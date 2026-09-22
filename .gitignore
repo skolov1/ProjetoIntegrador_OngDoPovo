@@ -585,4 +585,7 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Obsidian
+.obsidian
+
 # End of https://www.toptal.com/developers/gitignore/api/python,django,node,react,java,maven,windows,linux,intellij+all
