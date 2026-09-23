@@ -1,0 +1,8 @@
+Paleta de Cores:
+
+Verde Institucional (Dark): #0F523A (Fundo do Hero, Seção de Impacto e Rodapé)
+Verde Claro (Mint/Bg): #EBF5ED (Fundo do Quem Somos, Contato e Badges)
+Laranja Destaque (CTA): #F59E0B / #E65100 (Botões de ação principal e destaque de números)
+Texto Escuro: #1E293B | Texto Mutado: #64748B
+Tipografia: Fonte Sans-Serif moderna e encorpada (Inter ou Poppins), com títulos em peso bold/extrabold.
+Bordas: Cards e botões com border-radius: 12px a 16px (rounded-xl / rounded-2xl).
