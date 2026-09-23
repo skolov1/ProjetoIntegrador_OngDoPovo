@@ -14,9 +14,11 @@ export default function Footer() {
         <div className="grid gap-10 md:grid-cols-[1fr_auto_auto] md:items-start">
           <div className="max-w-sm">
             <a href="#inicio" className="flex items-center gap-3" aria-label="Voltar ao início">
-              <span className="grid size-10 place-items-center rounded-2xl bg-[#F59E0B] text-lg font-extrabold text-[#0F523A]">
-                OP
-              </span>
+              <img
+                src="/logo-ong-do-povo.png"
+                alt="Logo da ONG do Povo"
+                className="size-10 object-contain"
+              />
               <span className="text-lg font-extrabold">ONG do Povo</span>
             </a>
             <p className="mt-5 leading-7 text-[#D9F4DE]">
@@ -39,7 +41,7 @@ export default function Footer() {
             <h2 className="font-extrabold">Fale com a gente</h2>
             <div className="mt-4 flex gap-3">
               <a
-                href="https://wa.me/5511999999999"
+                href="https://wa.me/5513988066437"
                 aria-label="WhatsApp"
                 className="grid size-10 place-items-center rounded-xl bg-white/10 transition hover:bg-[#F59E0B] hover:text-[#0F523A]"
               >
@@ -53,7 +55,7 @@ export default function Footer() {
                 <Mail className="size-5" aria-hidden="true" />
               </a>
               <a
-                href="https://instagram.com/ongdopovo"
+                href="https://instagram.com/ongdopovo_"
                 aria-label="Instagram"
                 className="grid size-10 place-items-center rounded-xl bg-white/10 transition hover:bg-[#F59E0B] hover:text-[#0F523A]"
               >

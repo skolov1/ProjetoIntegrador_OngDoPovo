@@ -32,8 +32,8 @@ export default function ContactSection() {
               </span>
               <div>
                 <p className="font-extrabold text-[#0F523A]">WhatsApp</p>
-                <a href="https://wa.me/5511999999999" className="mt-1 block text-sm text-[#64748B] hover:text-[#0F523A]">
-                  (11) 99999-9999
+                <a href="https://wa.me/5513988066437" className="mt-1 block text-sm text-[#64748B] hover:text-[#0F523A]">
+                  (13) 98806-6437
                 </a>
               </div>
             </div>
@@ -54,8 +54,8 @@ export default function ContactSection() {
               </span>
               <div>
                 <p className="font-extrabold text-[#0F523A]">Instagram</p>
-                <a href="https://instagram.com/ongdopovo" className="mt-1 block text-sm text-[#64748B] hover:text-[#0F523A]">
-                  @ongdopovo
+                <a href="https://instagram.com/ongdopovo_" className="mt-1 block text-sm text-[#64748B] hover:text-[#0F523A]">
+                  @ongdopovo_
                 </a>
               </div>
             </div>
