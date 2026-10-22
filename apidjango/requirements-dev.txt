@@ -1,0 +1,10 @@
+# Dependências de desenvolvimento. NÃO entram no container de produção.
+# Instalar com:  pip install -r requirements-dev.txt
+
+-r requirements.txt
+
+pytest~=9.1.1
+pytest-django~=4.14.0
+
+# Lint + format. Configurar em pyproject.toml
+ruff~=0.16.10

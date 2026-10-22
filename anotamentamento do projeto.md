@@ -1,4 +1,4 @@
-# 🔗 Plano de Integração: React (Vite/TS) + Django + Spring Boot
+# 🔗 Plano de Integração: React (Vite/TS) + Django
 
 Arquivozinho resenha que define o fluxo de trabalho para conectar a interface de usuário às duas APIs (Python e Java). O ambiente de desenvolvimento será padronizado e orquestrado para rodar perfeitamente em qualquer sistema operacional (supostamente), utilizando o MongoDB como banco de dados não-relacional.
 
@@ -7,7 +7,6 @@ Manteremos todos os serviços no mesmo repositório Git. Isso garante que a equi
 
 - `/frontend` (React + Vite + TypeScript)
 - `/api-django` (Python + Django REST Framework)
-- `/api-java` (Java + Spring Boot)
 - `docker-compose.yml` (Orquestração do PostgreSQL e serviços)
 
 ## 2. Preparação do Back-end (Liberando o Acesso)
@@ -21,17 +20,6 @@ Por padrão, os navegadores bloqueiam requisições de portas diferentes (CORS, 
    CORS_ALLOWED_ORIGINS = [
        "http://localhost:5173",
    ]
-```
-
-### No Spring Boot (`/api-java`):
-
-1. Na classe principal ou no controlador (Controller), adicionar a anotação para liberar o CORS:
-2. 
-```Java
-    @CrossOrigin(origins = "http://localhost:5173")
-    @RestController
-    @RequestMapping("/api/java-endpoint")
-    public class ExemploController { ... }
 ```
 
 ## 3. Preparação do Front-end (Consumindo as APIs)
@@ -68,7 +56,3 @@ A primeira "tarefa" técnica (Sprint 0) da equipe será garantir que o encanamen
 1. Subir o banco de dados via Docker.
     
 2. Criar um endpoint `/ping` no Django que retorne `{"servico": "django", "status": "ok"}`.
-    
-3. Criar um endpoint `/ping` no Spring Boot que retorne `{"servico": "java", "status": "ok"}`.
-    
-4. Criar uma tela simples no React com dois botões ("Testar Django" e "Testar Java") que exibam o JSON recebido na tela.

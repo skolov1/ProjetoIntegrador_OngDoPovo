@@ -1,22 +1,45 @@
 """
-URL configuration for setup project.
+Rotas da API.
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+Prefixo `/api/v1/` desde o dia 1: quando o contrato precisar mudar, a versao
+nova convive com a antiga em vez de quebrar o frontend que ja esta em producao.
+
+Tres blocos:
+
+  /api/schema/       OpenAPI em JSON  -> consumido pelo Orval (ver frontend/orval.config.ts)
+  /api/docs/         Swagger UI       -> navegavel no browser, util na apresentacao
+  /api/v1/           a API em si
 """
+
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
+
+from . import views
 
 urlpatterns = [
+    # Back-office interno da equipe da ONG
     path('admin/', admin.site.urls),
+    # --- Contrato de API ---
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    # --- API ---
+    path('api/v1/auth/token/', views.CookieTokenObtainPairView.as_view(), name='token-obtain-pair'),
+    path(
+        'api/v1/auth/token/refresh/',
+        views.CookieTokenRefreshView.as_view(),
+        name='token-refresh',
+    ),
+    path('api/v1/auth/logout/', views.LogoutView.as_view(), name='logout'),
+    path('api/v1/auth/me/', views.MeView.as_view(), name='me'),
+    path('api/v1/ping/', views.ping, name='ping'),
+    # --- Apps de dominio ---
+    # prefixo /api/v1 declarado no include, e tambem em
+    # SPECTACULAR_SETTINGS['SCHEMA_PATH_PREFIX'] (ver settings.py)
+    path('api/v1/doacoes/', include('doacoes.urls')),
 ]

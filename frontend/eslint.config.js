@@ -6,7 +6,9 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // `generated` e reescrito pelo Orval a cada `pnpm api:generate`; lintar esse
+  // arquivo so gera ruido quando o estilo do gerador muda.
+  globalIgnores(['dist', 'src/api/generated']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

@@ -9,7 +9,6 @@ Antes de iniciar, certifique-se de ter as seguintes ferramentas instaladas em su
 - **Docker** e **Docker Compose** (Para rodar o PostgreSQL)
 - **Node.js** (Versão 20 ou superior)
 - **Python** (Versão 3.12 ou superior)
-- **Java JDK 21** e **Maven**
 
 ---
 

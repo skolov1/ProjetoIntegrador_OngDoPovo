@@ -1,0 +1,37 @@
+[tool.ruff]
+# Ruff substitui flake8 + isort + pylint em um binario so.
+# https://docs.astral.sh/ruff/
+target-version = "py312"
+line-length = 100
+extend-exclude = ["venv", "*/migrations/*"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "I",    # isort
+    "UP",   # pyupgrade (moderniza sintaxe)
+    "B",    # bugbear (armadilhas comuns)
+    "C4",   # comprehensions
+    "DJ",   # regras especificas de Django
+    "RUF",
+]
+ignore = [
+    # DRF define permission_classes / authentication_classes como listas mutáveis
+    # em classe por convenção da biblioteca. Marcar como ClassVar quebraria o DRF.
+    "RUF012",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["core", "setup"]
+
+[tool.ruff.format]
+# Formata junto com o lint: `ruff format .`
+quote-style = "double"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "setup.settings"
+python_files = ["test_*.py", "tests.py"]
+testpaths = ["."]
+# apps sem testes nao devem barulhar o CI
+addopts = "--strict-markers"

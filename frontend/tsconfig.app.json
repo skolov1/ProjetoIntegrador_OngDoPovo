@@ -8,6 +8,12 @@
     "allowArbitraryExtensions": true,
     "skipLibCheck": true,
 
+    /* Alias de import: espelha o `resolve.alias` do vite.config.ts.
+       Sem `baseUrl` — deprecado no TS 6; `paths` resolve relativo a este arquivo. */
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,

@@ -589,3 +589,8 @@ $RECYCLE.BIN/
 .obsidian
 
 # End of https://www.toptal.com/developers/gitignore/api/python,django,node,react,java,maven,windows,linux,intellij+all
+
+# Referências de design (manual de marca, referência de layout, logo bruta).
+# São ~8 MB de PNG de origem. A identidade já está extraída em código:
+# tokens de cor em frontend/src/index.css e logo otimizada em frontend/public/.
+refs/

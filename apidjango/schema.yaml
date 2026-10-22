@@ -1,0 +1,2814 @@
+openapi: 3.0.3
+info:
+  title: Sistema ONG do Povo — API
+  version: 1.0.0
+  description: API do Sistema ONG do Povo (Projeto Integrador). O schema em /api/schema/
+    alimenta o gerador de client do frontend.
+paths:
+  /auth/logout/:
+    post:
+      operationId: auth_logout_create
+      description: Apaga o cookie httpOnly do refresh token. O access token em memoria
+        continua valido ate expirar, entao o frontend deve limpar o estado da sessao
+        imediatamente apos chamar esta rota.
+      summary: Encerra a sessao
+      tags:
+      - auth
+      security:
+      - {}
+      responses:
+        '204':
+          description: Sessao encerrada
+  /auth/me/:
+    get:
+      operationId: auth_me_retrieve
+      description: |-
+        GET /api/v1/auth/me/
+
+        Dados do usuario autenticado (via header Authorization).
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+          description: ''
+  /auth/token/:
+    post:
+      operationId: auth_token_create
+      description: Recebe usuario e senha, devolve `{access, user}` no corpo e grava
+        o refresh token num cookie httpOnly. O campo `refresh` nunca aparece na resposta.
+        Limitado a 10 tentativas por minuto por IP.
+      summary: Autentica e devolve o access token
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPairRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPairRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CustomTokenObtainPairRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+          description: ''
+        '401':
+          description: Credenciais invalidas
+        '429':
+          description: Limite de tentativas excedido
+  /auth/token/refresh/:
+    post:
+      operationId: auth_token_refresh_create
+      description: Le o refresh token do cookie httpOnly e devolve um novo access
+        token. Com ROTATE_REFRESH_TOKENS ligado, o cookie e renovado junto.
+      summary: Renova o access token
+      tags:
+      - auth
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessToken'
+          description: ''
+        '401':
+          description: Sessao expirada ou sem cookie valido
+  /doacoes/alunos/:
+    get:
+      operationId: doacoes_alunos_list
+      description: CRUD de alunos (admin).
+      parameters:
+      - in: query
+        name: ativo
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: sexo
+        schema:
+          type: string
+          enum:
+          - F
+          - M
+          - N
+          - O
+        description: |-
+          * `M` - Masculino
+          * `F` - Feminino
+          * `O` - Outro
+          * `N` - Prefiro não informar
+      - in: query
+        name: turma
+        schema:
+          type: integer
+      tags:
+      - doacoes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAlunoListList'
+          description: ''
+    post:
+      operationId: doacoes_alunos_create
+      description: CRUD de alunos (admin).
+      tags:
+      - doacoes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlunoRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AlunoRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AlunoRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Aluno'
+          description: ''
+  /doacoes/alunos/{id}/:
+    get:
+      operationId: doacoes_alunos_retrieve
+      description: CRUD de alunos (admin).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Aluno.
+        required: true
+      tags:
+      - doacoes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Aluno'
+          description: ''
+    put:
+      operationId: doacoes_alunos_update
+      description: CRUD de alunos (admin).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Aluno.
+        required: true
+      tags:
+      - doacoes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlunoRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AlunoRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AlunoRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Aluno'
+          description: ''
+    patch:
+      operationId: doacoes_alunos_partial_update
+      description: CRUD de alunos (admin).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Aluno.
+        required: true
+      tags:
+      - doacoes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAlunoRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAlunoRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAlunoRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Aluno'
+          description: ''
+    delete:
+      operationId: doacoes_alunos_destroy
+      description: CRUD de alunos (admin).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Aluno.
+        required: true
+      tags:
+      - doacoes
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /doacoes/alunos/pre-cadastro/:
+    post:
+      operationId: doacoes_alunos_pre_cadastro_create
+      description: Público. Cria o registro do aluno com status ativo=True. A equipe
+        valida documentos depois.
+      summary: Pré-cadastro de aluno (público)
+      tags:
+      - alunos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlunoPublicCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AlunoPublicCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AlunoPublicCreateRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Aluno'
+          description: ''
+        '400':
+          description: Dados inválidos
+        '429':
+          description: Limite de envios excedido
+  /doacoes/doacoes/:
+    post:
+      operationId: doacoes_doacoes_create
+      description: Público. Cria o registro sempre como PENDENTE — a equipe confirma
+        no extrato. O campo `status` não é aceito no corpo da requisição.
+      summary: Registra uma doação
+      tags:
+      - doacoes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoacaoPublicCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DoacaoPublicCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DoacaoPublicCreateRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoacaoCriada'
+          description: ''
+        '400':
+          description: Dados inválidos
+        '429':
+          description: Limite de envios excedido
+  /doacoes/doacoes/admin/:
+    get:
+      operationId: doacoes_doacoes_admin_list
+      description: |-
+        CRUD da equipe da ONG.
+
+        Fica atrás de `IsAdminUser`. É o mesmo conjunto de dados que o Django admin
+        usa — aqui para quando o painel em React entrar na Fase 3.
+      parameters:
+      - in: query
+        name: anonimo
+        schema:
+          type: boolean
+      - in: query
+        name: destinacao
+        schema:
+          type: string
+          title: Destinação
+          enum:
+          - ALIMENTACAO
+          - GERAL
+          - INFRAESTRUTURA
+          - MATERIAL
+        description: |-
+          * `GERAL` - Onde mais precisar
+          * `MATERIAL` - Material esportivo
+          * `INFRAESTRUTURA` - Infraestrutura da sede
+          * `ALIMENTACAO` - Alimentação e eventos
+      - in: query
+        name: forma_pagamento
+        schema:
+          type: string
+          title: Forma de pagamento
+          enum:
+          - CARTAO
+          - DINHEIRO
+          - PIX
+          - TRANSFERENCIA
+        description: |-
+          * `PIX` - Pix
+          * `DINHEIRO` - Dinheiro
+          * `CARTAO` - Cartão
+          * `TRANSFERENCIA` - Transferência
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - CANCELADA
+          - CONFIRMADA
+          - PENDENTE
+        description: |-
+          * `PENDENTE` - Pendente
+          * `CONFIRMADA` - Confirmada
+          * `CANCELADA` - Cancelada
+      tags:
+      - doacoes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDoacaoAdminList'
+          description: ''
+    post:
+      operationId: doacoes_doacoes_admin_create
+      description: |-
+        CRUD da equipe da ONG.
+
+        Fica atrás de `IsAdminUser`. É o mesmo conjunto de dados que o Django admin
+        usa — aqui para quando o painel em React entrar na Fase 3.
+      tags:
+      - doacoes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoacaoAdminRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DoacaoAdminRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DoacaoAdminRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoacaoAdmin'
+          description: ''
+  /doacoes/doacoes/admin/{id}/:
+    get:
+      operationId: doacoes_doacoes_admin_retrieve
+      description: |-
+        CRUD da equipe da ONG.
+
+        Fica atrás de `IsAdminUser`. É o mesmo conjunto de dados que o Django admin
+        usa — aqui para quando o painel em React entrar na Fase 3.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Doação.
+        required: true
+      tags:
+      - doacoes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoacaoAdmin'
+          description: ''
+    put:
+      operationId: doacoes_doacoes_admin_update
+      description: |-
+        CRUD da equipe da ONG.
+
+        Fica atrás de `IsAdminUser`. É o mesmo conjunto de dados que o Django admin
+        usa — aqui para quando o painel em React entrar na Fase 3.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Doação.
+        required: true
+      tags:
+      - doacoes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoacaoAdminRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DoacaoAdminRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DoacaoAdminRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoacaoAdmin'
+          description: ''
+    patch:
+      operationId: doacoes_doacoes_admin_partial_update
+      description: |-
+        CRUD da equipe da ONG.
+
+        Fica atrás de `IsAdminUser`. É o mesmo conjunto de dados que o Django admin
+        usa — aqui para quando o painel em React entrar na Fase 3.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Doação.
+        required: true
+      tags:
+      - doacoes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDoacaoAdminRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDoacaoAdminRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDoacaoAdminRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoacaoAdmin'
+          description: ''
+    delete:
+      operationId: doacoes_doacoes_admin_destroy
+      description: |-
+        CRUD da equipe da ONG.
+
+        Fica atrás de `IsAdminUser`. É o mesmo conjunto de dados que o Django admin
+        usa — aqui para quando o painel em React entrar na Fase 3.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Doação.
+        required: true
+      tags:
+      - doacoes
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /doacoes/doacoes/admin/{id}/confirmada/:
+    post:
+      operationId: doacoes_doacoes_admin_confirmada_create
+      description: 'Ações em massa pelo painel: `/doacoes/admin/12/confirmada/`.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Doação.
+        required: true
+      tags:
+      - doacoes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoacaoAdminRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DoacaoAdminRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DoacaoAdminRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoacaoAdmin'
+          description: ''
+  /doacoes/doacoes/admin/cancelar/:
+    post:
+      operationId: doacoes_doacoes_admin_cancelar_create
+      description: |-
+        CRUD da equipe da ONG.
+
+        Fica atrás de `IsAdminUser`. É o mesmo conjunto de dados que o Django admin
+        usa — aqui para quando o painel em React entrar na Fase 3.
+      summary: Cancela doações em lote
+      parameters:
+      - in: query
+        name: anonimo
+        schema:
+          type: boolean
+      - in: query
+        name: destinacao
+        schema:
+          type: string
+          title: Destinação
+          enum:
+          - ALIMENTACAO
+          - GERAL
+          - INFRAESTRUTURA
+          - MATERIAL
+        description: |-
+          * `GERAL` - Onde mais precisar
+          * `MATERIAL` - Material esportivo
+          * `INFRAESTRUTURA` - Infraestrutura da sede
+          * `ALIMENTACAO` - Alimentação e eventos
+      - in: query
+        name: forma_pagamento
+        schema:
+          type: string
+          title: Forma de pagamento
+          enum:
+          - CARTAO
+          - DINHEIRO
+          - PIX
+          - TRANSFERENCIA
+        description: |-
+          * `PIX` - Pix
+          * `DINHEIRO` - Dinheiro
+          * `CARTAO` - Cartão
+          * `TRANSFERENCIA` - Transferência
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - CANCELADA
+          - CONFIRMADA
+          - PENDENTE
+        description: |-
+          * `PENDENTE` - Pendente
+          * `CONFIRMADA` - Confirmada
+          * `CANCELADA` - Cancelada
+      tags:
+      - doacoes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDoacaoAdminList'
+          description: ''
+  /doacoes/doacoes/admin/confirmar/:
+    post:
+      operationId: doacoes_doacoes_admin_confirmar_create
+      description: Marca as doações indicadas como CONFIRMADA e carimba a data.
+      summary: Confirma doações em lote
+      parameters:
+      - in: query
+        name: anonimo
+        schema:
+          type: boolean
+      - in: query
+        name: destinacao
+        schema:
+          type: string
+          title: Destinação
+          enum:
+          - ALIMENTACAO
+          - GERAL
+          - INFRAESTRUTURA
+          - MATERIAL
+        description: |-
+          * `GERAL` - Onde mais precisar
+          * `MATERIAL` - Material esportivo
+          * `INFRAESTRUTURA` - Infraestrutura da sede
+          * `ALIMENTACAO` - Alimentação e eventos
+      - in: query
+        name: forma_pagamento
+        schema:
+          type: string
+          title: Forma de pagamento
+          enum:
+          - CARTAO
+          - DINHEIRO
+          - PIX
+          - TRANSFERENCIA
+        description: |-
+          * `PIX` - Pix
+          * `DINHEIRO` - Dinheiro
+          * `CARTAO` - Cartão
+          * `TRANSFERENCIA` - Transferência
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - CANCELADA
+          - CONFIRMADA
+          - PENDENTE
+        description: |-
+          * `PENDENTE` - Pendente
+          * `CONFIRMADA` - Confirmada
+          * `CANCELADA` - Cancelada
+      tags:
+      - doacoes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDoacaoAdminList'
+          description: ''
+  /doacoes/doacoes/publico/:
+    get:
+      operationId: doacoes_doacoes_publico_list
+      description: |-
+        GET /api/v1/doacoes/publico/
+
+        Mural de doações. Só CONFIRMADAS e sem nenhum dado pessoal.
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - doacoes
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DoacaoPublic'
+          description: ''
+  /doacoes/doacoes/resumo/:
+    get:
+      operationId: doacoes_doacoes_resumo_retrieve
+      description: Público. Soma das doações confirmadas, geral e por destinação.
+        Não inclui registros pendentes ou cancelados.
+      summary: Total arrecadado
+      tags:
+      - doacoes
+      security:
+      - {}
+      responses:
+        '200':
+          description: Totais da captação
+  /doacoes/presencas/:
+    get:
+      operationId: doacoes_presencas_list
+      description: CRUD de presenças (recepcionista/admin).
+      parameters:
+      - in: query
+        name: aluno
+        schema:
+          type: integer
+      - in: query
+        name: data
+        schema:
+          type: string
+          format: date
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: situacao
+        schema:
+          type: string
+          title: Situação
+          enum:
+          - AUSENTE
+          - JUSTIFICADO
+          - PRESENTE
+        description: |-
+          * `PRESENTE` - Presente
+          * `AUSENTE` - Ausente
+          * `JUSTIFICADO` - Justificado
+      - in: query
+        name: turma
+        schema:
+          type: integer
+      tags:
+      - doacoes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPresencaList'
+          description: ''
+    post:
+      operationId: doacoes_presencas_create
+      description: CRUD de presenças (recepcionista/admin).
+      tags:
+      - doacoes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PresencaCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PresencaCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PresencaCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PresencaCreate'
+          description: ''
+  /doacoes/presencas/{id}/:
+    get:
+      operationId: doacoes_presencas_retrieve
+      description: CRUD de presenças (recepcionista/admin).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Presença.
+        required: true
+      tags:
+      - doacoes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Presenca'
+          description: ''
+    put:
+      operationId: doacoes_presencas_update
+      description: CRUD de presenças (recepcionista/admin).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Presença.
+        required: true
+      tags:
+      - doacoes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PresencaRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PresencaRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PresencaRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Presenca'
+          description: ''
+    patch:
+      operationId: doacoes_presencas_partial_update
+      description: CRUD de presenças (recepcionista/admin).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Presença.
+        required: true
+      tags:
+      - doacoes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPresencaRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPresencaRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPresencaRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Presenca'
+          description: ''
+    delete:
+      operationId: doacoes_presencas_destroy
+      description: CRUD de presenças (recepcionista/admin).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Presença.
+        required: true
+      tags:
+      - doacoes
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /doacoes/presencas/lote/:
+    post:
+      operationId: doacoes_presencas_lote_create
+      description: |-
+        Recebe: { turma: 1, data: "2026-10-20", presencas: [{aluno_id: 1, situacao: "PRESENTE"}, ...] }
+        Cria/atualiza presenças em bulk.
+      summary: Marca presença em lote para uma turma/data
+      parameters:
+      - in: query
+        name: aluno
+        schema:
+          type: integer
+      - in: query
+        name: data
+        schema:
+          type: string
+          format: date
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: situacao
+        schema:
+          type: string
+          title: Situação
+          enum:
+          - AUSENTE
+          - JUSTIFICADO
+          - PRESENTE
+        description: |-
+          * `PRESENTE` - Presente
+          * `AUSENTE` - Ausente
+          * `JUSTIFICADO` - Justificado
+      - in: query
+        name: turma
+        schema:
+          type: integer
+      tags:
+      - presencas
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PresencaLoteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PresencaLoteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PresencaLoteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPresencaList'
+          description: ''
+  /doacoes/presencas/por-turma-data/:
+    get:
+      operationId: doacoes_presencas_por_turma_data_list
+      description: |-
+        Query params: ?turma=1&data=2026-10-20
+        Retorna todas as presenças da turma na data, incluindo alunos sem registro (como ausentes).
+      summary: Lista presenças de uma turma em uma data
+      parameters:
+      - in: query
+        name: aluno
+        schema:
+          type: integer
+      - in: query
+        name: data
+        schema:
+          type: string
+          format: date
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: situacao
+        schema:
+          type: string
+          title: Situação
+          enum:
+          - AUSENTE
+          - JUSTIFICADO
+          - PRESENTE
+        description: |-
+          * `PRESENTE` - Presente
+          * `AUSENTE` - Ausente
+          * `JUSTIFICADO` - Justificado
+      - in: query
+        name: turma
+        schema:
+          type: integer
+      tags:
+      - presencas
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPresencaList'
+          description: ''
+  /doacoes/professores/:
+    get:
+      operationId: doacoes_professores_list
+      description: CRUD de professores (admin).
+      parameters:
+      - in: query
+        name: ativo
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: turmas
+        schema:
+          type: array
+          items:
+            type: integer
+        explode: true
+        style: form
+      tags:
+      - doacoes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProfessorList'
+          description: ''
+    post:
+      operationId: doacoes_professores_create
+      description: CRUD de professores (admin).
+      tags:
+      - doacoes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfessorRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProfessorRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProfessorRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Professor'
+          description: ''
+  /doacoes/professores/{id}/:
+    get:
+      operationId: doacoes_professores_retrieve
+      description: CRUD de professores (admin).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Professor.
+        required: true
+      tags:
+      - doacoes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Professor'
+          description: ''
+    put:
+      operationId: doacoes_professores_update
+      description: CRUD de professores (admin).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Professor.
+        required: true
+      tags:
+      - doacoes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfessorRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProfessorRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProfessorRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Professor'
+          description: ''
+    patch:
+      operationId: doacoes_professores_partial_update
+      description: CRUD de professores (admin).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Professor.
+        required: true
+      tags:
+      - doacoes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProfessorRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProfessorRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProfessorRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Professor'
+          description: ''
+    delete:
+      operationId: doacoes_professores_destroy
+      description: CRUD de professores (admin).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Professor.
+        required: true
+      tags:
+      - doacoes
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /doacoes/turmas/:
+    get:
+      operationId: doacoes_turmas_list
+      description: CRUD de turmas (admin).
+      parameters:
+      - in: query
+        name: ativo
+        schema:
+          type: boolean
+      - in: query
+        name: dia_semana
+        schema:
+          type: string
+          title: Dia da semana
+          enum:
+          - DOM
+          - QUA
+          - QUI
+          - SAB
+          - SEG
+          - SEX
+          - TER
+        description: |-
+          * `SEG` - Segunda
+          * `TER` - Terça
+          * `QUA` - Quarta
+          * `QUI` - Quinta
+          * `SEX` - Sexta
+          * `SAB` - Sábado
+          * `DOM` - Domingo
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - doacoes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTurmaListList'
+          description: ''
+    post:
+      operationId: doacoes_turmas_create
+      description: CRUD de turmas (admin).
+      tags:
+      - doacoes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TurmaRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TurmaRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TurmaRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Turma'
+          description: ''
+  /doacoes/turmas/{id}/:
+    get:
+      operationId: doacoes_turmas_retrieve
+      description: CRUD de turmas (admin).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Turma.
+        required: true
+      tags:
+      - doacoes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Turma'
+          description: ''
+    put:
+      operationId: doacoes_turmas_update
+      description: CRUD de turmas (admin).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Turma.
+        required: true
+      tags:
+      - doacoes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TurmaRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TurmaRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TurmaRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Turma'
+          description: ''
+    patch:
+      operationId: doacoes_turmas_partial_update
+      description: CRUD de turmas (admin).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Turma.
+        required: true
+      tags:
+      - doacoes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTurmaRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTurmaRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTurmaRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Turma'
+          description: ''
+    delete:
+      operationId: doacoes_turmas_destroy
+      description: CRUD de turmas (admin).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Turma.
+        required: true
+      tags:
+      - doacoes
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /ping/:
+    get:
+      operationId: ping_retrieve
+      description: Sprint 0 do plano de remodelagem. Endpoint publico e sem autenticacao
+        usado para validar o encanamento React -> Django. Tambem reporta se o banco
+        esta acessivel.
+      summary: Verifica se a API esta no ar
+      tags:
+      - sistema
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ping'
+          description: ''
+components:
+  schemas:
+    AccessToken:
+      type: object
+      description: Corpo de /auth/token/refresh/ — so o access token volta.
+      properties:
+        access:
+          type: string
+      required:
+      - access
+    Aluno:
+      type: object
+      description: Serializer completo do aluno (admin).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nome:
+          type: string
+          title: Nome completo
+          maxLength: 150
+        data_nascimento:
+          type: string
+          format: date
+          title: Data de nascimento
+        sexo:
+          $ref: '#/components/schemas/SexoEnum'
+        rg:
+          type: string
+          maxLength: 20
+        cpf:
+          type: string
+          maxLength: 14
+        comprovante_residencia:
+          type: string
+          format: uri
+          nullable: true
+          title: Comprovante de residência
+        titulo_eleitor:
+          type: string
+          nullable: true
+          title: Título de eleitor
+          maxLength: 20
+        rg_responsavel:
+          type: string
+          nullable: true
+          title: RG do responsável
+          maxLength: 20
+        certificado_nascimento:
+          type: string
+          format: uri
+          nullable: true
+          title: Certidão de nascimento
+        atestado_medico:
+          type: string
+          format: uri
+          nullable: true
+          title: Atestado médico de aptidão física
+        mensalidade:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        turma:
+          type: integer
+          nullable: true
+        turma_nome:
+          type: string
+          readOnly: true
+        ativo:
+          type: boolean
+        idade:
+          type: integer
+          readOnly: true
+        eh_maior_de_idade:
+          type: boolean
+          readOnly: true
+        campos_obrigatorios_faltando:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        criado_em:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Cadastrado em
+        atualizado_em:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - atualizado_em
+      - campos_obrigatorios_faltando
+      - cpf
+      - criado_em
+      - data_nascimento
+      - eh_maior_de_idade
+      - id
+      - idade
+      - nome
+      - rg
+      - turma_nome
+    AlunoList:
+      type: object
+      description: Listagem leve para tabelas.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nome:
+          type: string
+          title: Nome completo
+          maxLength: 150
+        cpf:
+          type: string
+          maxLength: 14
+        idade:
+          type: integer
+          readOnly: true
+        turma:
+          type: integer
+          nullable: true
+        turma_nome:
+          type: string
+          readOnly: true
+        mensalidade:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        ativo:
+          type: boolean
+      required:
+      - cpf
+      - id
+      - idade
+      - nome
+      - turma_nome
+    AlunoPublicCreateRequest:
+      type: object
+      description: Entrada do formulário público de pré-cadastro (landing page).
+      properties:
+        nome:
+          type: string
+          minLength: 1
+          title: Nome completo
+          maxLength: 150
+        data_nascimento:
+          type: string
+          format: date
+          title: Data de nascimento
+        sexo:
+          $ref: '#/components/schemas/SexoEnum'
+        rg:
+          type: string
+          minLength: 1
+          maxLength: 20
+        cpf:
+          type: string
+          minLength: 1
+          maxLength: 14
+        comprovante_residencia:
+          type: string
+          format: binary
+          nullable: true
+          title: Comprovante de residência
+        titulo_eleitor:
+          type: string
+          nullable: true
+          title: Título de eleitor
+          maxLength: 20
+        rg_responsavel:
+          type: string
+          nullable: true
+          title: RG do responsável
+          maxLength: 20
+        certificado_nascimento:
+          type: string
+          format: binary
+          nullable: true
+          title: Certidão de nascimento
+        atestado_medico:
+          type: string
+          format: binary
+          nullable: true
+          title: Atestado médico de aptidão física
+        mensalidade:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        turma:
+          type: integer
+          nullable: true
+      required:
+      - cpf
+      - data_nascimento
+      - nome
+      - rg
+    AlunoRequest:
+      type: object
+      description: Serializer completo do aluno (admin).
+      properties:
+        nome:
+          type: string
+          minLength: 1
+          title: Nome completo
+          maxLength: 150
+        data_nascimento:
+          type: string
+          format: date
+          title: Data de nascimento
+        sexo:
+          $ref: '#/components/schemas/SexoEnum'
+        rg:
+          type: string
+          minLength: 1
+          maxLength: 20
+        cpf:
+          type: string
+          minLength: 1
+          maxLength: 14
+        comprovante_residencia:
+          type: string
+          format: binary
+          nullable: true
+          title: Comprovante de residência
+        titulo_eleitor:
+          type: string
+          nullable: true
+          title: Título de eleitor
+          maxLength: 20
+        rg_responsavel:
+          type: string
+          nullable: true
+          title: RG do responsável
+          maxLength: 20
+        certificado_nascimento:
+          type: string
+          format: binary
+          nullable: true
+          title: Certidão de nascimento
+        atestado_medico:
+          type: string
+          format: binary
+          nullable: true
+          title: Atestado médico de aptidão física
+        mensalidade:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        turma:
+          type: integer
+          nullable: true
+        ativo:
+          type: boolean
+      required:
+      - cpf
+      - data_nascimento
+      - nome
+      - rg
+    CustomTokenObtainPairRequest:
+      type: object
+      description: |-
+        Inclui nome e papel do usuario na resposta do login.
+
+        O React usa esses dados para exibir o nome no header e decidir o que renderizar,
+        sem precisar de uma segunda chamada a /api/v1/auth/me/.
+      properties:
+        username:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - username
+    DestinacaoEnum:
+      enum:
+      - GERAL
+      - MATERIAL
+      - INFRAESTRUTURA
+      - ALIMENTACAO
+      type: string
+      description: |-
+        * `GERAL` - Onde mais precisar
+        * `MATERIAL` - Material esportivo
+        * `INFRAESTRUTURA` - Infraestrutura da sede
+        * `ALIMENTACAO` - Alimentação e eventos
+    DiaSemanaEnum:
+      enum:
+      - SEG
+      - TER
+      - QUA
+      - QUI
+      - SEX
+      - SAB
+      - DOM
+      type: string
+      description: |-
+        * `SEG` - Segunda
+        * `TER` - Terça
+        * `QUA` - Quarta
+        * `QUI` - Quinta
+        * `SEX` - Sexta
+        * `SAB` - Sábado
+        * `DOM` - Domingo
+    DoacaoAdmin:
+      type: object
+      description: |-
+        CRUD da equipe — único serializer com dado pessoal.
+
+        Protegido por IsAdminUser na view. É o mesmo serializer que gera o client do
+        Orval para o painel da Fase 3, então quando ele existir o contrato já está
+        definido aqui.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nome:
+          type: string
+          maxLength: 150
+        nome_exibido:
+          type: string
+          readOnly: true
+        email:
+          type: string
+          format: email
+          title: E-mail
+          maxLength: 254
+        telefone:
+          type: string
+          maxLength: 20
+        anonimo:
+          type: boolean
+          title: Doação anônima
+        valor:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        forma_pagamento:
+          allOf:
+          - $ref: '#/components/schemas/FormaPagamentoEnum'
+          title: Forma de pagamento
+        destinacao:
+          allOf:
+          - $ref: '#/components/schemas/DestinacaoEnum'
+          title: Destinação
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        mensagem:
+          type: string
+        criado_em:
+          type: string
+          format: date-time
+          readOnly: true
+        confirmado_em:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - confirmado_em
+      - criado_em
+      - email
+      - forma_pagamento
+      - id
+      - nome
+      - nome_exibido
+      - valor
+    DoacaoAdminRequest:
+      type: object
+      description: |-
+        CRUD da equipe — único serializer com dado pessoal.
+
+        Protegido por IsAdminUser na view. É o mesmo serializer que gera o client do
+        Orval para o painel da Fase 3, então quando ele existir o contrato já está
+        definido aqui.
+      properties:
+        nome:
+          type: string
+          minLength: 1
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          minLength: 1
+          title: E-mail
+          maxLength: 254
+        telefone:
+          type: string
+          maxLength: 20
+        anonimo:
+          type: boolean
+          title: Doação anônima
+        valor:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        forma_pagamento:
+          allOf:
+          - $ref: '#/components/schemas/FormaPagamentoEnum'
+          title: Forma de pagamento
+        destinacao:
+          allOf:
+          - $ref: '#/components/schemas/DestinacaoEnum'
+          title: Destinação
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        mensagem:
+          type: string
+      required:
+      - email
+      - forma_pagamento
+      - nome
+      - valor
+    DoacaoCriada:
+      type: object
+      description: |-
+        Resposta do POST público.
+
+        Declarada como serializer (e não `OpenApiResponse(description=...)`) para que
+        o Orval gere o tipo no frontend. Sem isso o client sai como `api<void>` e o
+        React perde a verificação de tipo do retorno.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        status:
+          type: string
+          readOnly: true
+        mensagem:
+          type: string
+          readOnly: true
+      required:
+      - id
+      - mensagem
+      - status
+    DoacaoPublic:
+      type: object
+      description: |-
+        Leitura pública — **zero dado pessoal**.
+
+        Nem doador anônimo, nem identificado: este serializer não tem acesso a
+        nome, email ou telefone, então nenhum endpoint que o use pode vazar nada.
+        Serve para a seção de impacto e, no futuro, o painel da Fase 3.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        valor:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        destinacao:
+          allOf:
+          - $ref: '#/components/schemas/DestinacaoEnum'
+          readOnly: true
+          title: Destinação
+        criado_em:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - criado_em
+      - destinacao
+      - id
+      - valor
+    DoacaoPublicCreateRequest:
+      type: object
+      description: |-
+        Entrada do formulário público.
+
+        Note que `status`, `confirmado_em` e `criado_em` **nao estao** em `fields`.
+        Nao e que sejam `read_only`: eles simplesmente nao existem para o cliente.
+        Assim nao existe caminho para o doador se auto-declarar confirmado.
+      properties:
+        nome:
+          type: string
+          minLength: 1
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          minLength: 1
+          title: E-mail
+          maxLength: 254
+        telefone:
+          type: string
+          maxLength: 20
+        anonimo:
+          type: boolean
+          title: Doação anônima
+        valor:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Em reais. Mínimo R$ 1,00.
+        forma_pagamento:
+          allOf:
+          - $ref: '#/components/schemas/FormaPagamentoEnum'
+          title: Forma de pagamento
+        destinacao:
+          allOf:
+          - $ref: '#/components/schemas/DestinacaoEnum'
+          title: Destinação
+        mensagem:
+          type: string
+      required:
+      - email
+      - forma_pagamento
+      - nome
+      - valor
+    FormaPagamentoEnum:
+      enum:
+      - PIX
+      - DINHEIRO
+      - CARTAO
+      - TRANSFERENCIA
+      type: string
+      description: |-
+        * `PIX` - Pix
+        * `DINHEIRO` - Dinheiro
+        * `CARTAO` - Cartão
+        * `TRANSFERENCIA` - Transferência
+    LoginResponse:
+      type: object
+      description: |-
+        Corpo de /auth/token/.
+
+        Nao inclui `refresh`: o token vai em cookie httpOnly, nunca no corpo.
+      properties:
+        access:
+          type: string
+        user:
+          $ref: '#/components/schemas/LoginUser'
+      required:
+      - access
+      - user
+    LoginUser:
+      type: object
+      description: Dados do usuario devolvidos junto do access token no login.
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+        is_staff:
+          type: boolean
+      required:
+      - id
+      - is_staff
+      - name
+      - role
+      - username
+    Me:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        name:
+          type: string
+        email:
+          oneOf:
+          - type: string
+            format: email
+          - type: string
+            maxLength: 0
+        role:
+          type: string
+        is_staff:
+          type: boolean
+      required:
+      - email
+      - id
+      - is_staff
+      - name
+      - role
+      - username
+    PaginatedAlunoListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlunoList'
+    PaginatedDoacaoAdminList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DoacaoAdmin'
+    PaginatedPresencaList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Presenca'
+    PaginatedProfessorList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Professor'
+    PaginatedTurmaListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TurmaList'
+    PatchedAlunoRequest:
+      type: object
+      description: Serializer completo do aluno (admin).
+      properties:
+        nome:
+          type: string
+          minLength: 1
+          title: Nome completo
+          maxLength: 150
+        data_nascimento:
+          type: string
+          format: date
+          title: Data de nascimento
+        sexo:
+          $ref: '#/components/schemas/SexoEnum'
+        rg:
+          type: string
+          minLength: 1
+          maxLength: 20
+        cpf:
+          type: string
+          minLength: 1
+          maxLength: 14
+        comprovante_residencia:
+          type: string
+          format: binary
+          nullable: true
+          title: Comprovante de residência
+        titulo_eleitor:
+          type: string
+          nullable: true
+          title: Título de eleitor
+          maxLength: 20
+        rg_responsavel:
+          type: string
+          nullable: true
+          title: RG do responsável
+          maxLength: 20
+        certificado_nascimento:
+          type: string
+          format: binary
+          nullable: true
+          title: Certidão de nascimento
+        atestado_medico:
+          type: string
+          format: binary
+          nullable: true
+          title: Atestado médico de aptidão física
+        mensalidade:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        turma:
+          type: integer
+          nullable: true
+        ativo:
+          type: boolean
+    PatchedDoacaoAdminRequest:
+      type: object
+      description: |-
+        CRUD da equipe — único serializer com dado pessoal.
+
+        Protegido por IsAdminUser na view. É o mesmo serializer que gera o client do
+        Orval para o painel da Fase 3, então quando ele existir o contrato já está
+        definido aqui.
+      properties:
+        nome:
+          type: string
+          minLength: 1
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          minLength: 1
+          title: E-mail
+          maxLength: 254
+        telefone:
+          type: string
+          maxLength: 20
+        anonimo:
+          type: boolean
+          title: Doação anônima
+        valor:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        forma_pagamento:
+          allOf:
+          - $ref: '#/components/schemas/FormaPagamentoEnum'
+          title: Forma de pagamento
+        destinacao:
+          allOf:
+          - $ref: '#/components/schemas/DestinacaoEnum'
+          title: Destinação
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        mensagem:
+          type: string
+    PatchedPresencaRequest:
+      type: object
+      description: Serializer completo da presença.
+      properties:
+        aluno:
+          type: integer
+        turma:
+          type: integer
+        data:
+          type: string
+          format: date
+          title: Data da aula
+        situacao:
+          allOf:
+          - $ref: '#/components/schemas/SituacaoEnum'
+          title: Situação
+        observacao:
+          type: string
+          title: Observação
+          maxLength: 255
+        registrado_por:
+          type: string
+          maxLength: 100
+    PatchedProfessorRequest:
+      type: object
+      properties:
+        nome:
+          type: string
+          minLength: 1
+          title: Nome completo
+          maxLength: 150
+        cpf:
+          type: string
+          minLength: 1
+          maxLength: 14
+        email:
+          title: E-mail
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        telefone:
+          type: string
+          maxLength: 20
+        turmas:
+          type: array
+          items:
+            type: integer
+        ativo:
+          type: boolean
+    PatchedTurmaRequest:
+      type: object
+      description: Serializer base da turma.
+      properties:
+        nome:
+          type: string
+          minLength: 1
+          title: Nome da turma
+          maxLength: 100
+        descricao:
+          type: string
+          title: Descrição
+          maxLength: 255
+        dia_semana:
+          allOf:
+          - $ref: '#/components/schemas/DiaSemanaEnum'
+          title: Dia da semana
+        horario_inicio:
+          type: string
+          format: time
+          title: Horário de início
+        horario_fim:
+          type: string
+          format: time
+          title: Horário de fim
+        data_inicio:
+          type: string
+          format: date
+          title: Data de início
+        data_fim:
+          type: string
+          format: date
+          nullable: true
+          title: Data de fim
+        ativo:
+          type: boolean
+    Ping:
+      type: object
+      properties:
+        servico:
+          type: string
+        status:
+          type: string
+        banco:
+          type: string
+      required:
+      - banco
+      - servico
+      - status
+    Presenca:
+      type: object
+      description: Serializer completo da presença.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        aluno:
+          type: integer
+        aluno_nome:
+          type: string
+          readOnly: true
+        turma:
+          type: integer
+        turma_nome:
+          type: string
+          readOnly: true
+        data:
+          type: string
+          format: date
+          title: Data da aula
+        situacao:
+          allOf:
+          - $ref: '#/components/schemas/SituacaoEnum'
+          title: Situação
+        observacao:
+          type: string
+          title: Observação
+          maxLength: 255
+        registrado_em:
+          type: string
+          format: date-time
+          readOnly: true
+        registrado_por:
+          type: string
+          maxLength: 100
+      required:
+      - aluno
+      - aluno_nome
+      - data
+      - id
+      - registrado_em
+      - turma
+      - turma_nome
+    PresencaCreate:
+      type: object
+      description: Para marcar presença (recepcionista).
+      properties:
+        aluno:
+          type: integer
+        turma:
+          type: integer
+        data:
+          type: string
+          format: date
+          title: Data da aula
+        situacao:
+          allOf:
+          - $ref: '#/components/schemas/SituacaoEnum'
+          title: Situação
+        observacao:
+          type: string
+          title: Observação
+          maxLength: 255
+      required:
+      - aluno
+      - data
+      - turma
+    PresencaCreateRequest:
+      type: object
+      description: Para marcar presença (recepcionista).
+      properties:
+        aluno:
+          type: integer
+        turma:
+          type: integer
+        data:
+          type: string
+          format: date
+          title: Data da aula
+        situacao:
+          allOf:
+          - $ref: '#/components/schemas/SituacaoEnum'
+          title: Situação
+        observacao:
+          type: string
+          title: Observação
+          maxLength: 255
+      required:
+      - aluno
+      - data
+      - turma
+    PresencaLoteRequest:
+      type: object
+      description: 'Marcação em lote: lista de presenças para uma turma/data.'
+      properties:
+        turma:
+          type: integer
+        data:
+          type: string
+          format: date
+        presencas:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: string
+              minLength: 1
+      required:
+      - data
+      - presencas
+      - turma
+    PresencaRequest:
+      type: object
+      description: Serializer completo da presença.
+      properties:
+        aluno:
+          type: integer
+        turma:
+          type: integer
+        data:
+          type: string
+          format: date
+          title: Data da aula
+        situacao:
+          allOf:
+          - $ref: '#/components/schemas/SituacaoEnum'
+          title: Situação
+        observacao:
+          type: string
+          title: Observação
+          maxLength: 255
+        registrado_por:
+          type: string
+          maxLength: 100
+      required:
+      - aluno
+      - data
+      - turma
+    Professor:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nome:
+          type: string
+          title: Nome completo
+          maxLength: 150
+        cpf:
+          type: string
+          maxLength: 14
+        email:
+          title: E-mail
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        telefone:
+          type: string
+          maxLength: 20
+        turmas:
+          type: array
+          items:
+            type: integer
+        turmas_nomes:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        ativo:
+          type: boolean
+        total_alunos:
+          type: integer
+          readOnly: true
+        criado_em:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - cpf
+      - criado_em
+      - id
+      - nome
+      - total_alunos
+      - turmas_nomes
+    ProfessorRequest:
+      type: object
+      properties:
+        nome:
+          type: string
+          minLength: 1
+          title: Nome completo
+          maxLength: 150
+        cpf:
+          type: string
+          minLength: 1
+          maxLength: 14
+        email:
+          title: E-mail
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        telefone:
+          type: string
+          maxLength: 20
+        turmas:
+          type: array
+          items:
+            type: integer
+        ativo:
+          type: boolean
+      required:
+      - cpf
+      - nome
+    SexoEnum:
+      enum:
+      - M
+      - F
+      - O
+      - N
+      type: string
+      description: |-
+        * `M` - Masculino
+        * `F` - Feminino
+        * `O` - Outro
+        * `N` - Prefiro não informar
+    SituacaoEnum:
+      enum:
+      - PRESENTE
+      - AUSENTE
+      - JUSTIFICADO
+      type: string
+      description: |-
+        * `PRESENTE` - Presente
+        * `AUSENTE` - Ausente
+        * `JUSTIFICADO` - Justificado
+    StatusEnum:
+      enum:
+      - PENDENTE
+      - CONFIRMADA
+      - CANCELADA
+      type: string
+      description: |-
+        * `PENDENTE` - Pendente
+        * `CONFIRMADA` - Confirmada
+        * `CANCELADA` - Cancelada
+    Turma:
+      type: object
+      description: Serializer base da turma.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nome:
+          type: string
+          title: Nome da turma
+          maxLength: 100
+        descricao:
+          type: string
+          title: Descrição
+          maxLength: 255
+        dia_semana:
+          allOf:
+          - $ref: '#/components/schemas/DiaSemanaEnum'
+          title: Dia da semana
+        horario_inicio:
+          type: string
+          format: time
+          title: Horário de início
+        horario_fim:
+          type: string
+          format: time
+          title: Horário de fim
+        horario_formatado:
+          type: string
+          readOnly: true
+        data_inicio:
+          type: string
+          format: date
+          title: Data de início
+        data_fim:
+          type: string
+          format: date
+          nullable: true
+          title: Data de fim
+        ativo:
+          type: boolean
+        total_alunos:
+          type: integer
+          readOnly: true
+        criado_em:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - criado_em
+      - data_inicio
+      - dia_semana
+      - horario_fim
+      - horario_formatado
+      - horario_inicio
+      - id
+      - nome
+      - total_alunos
+    TurmaList:
+      type: object
+      description: Listagem leve para selects/lookups.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nome:
+          type: string
+          title: Nome da turma
+          maxLength: 100
+        horario_formatado:
+          type: string
+          readOnly: true
+        ativo:
+          type: boolean
+      required:
+      - horario_formatado
+      - id
+      - nome
+    TurmaRequest:
+      type: object
+      description: Serializer base da turma.
+      properties:
+        nome:
+          type: string
+          minLength: 1
+          title: Nome da turma
+          maxLength: 100
+        descricao:
+          type: string
+          title: Descrição
+          maxLength: 255
+        dia_semana:
+          allOf:
+          - $ref: '#/components/schemas/DiaSemanaEnum'
+          title: Dia da semana
+        horario_inicio:
+          type: string
+          format: time
+          title: Horário de início
+        horario_fim:
+          type: string
+          format: time
+          title: Horário de fim
+        data_inicio:
+          type: string
+          format: date
+          title: Data de início
+        data_fim:
+          type: string
+          format: date
+          nullable: true
+          title: Data de fim
+        ativo:
+          type: boolean
+      required:
+      - data_inicio
+      - dia_semana
+      - horario_fim
+      - horario_inicio
+      - nome
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+- url: http://localhost:8000/api/v1
+  description: Desenvolvimento local

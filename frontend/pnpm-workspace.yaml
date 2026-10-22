@@ -1,0 +1,12 @@
+# Criado pelo pnpm 12. Configuracoes de build do workspace.
+# Documentacao: https://pnpm.io/settings
+
+# esbuild (dependencia do Vite) precisa rodar o postinstall para baixar o binario
+# nativo da plataforma. Sem isto, `pnpm install` em uma maquina limpa instala o
+# pacote mas deixa o binario ausente e o `vite build` falha com
+# "You installed esbuild for another platform".
+allowBuilds:
+  esbuild: true
+
+# Ao adicionar um pacote com build script, revise antes de aprovar:
+#   pnpm approve-builds

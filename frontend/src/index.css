@@ -1,1 +1,171 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
+/* =========================================================================
+   TOKENS DE MARCA — ONG do Povo
+   Hex exatos do manual de identidade visual (pasta refs/).
+   Trocar um valor aqui reflete em toda a landing page.
+   ========================================================================= */
+@theme {
+  /* --- Cores da marca --- */
+  --color-verde: #00a651;
+  --color-verde-escuro: #083d2e;
+  --color-grafite: #1f2937;
+  --color-amarelo: #ffc107;
+  --color-laranja: #ff6b00;
+  --color-vermelho: #e53935;
+  --color-roxo: #6a3ec8;
+  --color-azul: #2563eb;
+
+  /* --- Tons derivados (não estão no manual, builtados a partir do verde) ---
+     O manual não define os tons de fundo, então derivamos do Verde Principal
+     mantendo o mesmo matiz para a página não parecer de duas marcas. */
+  --color-mist-50: #f4fbf6;
+  --color-mist-100: #e8f6ec;
+  --color-mist-200: #d1ecda;
+  --color-mist-300: #aadcc0;
+  --color-verde-900: #05281d;
+
+  /* --- Tipografia: Montserrat, conforme o manual --- */
+  --font-sans:
+    'Montserrat', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* --- Animações declarativas (viram utilitários animate-*) --- */
+  --animate-sunburst: sunburst 60s linear infinite;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-marquee: marquee 32s linear infinite;
+
+  /* --- Transições suaves para hovers de card/botão --- */
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* =========================================================================
+   KEYFRAMES
+   ========================================================================= */
+
+/* Rotação lenta do padrão de raios (o "movimento" do logo). */
+@keyframes sunburst {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Flutuação suave das fotos do hero. */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* =========================================================================
+   BASE
+   ========================================================================= */
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* Compensa o header fixo ao pular para uma âncora (#programas etc). */
+    scroll-padding-top: 5rem;
+    /* Desliga o "scroll anchoring": sem isso, ao trocar de aba em Programas
+       (quando os cards antigos são desmontados) o navegador perde a âncora e
+       recalcula a rolagem, empurrando a página para cima. Como o layout da
+       landing é estável (imagens com proporção fixa), desligar é seguro. */
+    overflow-anchor: none;
+  }
+
+  body {
+    background-color: var(--color-white);
+    color: var(--color-grafite);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Foco visível e consistente. Nunca remover sem substituto — é o que
+     permite navegar por teclado. */
+  :focus-visible {
+    outline: 3px solid var(--color-verde);
+    outline-offset: 2px;
+    border-radius: 0.25rem;
+  }
+
+  ::selection {
+    background-color: var(--color-verde);
+    color: var(--color-white);
+  }
+}
+
+/* =========================================================================
+   ANIMAÇÕES DE ENTRADA (usadas pelo <Reveal>)
+   O elemento parte de .opacity-0 e ganha a classe `is-visible` quando entra
+   na viewport. O delay inline (style={{ transitionDelay }}) cria o efeito
+   de cascata nos grids.
+   ========================================================================= */
+
+@layer utilities {
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition:
+      opacity 0.7s var(--ease-smooth),
+      transform 0.7s var(--ease-smooth);
+    will-change: opacity, transform;
+  }
+
+  .reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Variante vinda da esquerda (paraRV e colunas de texto/imagem). */
+  .reveal-x {
+    transform: translateX(-32px);
+  }
+
+  .reveal-x.is-visible {
+    transform: translateX(0);
+  }
+}
+
+/* =========================================================================
+   ACESSIBILIDADE — MOVIMENTO REDUZIDO
+   =========================================================================
+
+   Quem tem "reduzir movimento" ligado no sistema não deve ver nada se mover.
+   Desliga a animação de entrada, os loops e o scroll suave — e o conteúdo
+   continua 100% visível, porque `.reveal` volta a opacidade 1.
+   ========================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .reveal,
+  .reveal-x {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
