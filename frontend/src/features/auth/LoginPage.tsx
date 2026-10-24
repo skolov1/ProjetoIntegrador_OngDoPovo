@@ -11,7 +11,6 @@ import type { AxiosError } from 'axios'
 import { AlertCircle } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
-import { Section, SectionTitle, SectionLead } from '@/components/ui/Section'
 import { Eyebrow } from '@/components/ui/Section'
 import { ONG } from '@/features/home/data'
 import { api } from '@/lib/api'
@@ -46,20 +45,20 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen bg-mist-50 flex items-center justify-center p-4">
-      <Section className="w-full max-w-md">
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-sm sm:p-8">
         <a
           href="/"
           aria-label={`${ONG.nome} — voltar ao site`}
-          className="mb-8 flex flex-col items-center gap-3"
+          className="mb-5 flex flex-col items-center gap-2"
         >
           <picture>
             <source srcSet="/logo-ong-do-povo.webp" type="image/webp" />
             <img
               src="/logo-ong-do-povo.png"
               alt=""
-              width={88}
-              height={88}
-              className="size-22 object-contain"
+              width={72}
+              height={72}
+              className="size-18 object-contain"
             />
           </picture>
           <span className="text-2xl font-extrabold uppercase tracking-tight text-verde-escuro">
@@ -68,10 +67,14 @@ export function LoginPage() {
         </a>
 
         <Eyebrow>Acesso Restrito</Eyebrow>
-        <SectionTitle>Área Administrativa</SectionTitle>
-        <SectionLead>Faça login para acessar o painel de administração da ONG do Povo.</SectionLead>
+        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-verde-escuro">
+          Área Administrativa
+        </h1>
+        <p className="mt-2 text-sm leading-relaxed text-grafite/70">
+          Faça login para acessar o painel de administração da ONG do Povo.
+        </p>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6" noValidate>
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4" noValidate>
           {error && (
             <div className="flex items-center gap-2 rounded-xl border border-vermelho/30 bg-vermelho/5 p-3 text-sm text-vermelho" role="alert">
               <AlertCircle className="size-4 shrink-0" aria-hidden="true" />
@@ -126,7 +129,7 @@ export function LoginPage() {
             Apenas usuários autorizados. Contato via WhatsApp para suporte.
           </p>
         </form>
-      </Section>
+      </div>
     </div>
   )
 }
