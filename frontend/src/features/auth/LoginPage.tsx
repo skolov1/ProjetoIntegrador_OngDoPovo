@@ -13,6 +13,7 @@ import { AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Section, SectionTitle, SectionLead } from '@/components/ui/Section'
 import { Eyebrow } from '@/components/ui/Section'
+import { ONG } from '@/features/home/data'
 import { api } from '@/lib/api'
 
 import type { CustomTokenObtainPairRequest, LoginResponse } from '@/api/generated/model'
@@ -46,6 +47,26 @@ export function LoginPage() {
   return (
     <div className="min-h-screen bg-mist-50 flex items-center justify-center p-4">
       <Section className="w-full max-w-md">
+        <a
+          href="/"
+          aria-label={`${ONG.nome} — voltar ao site`}
+          className="mb-8 flex flex-col items-center gap-3"
+        >
+          <picture>
+            <source srcSet="/logo-ong-do-povo.webp" type="image/webp" />
+            <img
+              src="/logo-ong-do-povo.png"
+              alt=""
+              width={88}
+              height={88}
+              className="size-22 object-contain"
+            />
+          </picture>
+          <span className="text-2xl font-extrabold uppercase tracking-tight text-verde-escuro">
+            {ONG.nome}
+          </span>
+        </a>
+
         <Eyebrow>Acesso Restrito</Eyebrow>
         <SectionTitle>Área Administrativa</SectionTitle>
         <SectionLead>Faça login para acessar o painel de administração da ONG do Povo.</SectionLead>
