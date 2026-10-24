@@ -186,37 +186,50 @@ export function DashboardLayout() {
     });
   };
 
+  // Junta os erros de validação que a API devolve ({campo: ["msg"]}) em uma frase.
+  const mensagemDeErro = (erro: unknown) => {
+    const data = (erro as { response?: { data?: unknown } })?.response?.data;
+    if (data && typeof data === "object") {
+      return Object.entries(data as Record<string, unknown>)
+        .map(([campo, msg]) => `${campo}: ${Array.isArray(msg) ? msg.join(" ") : String(msg)}`)
+        .join("\n");
+    }
+    return "Não foi possível salvar. Tente novamente.";
+  };
+
+  const aoSalvar = {
+    onSuccess: () => closeForm(),
+    onError: (erro: unknown) => alert(mensagemDeErro(erro)),
+  };
+
   const handleSubmitTurma = (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = { ...formTurma };
+    const payload = { ...formTurma, data_fim: formTurma.data_fim || null };
     if (editingItem && "dia_semana" in editingItem) {
-      updateTurma.mutate({ id: editingItem.id, data: payload });
+      updateTurma.mutate({ id: editingItem.id, data: payload }, aoSalvar);
     } else {
-      createTurma.mutate(payload);
+      createTurma.mutate(payload, aoSalvar);
     }
-    closeForm();
   };
 
   const handleSubmitAluno = (e: React.FormEvent) => {
     e.preventDefault();
     const payload = { ...formAluno };
     if (editingItem && "mensalidade" in editingItem) {
-      updateAluno.mutate({ id: editingItem.id, data: payload });
+      updateAluno.mutate({ id: editingItem.id, data: payload }, aoSalvar);
     } else {
-      createAluno.mutate(payload);
+      createAluno.mutate(payload, aoSalvar);
     }
-    closeForm();
   };
 
   const handleSubmitProfessor = (e: React.FormEvent) => {
     e.preventDefault();
     const payload = { ...formProfessor };
     if (editingItem && "turmas" in editingItem) {
-      updateProfessor.mutate({ id: editingItem.id, data: payload });
+      updateProfessor.mutate({ id: editingItem.id, data: payload }, aoSalvar);
     } else {
-      createProfessor.mutate(payload);
+      createProfessor.mutate(payload, aoSalvar);
     }
-    closeForm();
   };
 
   const handleEdit = (item: any) => {
