@@ -1,3 +1,5 @@
+import { topicoEmNegrito } from '@/lib/whatsapp'
+
 /**
  * Regras do formulário de inscrição.
  *
@@ -129,7 +131,11 @@ export function montarMensagemInscricao(dados: DadosInscricao, hoje: Date = new 
   const idade = calcularIdade(dados.nascimento, hoje)
   const total = dados.modalidades.length + dados.cursos.length
 
+  // Só cursos = lista de espera; com modalidade, é matrícula.
+  const topico = dados.modalidades.length > 0 ? 'Matrícula' : 'Lista de espera'
+
   const linhas = [
+    topicoEmNegrito(topico),
     'Olá, ONG do Povo! Quero fazer uma inscrição.',
     '',
     `Aluno: ${nomeCompleto(dados.nome, dados.sobrenome)}`,

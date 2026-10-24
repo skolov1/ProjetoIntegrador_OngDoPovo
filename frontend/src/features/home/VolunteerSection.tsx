@@ -8,7 +8,12 @@ import { LinkBotao } from '@/components/ui/Button'
 import { Eyebrow, Section, SectionLead, SectionTitle } from '@/components/ui/Section'
 import { Reveal } from '@/components/ui/Reveal'
 import { FRONTEIRAS_VOLUNTARIADO } from '@/features/home/data'
-import { linkWhatsapp } from '@/lib/whatsapp'
+import { linkWhatsapp, topicoEmNegrito } from '@/lib/whatsapp'
+
+const MENSAGEM_VOLUNTARIO = [
+  topicoEmNegrito('Voluntariado'),
+  'Olá! Quero ser voluntário(a) na ONG do Povo. Podem me explicar como funciona?',
+].join('\n')
 
 export function VolunteerSection() {
   return (
@@ -55,7 +60,7 @@ export function VolunteerSection() {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <LinkBotao href="#contato">Quero ser voluntário</LinkBotao>
               <LinkBotao
-                href={linkWhatsapp('Olá! Quero ser voluntário(a) na ONG do Povo. Podem me explicar como funciona?')}
+                href={linkWhatsapp(MENSAGEM_VOLUNTARIO)}
                 variante="contorno-claro"
                 seta={false}
                 externa

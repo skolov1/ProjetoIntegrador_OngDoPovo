@@ -11,7 +11,7 @@ import { InstagramIcon } from '@/components/ui/BrandIcons'
 import { Eyebrow, Section, SectionLead, SectionTitle } from '@/components/ui/Section'
 import { Reveal } from '@/components/ui/Reveal'
 import { ONG } from '@/features/home/data'
-import { linkWhatsapp } from '@/lib/whatsapp'
+import { linkWhatsapp, topicoEmNegrito } from '@/lib/whatsapp'
 
 const ASSUNTOS = ['Dúvida geral', 'Voluntariado', 'Doações', 'Parceria', 'Imprensa'] as const
 
@@ -34,9 +34,9 @@ export function ContactSection() {
     e.preventDefault()
     const dados = new FormData(e.currentTarget)
     const mensagem = [
+      topicoEmNegrito(String(dados.get('assunto'))),
       'Olá, ONG do Povo!',
       `Meu nome é ${dados.get('nome')}.`,
-      `Assunto: ${dados.get('assunto')}`,
       '',
       String(dados.get('mensagem')),
     ].join('\n')

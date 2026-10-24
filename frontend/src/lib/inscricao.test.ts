@@ -102,6 +102,7 @@ describe('validarInscricao', () => {
 describe('montarMensagemInscricao', () => {
   it('adulto com modalidades', () => {
     const msg = montarMensagemInscricao({ ...base, modalidades: ['Muay Thai', 'Jazz'] }, HOJE)
+    expect(msg.startsWith('*MATRÍCULA*')).toBe(true)
     expect(msg).toContain('Aluno: Ana Souza')
     expect(msg).toContain('Data de nascimento: 10/05/1990 (36 anos)')
     expect(msg).toContain('Modalidades: Muay Thai, Jazz')
@@ -134,6 +135,8 @@ describe('montarMensagemInscricao', () => {
       HOJE,
     )
     expect(msg).toContain('Telefone para contato: (13) 98806-6437')
+    // só cursos: o tópico muda para lista de espera
+    expect(msg.startsWith('*LISTA DE ESPERA*')).toBe(true)
   })
 
   it('quebra de linha e acentos sobrevivem à codificação do link', () => {
