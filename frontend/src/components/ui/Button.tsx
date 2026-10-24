@@ -33,15 +33,12 @@ interface BotaoProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
   variante?: Variante;
   tamanho?: Tamanho;
-  /** Setas e ícones: ficam à direita e andam no hover. */
-  seta?: boolean;
 }
 
 export function Button({
   children,
   variante = "primaria",
   tamanho = "lg",
-  seta = true,
   className = "",
   ...props
 }: BotaoProps) {
