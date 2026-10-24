@@ -7,7 +7,6 @@
  */
 import type {
   Aluno,
-  AlunoPublicCreateRequest,
   AlunoRequest,
   AlunosListParams,
   PaginatedAlunoListList,
@@ -93,24 +92,9 @@ export const alunosDestroy = (
     },
       );
     }
-  /**
- * Público. Cria o registro do aluno com status ativo=True. A equipe valida documentos depois.
- * @summary Pré-cadastro de aluno (público)
- */
-export const alunosPreCadastroCreate = (
-    alunoPublicCreateRequest: AlunoPublicCreateRequest,
- ) => {
-      return api<Aluno>(
-      {url: `/alunos/pre-cadastro/`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: alunoPublicCreateRequest
-    },
-      );
-    }
   export type AlunosListResult = NonNullable<Awaited<ReturnType<typeof alunosList>>>
 export type AlunosCreateResult = NonNullable<Awaited<ReturnType<typeof alunosCreate>>>
 export type AlunosRetrieveResult = NonNullable<Awaited<ReturnType<typeof alunosRetrieve>>>
 export type AlunosUpdateResult = NonNullable<Awaited<ReturnType<typeof alunosUpdate>>>
 export type AlunosPartialUpdateResult = NonNullable<Awaited<ReturnType<typeof alunosPartialUpdate>>>
 export type AlunosDestroyResult = NonNullable<Awaited<ReturnType<typeof alunosDestroy>>>
-export type AlunosPreCadastroCreateResult = NonNullable<Awaited<ReturnType<typeof alunosPreCadastroCreate>>>

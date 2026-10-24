@@ -19,7 +19,6 @@ from rest_framework.views import APIView
 from .models import Aluno, Doacao, Presenca, Professor, Turma
 from .serializers import (
     AlunoListSerializer,
-    AlunoPublicCreateSerializer,
     AlunoSerializer,
     DoacaoAdminSerializer,
     DoacaoCriadaSerializer,
@@ -270,42 +269,6 @@ class TurmaViewSet(
 # =============================================================================
 # Aluno
 # =============================================================================
-
-
-class AlunoPublicCreateView(CreateAPIView):
-    """POST /api/v1/alunos/pre-cadastro/
-
-    Formulário público da landing page. Qualquer pessoa registra interesse;
-    a equipe valida e ativa depois.
-    """
-
-    queryset = Aluno.objects.all()
-    serializer_class = AlunoPublicCreateSerializer
-    permission_classes = [AllowAny]
-    authentication_classes = []
-    throttle_scope = "aluno_pre_cadastro"
-
-    @extend_schema(
-        summary="Pré-cadastro de aluno (público)",
-        description=(
-            "Público. Cria o registro do aluno com status ativo=True. "
-            "A equipe valida documentos depois."
-        ),
-        tags=["alunos"],
-        responses={
-            201: AlunoSerializer,
-            400: OpenApiResponse(description="Dados inválidos"),
-            429: OpenApiResponse(description="Limite de envios excedido"),
-        },
-    )
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        aluno = serializer.save()
-        return Response(
-            AlunoSerializer(aluno).data,
-            status=status.HTTP_201_CREATED,
-        )
 
 
 class AlunoViewSet(

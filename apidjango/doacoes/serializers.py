@@ -217,35 +217,6 @@ class AlunoListSerializer(serializers.ModelSerializer):
         ]
 
 
-class AlunoPublicCreateSerializer(serializers.ModelSerializer):
-    """Entrada do formulário público de pré-cadastro (landing page)."""
-
-    class Meta:
-        model = Aluno
-        fields = [
-            "nome",
-            "data_nascimento",
-            "sexo",
-            "rg",
-            "cpf",
-            "comprovante_residencia",
-            "titulo_eleitor",
-            "rg_responsavel",
-            "certificado_nascimento",
-            "atestado_medico",
-            "mensalidade",
-            "turma",
-        ]
-        extra_kwargs = {
-            "comprovante_residencia": {"required": False},
-            "titulo_eleitor": {"required": False},
-            "rg_responsavel": {"required": False},
-            "certificado_nascimento": {"required": False},
-            "atestado_medico": {"required": False},
-            "turma": {"required": False},
-        }
-
-
 # =============================================================================
 # Presença
 # =============================================================================

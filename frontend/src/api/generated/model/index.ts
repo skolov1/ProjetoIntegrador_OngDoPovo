@@ -9,7 +9,6 @@
 export * from './accessToken';
 export * from './aluno';
 export * from './alunoList';
-export * from './alunoPublicCreateRequest';
 export * from './alunoRequest';
 export * from './alunosListParams';
 export * from './alunosListSexo';

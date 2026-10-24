@@ -13,7 +13,7 @@ import pytest
 from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 
-from .models import Doacao
+from .models import Aluno, Doacao
 
 pytestmark = pytest.mark.django_db
 
@@ -369,3 +369,31 @@ class TestOrdenacao:
         response = cliente.get(URL_PUBLICO)
 
         assert response.data[0]["valor"] == "2.00"
+
+
+class TestPreCadastroPublicoRemovido:
+    """A inscrição virou mensagem de WhatsApp: ninguém cria aluno sem ser staff."""
+
+    ALUNO = {
+        "nome": "Ana Souza",
+        "data_nascimento": "2015-05-10",
+        "sexo": "F",
+        "rg": "123456789",
+        "cpf": "12345678900",
+        "mensalidade": "0.00",
+    }
+
+    @pytest.mark.parametrize("url", ["/api/v1/alunos/pre-cadastro/", "/api/v1/alunos/"])
+    def test_anonimo_nao_cria_aluno(self, cliente, url):
+        response = cliente.post(url, self.ALUNO, format="json")
+
+        assert response.status_code in (401, 403, 404, 405)
+        assert Aluno.objects.count() == 0
+
+    def test_usuario_sem_staff_nao_cria_aluno(self, cliente, nao_admin):
+        autenticar(cliente, nao_admin)
+
+        response = cliente.post("/api/v1/alunos/", self.ALUNO, format="json")
+
+        assert response.status_code == 403
+        assert Aluno.objects.count() == 0

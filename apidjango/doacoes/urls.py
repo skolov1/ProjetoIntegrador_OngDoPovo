@@ -24,8 +24,6 @@ urlpatterns = [
     path("doacoes/", views.DoacaoPublicCreateView.as_view(), name="doacao-criar"),
     path("doacoes/publico/", views.DoacaoPublicListView.as_view(), name="doacao-publico"),
     path("doacoes/resumo/", views.DoacaoResumoView.as_view(), name="doacao-resumo"),
-    # Aluno público (pré-cadastro da landing)
-    path("alunos/pre-cadastro/", views.AlunoPublicCreateView.as_view(), name="aluno-pre-cadastro"),
     # Router (admin)
     path("", include(router.urls)),
 ]

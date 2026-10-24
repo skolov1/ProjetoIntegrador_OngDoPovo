@@ -140,8 +140,6 @@ REST_FRAMEWORK = {
         "auth": os.getenv("DJANGO_AUTH_THROTTLE", "10/minute"),
         # Sem limite, alguem pode spammar o formulario de doacao.
         "doacao": os.getenv("DJANGO_DOACAO_THROTTLE", "20/hour"),
-        # Pre-cadastro de aluno na landing page.
-        "aluno_pre_cadastro": os.getenv("DJANGO_ALUNO_PRE_CADASTRO_THROTTLE", "30/hour"),
     },
 }
 
