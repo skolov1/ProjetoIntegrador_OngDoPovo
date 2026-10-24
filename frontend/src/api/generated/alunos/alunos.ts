@@ -7,7 +7,11 @@
  */
 import type {
   Aluno,
-  AlunoPublicCreateRequest
+  AlunoPublicCreateRequest,
+  AlunoRequest,
+  AlunosListParams,
+  PaginatedAlunoListList,
+  PatchedAlunoRequest
 } from '../model';
 
 import { api } from '../../../lib/api';
@@ -15,17 +19,98 @@ import { api } from '../../../lib/api';
 
 
   /**
+ * CRUD de alunos (admin).
+ */
+export const alunosList = (
+    params?: AlunosListParams,
+ ) => {
+      return api<PaginatedAlunoListList>(
+      {url: `/alunos/`, method: 'GET',
+        params
+    },
+      );
+    }
+  /**
+ * CRUD de alunos (admin).
+ */
+export const alunosCreate = (
+    alunoRequest: AlunoRequest,
+ ) => {
+      return api<Aluno>(
+      {url: `/alunos/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: alunoRequest
+    },
+      );
+    }
+  /**
+ * CRUD de alunos (admin).
+ */
+export const alunosRetrieve = (
+    id: number,
+ ) => {
+      return api<Aluno>(
+      {url: `/alunos/${id}/`, method: 'GET'
+    },
+      );
+    }
+  /**
+ * CRUD de alunos (admin).
+ */
+export const alunosUpdate = (
+    id: number,
+    alunoRequest: AlunoRequest,
+ ) => {
+      return api<Aluno>(
+      {url: `/alunos/${id}/`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: alunoRequest
+    },
+      );
+    }
+  /**
+ * CRUD de alunos (admin).
+ */
+export const alunosPartialUpdate = (
+    id: number,
+    patchedAlunoRequest?: PatchedAlunoRequest,
+ ) => {
+      return api<Aluno>(
+      {url: `/alunos/${id}/`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: patchedAlunoRequest
+    },
+      );
+    }
+  /**
+ * CRUD de alunos (admin).
+ */
+export const alunosDestroy = (
+    id: number,
+ ) => {
+      return api<void>(
+      {url: `/alunos/${id}/`, method: 'DELETE'
+    },
+      );
+    }
+  /**
  * Público. Cria o registro do aluno com status ativo=True. A equipe valida documentos depois.
  * @summary Pré-cadastro de aluno (público)
  */
-export const doacoesAlunosPreCadastroCreate = (
+export const alunosPreCadastroCreate = (
     alunoPublicCreateRequest: AlunoPublicCreateRequest,
  ) => {
       return api<Aluno>(
-      {url: `/doacoes/alunos/pre-cadastro/`, method: 'POST',
+      {url: `/alunos/pre-cadastro/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: alunoPublicCreateRequest
     },
       );
     }
-  export type DoacoesAlunosPreCadastroCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesAlunosPreCadastroCreate>>>
+  export type AlunosListResult = NonNullable<Awaited<ReturnType<typeof alunosList>>>
+export type AlunosCreateResult = NonNullable<Awaited<ReturnType<typeof alunosCreate>>>
+export type AlunosRetrieveResult = NonNullable<Awaited<ReturnType<typeof alunosRetrieve>>>
+export type AlunosUpdateResult = NonNullable<Awaited<ReturnType<typeof alunosUpdate>>>
+export type AlunosPartialUpdateResult = NonNullable<Awaited<ReturnType<typeof alunosPartialUpdate>>>
+export type AlunosDestroyResult = NonNullable<Awaited<ReturnType<typeof alunosDestroy>>>
+export type AlunosPreCadastroCreateResult = NonNullable<Awaited<ReturnType<typeof alunosPreCadastroCreate>>>

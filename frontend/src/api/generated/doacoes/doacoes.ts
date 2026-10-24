@@ -6,39 +6,17 @@
  * OpenAPI spec version: 1.0.0
  */
 import type {
-  Aluno,
-  AlunoRequest,
   DoacaoAdmin,
   DoacaoAdminRequest,
   DoacaoCriada,
   DoacaoPublic,
   DoacaoPublicCreateRequest,
-  DoacoesAlunosListParams,
-  DoacoesDoacoesAdminCancelarCreateParams,
-  DoacoesDoacoesAdminConfirmarCreateParams,
-  DoacoesDoacoesAdminListParams,
-  DoacoesDoacoesPublicoListParams,
-  DoacoesPresencasListParams,
-  DoacoesProfessoresListParams,
-  DoacoesTurmasListParams,
-  PaginatedAlunoListList,
+  DoacoesAdminCancelarCreateParams,
+  DoacoesAdminConfirmarCreateParams,
+  DoacoesAdminListParams,
+  DoacoesPublicoListParams,
   PaginatedDoacaoAdminList,
-  PaginatedPresencaList,
-  PaginatedProfessorList,
-  PaginatedTurmaListList,
-  PatchedAlunoRequest,
-  PatchedDoacaoAdminRequest,
-  PatchedPresencaRequest,
-  PatchedProfessorRequest,
-  PatchedTurmaRequest,
-  Presenca,
-  PresencaCreate,
-  PresencaCreateRequest,
-  PresencaRequest,
-  Professor,
-  ProfessorRequest,
-  Turma,
-  TurmaRequest
+  PatchedDoacaoAdminRequest
 } from '../model';
 
 import { api } from '../../../lib/api';
@@ -46,89 +24,14 @@ import { api } from '../../../lib/api';
 
 
   /**
- * CRUD de alunos (admin).
- */
-export const doacoesAlunosList = (
-    params?: DoacoesAlunosListParams,
- ) => {
-      return api<PaginatedAlunoListList>(
-      {url: `/doacoes/alunos/`, method: 'GET',
-        params
-    },
-      );
-    }
-  /**
- * CRUD de alunos (admin).
- */
-export const doacoesAlunosCreate = (
-    alunoRequest: AlunoRequest,
- ) => {
-      return api<Aluno>(
-      {url: `/doacoes/alunos/`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: alunoRequest
-    },
-      );
-    }
-  /**
- * CRUD de alunos (admin).
- */
-export const doacoesAlunosRetrieve = (
-    id: number,
- ) => {
-      return api<Aluno>(
-      {url: `/doacoes/alunos/${id}/`, method: 'GET'
-    },
-      );
-    }
-  /**
- * CRUD de alunos (admin).
- */
-export const doacoesAlunosUpdate = (
-    id: number,
-    alunoRequest: AlunoRequest,
- ) => {
-      return api<Aluno>(
-      {url: `/doacoes/alunos/${id}/`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: alunoRequest
-    },
-      );
-    }
-  /**
- * CRUD de alunos (admin).
- */
-export const doacoesAlunosPartialUpdate = (
-    id: number,
-    patchedAlunoRequest?: PatchedAlunoRequest,
- ) => {
-      return api<Aluno>(
-      {url: `/doacoes/alunos/${id}/`, method: 'PATCH',
-      headers: {'Content-Type': 'application/json', },
-      data: patchedAlunoRequest
-    },
-      );
-    }
-  /**
- * CRUD de alunos (admin).
- */
-export const doacoesAlunosDestroy = (
-    id: number,
- ) => {
-      return api<void>(
-      {url: `/doacoes/alunos/${id}/`, method: 'DELETE'
-    },
-      );
-    }
-  /**
  * Público. Cria o registro sempre como PENDENTE — a equipe confirma no extrato. O campo `status` não é aceito no corpo da requisição.
  * @summary Registra uma doação
  */
-export const doacoesDoacoesCreate = (
+export const doacoesCreate = (
     doacaoPublicCreateRequest: DoacaoPublicCreateRequest,
  ) => {
       return api<DoacaoCriada>(
-      {url: `/doacoes/doacoes/`, method: 'POST',
+      {url: `/doacoes/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: doacaoPublicCreateRequest
     },
@@ -140,11 +43,11 @@ export const doacoesDoacoesCreate = (
  * Fica atrás de `IsAdminUser`. É o mesmo conjunto de dados que o Django admin
  * usa — aqui para quando o painel em React entrar na Fase 3.
  */
-export const doacoesDoacoesAdminList = (
-    params?: DoacoesDoacoesAdminListParams,
+export const doacoesAdminList = (
+    params?: DoacoesAdminListParams,
  ) => {
       return api<PaginatedDoacaoAdminList>(
-      {url: `/doacoes/doacoes/admin/`, method: 'GET',
+      {url: `/doacoes/admin/`, method: 'GET',
         params
     },
       );
@@ -155,11 +58,11 @@ export const doacoesDoacoesAdminList = (
  * Fica atrás de `IsAdminUser`. É o mesmo conjunto de dados que o Django admin
  * usa — aqui para quando o painel em React entrar na Fase 3.
  */
-export const doacoesDoacoesAdminCreate = (
+export const doacoesAdminCreate = (
     doacaoAdminRequest: DoacaoAdminRequest,
  ) => {
       return api<DoacaoAdmin>(
-      {url: `/doacoes/doacoes/admin/`, method: 'POST',
+      {url: `/doacoes/admin/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: doacaoAdminRequest
     },
@@ -171,11 +74,11 @@ export const doacoesDoacoesAdminCreate = (
  * Fica atrás de `IsAdminUser`. É o mesmo conjunto de dados que o Django admin
  * usa — aqui para quando o painel em React entrar na Fase 3.
  */
-export const doacoesDoacoesAdminRetrieve = (
+export const doacoesAdminRetrieve = (
     id: number,
  ) => {
       return api<DoacaoAdmin>(
-      {url: `/doacoes/doacoes/admin/${id}/`, method: 'GET'
+      {url: `/doacoes/admin/${id}/`, method: 'GET'
     },
       );
     }
@@ -185,12 +88,12 @@ export const doacoesDoacoesAdminRetrieve = (
  * Fica atrás de `IsAdminUser`. É o mesmo conjunto de dados que o Django admin
  * usa — aqui para quando o painel em React entrar na Fase 3.
  */
-export const doacoesDoacoesAdminUpdate = (
+export const doacoesAdminUpdate = (
     id: number,
     doacaoAdminRequest: DoacaoAdminRequest,
  ) => {
       return api<DoacaoAdmin>(
-      {url: `/doacoes/doacoes/admin/${id}/`, method: 'PUT',
+      {url: `/doacoes/admin/${id}/`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: doacaoAdminRequest
     },
@@ -202,12 +105,12 @@ export const doacoesDoacoesAdminUpdate = (
  * Fica atrás de `IsAdminUser`. É o mesmo conjunto de dados que o Django admin
  * usa — aqui para quando o painel em React entrar na Fase 3.
  */
-export const doacoesDoacoesAdminPartialUpdate = (
+export const doacoesAdminPartialUpdate = (
     id: number,
     patchedDoacaoAdminRequest?: PatchedDoacaoAdminRequest,
  ) => {
       return api<DoacaoAdmin>(
-      {url: `/doacoes/doacoes/admin/${id}/`, method: 'PATCH',
+      {url: `/doacoes/admin/${id}/`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: patchedDoacaoAdminRequest
     },
@@ -219,23 +122,23 @@ export const doacoesDoacoesAdminPartialUpdate = (
  * Fica atrás de `IsAdminUser`. É o mesmo conjunto de dados que o Django admin
  * usa — aqui para quando o painel em React entrar na Fase 3.
  */
-export const doacoesDoacoesAdminDestroy = (
+export const doacoesAdminDestroy = (
     id: number,
  ) => {
       return api<void>(
-      {url: `/doacoes/doacoes/admin/${id}/`, method: 'DELETE'
+      {url: `/doacoes/admin/${id}/`, method: 'DELETE'
     },
       );
     }
   /**
  * Ações em massa pelo painel: `/doacoes/admin/12/confirmada/`.
  */
-export const doacoesDoacoesAdminConfirmadaCreate = (
+export const doacoesAdminConfirmadaCreate = (
     id: number,
     doacaoAdminRequest: DoacaoAdminRequest,
  ) => {
       return api<DoacaoAdmin>(
-      {url: `/doacoes/doacoes/admin/${id}/confirmada/`, method: 'POST',
+      {url: `/doacoes/admin/${id}/confirmada/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: doacaoAdminRequest
     },
@@ -248,11 +151,11 @@ export const doacoesDoacoesAdminConfirmadaCreate = (
  * usa — aqui para quando o painel em React entrar na Fase 3.
  * @summary Cancela doações em lote
  */
-export const doacoesDoacoesAdminCancelarCreate = (
-    params?: DoacoesDoacoesAdminCancelarCreateParams,
+export const doacoesAdminCancelarCreate = (
+    params?: DoacoesAdminCancelarCreateParams,
  ) => {
       return api<PaginatedDoacaoAdminList>(
-      {url: `/doacoes/doacoes/admin/cancelar/`, method: 'POST',
+      {url: `/doacoes/admin/cancelar/`, method: 'POST',
         params
     },
       );
@@ -261,11 +164,11 @@ export const doacoesDoacoesAdminCancelarCreate = (
  * Marca as doações indicadas como CONFIRMADA e carimba a data.
  * @summary Confirma doações em lote
  */
-export const doacoesDoacoesAdminConfirmarCreate = (
-    params?: DoacoesDoacoesAdminConfirmarCreateParams,
+export const doacoesAdminConfirmarCreate = (
+    params?: DoacoesAdminConfirmarCreateParams,
  ) => {
       return api<PaginatedDoacaoAdminList>(
-      {url: `/doacoes/doacoes/admin/confirmar/`, method: 'POST',
+      {url: `/doacoes/admin/confirmar/`, method: 'POST',
         params
     },
       );
@@ -275,11 +178,11 @@ export const doacoesDoacoesAdminConfirmarCreate = (
  *
  * Mural de doações. Só CONFIRMADAS e sem nenhum dado pessoal.
  */
-export const doacoesDoacoesPublicoList = (
-    params?: DoacoesDoacoesPublicoListParams,
+export const doacoesPublicoList = (
+    params?: DoacoesPublicoListParams,
  ) => {
       return api<DoacaoPublic[]>(
-      {url: `/doacoes/doacoes/publico/`, method: 'GET',
+      {url: `/doacoes/publico/`, method: 'GET',
         params
     },
       );
@@ -288,272 +191,23 @@ export const doacoesDoacoesPublicoList = (
  * Público. Soma das doações confirmadas, geral e por destinação. Não inclui registros pendentes ou cancelados.
  * @summary Total arrecadado
  */
-export const doacoesDoacoesResumoRetrieve = (
+export const doacoesResumoRetrieve = (
 
  ) => {
       return api<void>(
-      {url: `/doacoes/doacoes/resumo/`, method: 'GET'
+      {url: `/doacoes/resumo/`, method: 'GET'
     },
       );
     }
-  /**
- * CRUD de presenças (recepcionista/admin).
- */
-export const doacoesPresencasList = (
-    params?: DoacoesPresencasListParams,
- ) => {
-      return api<PaginatedPresencaList>(
-      {url: `/doacoes/presencas/`, method: 'GET',
-        params
-    },
-      );
-    }
-  /**
- * CRUD de presenças (recepcionista/admin).
- */
-export const doacoesPresencasCreate = (
-    presencaCreateRequest: PresencaCreateRequest,
- ) => {
-      return api<PresencaCreate>(
-      {url: `/doacoes/presencas/`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: presencaCreateRequest
-    },
-      );
-    }
-  /**
- * CRUD de presenças (recepcionista/admin).
- */
-export const doacoesPresencasRetrieve = (
-    id: number,
- ) => {
-      return api<Presenca>(
-      {url: `/doacoes/presencas/${id}/`, method: 'GET'
-    },
-      );
-    }
-  /**
- * CRUD de presenças (recepcionista/admin).
- */
-export const doacoesPresencasUpdate = (
-    id: number,
-    presencaRequest: PresencaRequest,
- ) => {
-      return api<Presenca>(
-      {url: `/doacoes/presencas/${id}/`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: presencaRequest
-    },
-      );
-    }
-  /**
- * CRUD de presenças (recepcionista/admin).
- */
-export const doacoesPresencasPartialUpdate = (
-    id: number,
-    patchedPresencaRequest?: PatchedPresencaRequest,
- ) => {
-      return api<Presenca>(
-      {url: `/doacoes/presencas/${id}/`, method: 'PATCH',
-      headers: {'Content-Type': 'application/json', },
-      data: patchedPresencaRequest
-    },
-      );
-    }
-  /**
- * CRUD de presenças (recepcionista/admin).
- */
-export const doacoesPresencasDestroy = (
-    id: number,
- ) => {
-      return api<void>(
-      {url: `/doacoes/presencas/${id}/`, method: 'DELETE'
-    },
-      );
-    }
-  /**
- * CRUD de professores (admin).
- */
-export const doacoesProfessoresList = (
-    params?: DoacoesProfessoresListParams,
- ) => {
-      return api<PaginatedProfessorList>(
-      {url: `/doacoes/professores/`, method: 'GET',
-        params
-    },
-      );
-    }
-  /**
- * CRUD de professores (admin).
- */
-export const doacoesProfessoresCreate = (
-    professorRequest: ProfessorRequest,
- ) => {
-      return api<Professor>(
-      {url: `/doacoes/professores/`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: professorRequest
-    },
-      );
-    }
-  /**
- * CRUD de professores (admin).
- */
-export const doacoesProfessoresRetrieve = (
-    id: number,
- ) => {
-      return api<Professor>(
-      {url: `/doacoes/professores/${id}/`, method: 'GET'
-    },
-      );
-    }
-  /**
- * CRUD de professores (admin).
- */
-export const doacoesProfessoresUpdate = (
-    id: number,
-    professorRequest: ProfessorRequest,
- ) => {
-      return api<Professor>(
-      {url: `/doacoes/professores/${id}/`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: professorRequest
-    },
-      );
-    }
-  /**
- * CRUD de professores (admin).
- */
-export const doacoesProfessoresPartialUpdate = (
-    id: number,
-    patchedProfessorRequest?: PatchedProfessorRequest,
- ) => {
-      return api<Professor>(
-      {url: `/doacoes/professores/${id}/`, method: 'PATCH',
-      headers: {'Content-Type': 'application/json', },
-      data: patchedProfessorRequest
-    },
-      );
-    }
-  /**
- * CRUD de professores (admin).
- */
-export const doacoesProfessoresDestroy = (
-    id: number,
- ) => {
-      return api<void>(
-      {url: `/doacoes/professores/${id}/`, method: 'DELETE'
-    },
-      );
-    }
-  /**
- * CRUD de turmas (admin).
- */
-export const doacoesTurmasList = (
-    params?: DoacoesTurmasListParams,
- ) => {
-      return api<PaginatedTurmaListList>(
-      {url: `/doacoes/turmas/`, method: 'GET',
-        params
-    },
-      );
-    }
-  /**
- * CRUD de turmas (admin).
- */
-export const doacoesTurmasCreate = (
-    turmaRequest: TurmaRequest,
- ) => {
-      return api<Turma>(
-      {url: `/doacoes/turmas/`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: turmaRequest
-    },
-      );
-    }
-  /**
- * CRUD de turmas (admin).
- */
-export const doacoesTurmasRetrieve = (
-    id: number,
- ) => {
-      return api<Turma>(
-      {url: `/doacoes/turmas/${id}/`, method: 'GET'
-    },
-      );
-    }
-  /**
- * CRUD de turmas (admin).
- */
-export const doacoesTurmasUpdate = (
-    id: number,
-    turmaRequest: TurmaRequest,
- ) => {
-      return api<Turma>(
-      {url: `/doacoes/turmas/${id}/`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: turmaRequest
-    },
-      );
-    }
-  /**
- * CRUD de turmas (admin).
- */
-export const doacoesTurmasPartialUpdate = (
-    id: number,
-    patchedTurmaRequest?: PatchedTurmaRequest,
- ) => {
-      return api<Turma>(
-      {url: `/doacoes/turmas/${id}/`, method: 'PATCH',
-      headers: {'Content-Type': 'application/json', },
-      data: patchedTurmaRequest
-    },
-      );
-    }
-  /**
- * CRUD de turmas (admin).
- */
-export const doacoesTurmasDestroy = (
-    id: number,
- ) => {
-      return api<void>(
-      {url: `/doacoes/turmas/${id}/`, method: 'DELETE'
-    },
-      );
-    }
-  export type DoacoesAlunosListResult = NonNullable<Awaited<ReturnType<typeof doacoesAlunosList>>>
-export type DoacoesAlunosCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesAlunosCreate>>>
-export type DoacoesAlunosRetrieveResult = NonNullable<Awaited<ReturnType<typeof doacoesAlunosRetrieve>>>
-export type DoacoesAlunosUpdateResult = NonNullable<Awaited<ReturnType<typeof doacoesAlunosUpdate>>>
-export type DoacoesAlunosPartialUpdateResult = NonNullable<Awaited<ReturnType<typeof doacoesAlunosPartialUpdate>>>
-export type DoacoesAlunosDestroyResult = NonNullable<Awaited<ReturnType<typeof doacoesAlunosDestroy>>>
-export type DoacoesDoacoesCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesDoacoesCreate>>>
-export type DoacoesDoacoesAdminListResult = NonNullable<Awaited<ReturnType<typeof doacoesDoacoesAdminList>>>
-export type DoacoesDoacoesAdminCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesDoacoesAdminCreate>>>
-export type DoacoesDoacoesAdminRetrieveResult = NonNullable<Awaited<ReturnType<typeof doacoesDoacoesAdminRetrieve>>>
-export type DoacoesDoacoesAdminUpdateResult = NonNullable<Awaited<ReturnType<typeof doacoesDoacoesAdminUpdate>>>
-export type DoacoesDoacoesAdminPartialUpdateResult = NonNullable<Awaited<ReturnType<typeof doacoesDoacoesAdminPartialUpdate>>>
-export type DoacoesDoacoesAdminDestroyResult = NonNullable<Awaited<ReturnType<typeof doacoesDoacoesAdminDestroy>>>
-export type DoacoesDoacoesAdminConfirmadaCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesDoacoesAdminConfirmadaCreate>>>
-export type DoacoesDoacoesAdminCancelarCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesDoacoesAdminCancelarCreate>>>
-export type DoacoesDoacoesAdminConfirmarCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesDoacoesAdminConfirmarCreate>>>
-export type DoacoesDoacoesPublicoListResult = NonNullable<Awaited<ReturnType<typeof doacoesDoacoesPublicoList>>>
-export type DoacoesDoacoesResumoRetrieveResult = NonNullable<Awaited<ReturnType<typeof doacoesDoacoesResumoRetrieve>>>
-export type DoacoesPresencasListResult = NonNullable<Awaited<ReturnType<typeof doacoesPresencasList>>>
-export type DoacoesPresencasCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesPresencasCreate>>>
-export type DoacoesPresencasRetrieveResult = NonNullable<Awaited<ReturnType<typeof doacoesPresencasRetrieve>>>
-export type DoacoesPresencasUpdateResult = NonNullable<Awaited<ReturnType<typeof doacoesPresencasUpdate>>>
-export type DoacoesPresencasPartialUpdateResult = NonNullable<Awaited<ReturnType<typeof doacoesPresencasPartialUpdate>>>
-export type DoacoesPresencasDestroyResult = NonNullable<Awaited<ReturnType<typeof doacoesPresencasDestroy>>>
-export type DoacoesProfessoresListResult = NonNullable<Awaited<ReturnType<typeof doacoesProfessoresList>>>
-export type DoacoesProfessoresCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesProfessoresCreate>>>
-export type DoacoesProfessoresRetrieveResult = NonNullable<Awaited<ReturnType<typeof doacoesProfessoresRetrieve>>>
-export type DoacoesProfessoresUpdateResult = NonNullable<Awaited<ReturnType<typeof doacoesProfessoresUpdate>>>
-export type DoacoesProfessoresPartialUpdateResult = NonNullable<Awaited<ReturnType<typeof doacoesProfessoresPartialUpdate>>>
-export type DoacoesProfessoresDestroyResult = NonNullable<Awaited<ReturnType<typeof doacoesProfessoresDestroy>>>
-export type DoacoesTurmasListResult = NonNullable<Awaited<ReturnType<typeof doacoesTurmasList>>>
-export type DoacoesTurmasCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesTurmasCreate>>>
-export type DoacoesTurmasRetrieveResult = NonNullable<Awaited<ReturnType<typeof doacoesTurmasRetrieve>>>
-export type DoacoesTurmasUpdateResult = NonNullable<Awaited<ReturnType<typeof doacoesTurmasUpdate>>>
-export type DoacoesTurmasPartialUpdateResult = NonNullable<Awaited<ReturnType<typeof doacoesTurmasPartialUpdate>>>
-export type DoacoesTurmasDestroyResult = NonNullable<Awaited<ReturnType<typeof doacoesTurmasDestroy>>>
+  export type DoacoesCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesCreate>>>
+export type DoacoesAdminListResult = NonNullable<Awaited<ReturnType<typeof doacoesAdminList>>>
+export type DoacoesAdminCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesAdminCreate>>>
+export type DoacoesAdminRetrieveResult = NonNullable<Awaited<ReturnType<typeof doacoesAdminRetrieve>>>
+export type DoacoesAdminUpdateResult = NonNullable<Awaited<ReturnType<typeof doacoesAdminUpdate>>>
+export type DoacoesAdminPartialUpdateResult = NonNullable<Awaited<ReturnType<typeof doacoesAdminPartialUpdate>>>
+export type DoacoesAdminDestroyResult = NonNullable<Awaited<ReturnType<typeof doacoesAdminDestroy>>>
+export type DoacoesAdminConfirmadaCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesAdminConfirmadaCreate>>>
+export type DoacoesAdminCancelarCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesAdminCancelarCreate>>>
+export type DoacoesAdminConfirmarCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesAdminConfirmarCreate>>>
+export type DoacoesPublicoListResult = NonNullable<Awaited<ReturnType<typeof doacoesPublicoList>>>
+export type DoacoesResumoRetrieveResult = NonNullable<Awaited<ReturnType<typeof doacoesResumoRetrieve>>>

@@ -169,8 +169,9 @@ SIMPLE_JWT = {
 # Nome do cookie httpOnly que carrega o refresh token.
 # Precisa bater com o nome usado nas views de auth (setup/views.py).
 JWT_REFRESH_COOKIE_NAME = "ong_refresh_token"
-# Path mais amplo para o cookie ser acessível em todas as páginas (incluindo dashboard)
-JWT_REFRESH_COOKIE_PATH = "/"
+# O cookie é httpOnly: o JS não o lê, só o browser o envia. Restringir o path
+# faz ele ir apenas para refresh/logout, não em toda requisição à API.
+JWT_REFRESH_COOKIE_PATH = "/api/v1/auth/"
 # Em dev (http://localhost) o cookie com Secure=True seria descartado pelo browser.
 JWT_REFRESH_COOKIE_SECURE = not DEBUG
 JWT_REFRESH_COOKIE_SAMESITE = "Lax"

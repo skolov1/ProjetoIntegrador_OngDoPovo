@@ -6,10 +6,16 @@
  * OpenAPI spec version: 1.0.0
  */
 import type {
-  DoacoesPresencasLoteCreateParams,
-  DoacoesPresencasPorTurmaDataListParams,
   PaginatedPresencaList,
-  PresencaLoteRequest
+  PatchedPresencaRequest,
+  Presenca,
+  PresencaCreate,
+  PresencaCreateRequest,
+  PresencaLoteRequest,
+  PresencaRequest,
+  PresencasListParams,
+  PresencasLoteCreateParams,
+  PresencasPorTurmaDataListParams
 } from '../model';
 
 import { api } from '../../../lib/api';
@@ -17,16 +23,91 @@ import { api } from '../../../lib/api';
 
 
   /**
+ * CRUD de presenças (recepcionista/admin).
+ */
+export const presencasList = (
+    params?: PresencasListParams,
+ ) => {
+      return api<PaginatedPresencaList>(
+      {url: `/presencas/`, method: 'GET',
+        params
+    },
+      );
+    }
+  /**
+ * CRUD de presenças (recepcionista/admin).
+ */
+export const presencasCreate = (
+    presencaCreateRequest: PresencaCreateRequest,
+ ) => {
+      return api<PresencaCreate>(
+      {url: `/presencas/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: presencaCreateRequest
+    },
+      );
+    }
+  /**
+ * CRUD de presenças (recepcionista/admin).
+ */
+export const presencasRetrieve = (
+    id: number,
+ ) => {
+      return api<Presenca>(
+      {url: `/presencas/${id}/`, method: 'GET'
+    },
+      );
+    }
+  /**
+ * CRUD de presenças (recepcionista/admin).
+ */
+export const presencasUpdate = (
+    id: number,
+    presencaRequest: PresencaRequest,
+ ) => {
+      return api<Presenca>(
+      {url: `/presencas/${id}/`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: presencaRequest
+    },
+      );
+    }
+  /**
+ * CRUD de presenças (recepcionista/admin).
+ */
+export const presencasPartialUpdate = (
+    id: number,
+    patchedPresencaRequest?: PatchedPresencaRequest,
+ ) => {
+      return api<Presenca>(
+      {url: `/presencas/${id}/`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: patchedPresencaRequest
+    },
+      );
+    }
+  /**
+ * CRUD de presenças (recepcionista/admin).
+ */
+export const presencasDestroy = (
+    id: number,
+ ) => {
+      return api<void>(
+      {url: `/presencas/${id}/`, method: 'DELETE'
+    },
+      );
+    }
+  /**
  * Recebe: { turma: 1, data: "2026-10-20", presencas: [{aluno_id: 1, situacao: "PRESENTE"}, ...] }
  * Cria/atualiza presenças em bulk.
  * @summary Marca presença em lote para uma turma/data
  */
-export const doacoesPresencasLoteCreate = (
+export const presencasLoteCreate = (
     presencaLoteRequest: PresencaLoteRequest,
-    params?: DoacoesPresencasLoteCreateParams,
+    params?: PresencasLoteCreateParams,
  ) => {
       return api<PaginatedPresencaList>(
-      {url: `/doacoes/presencas/lote/`, method: 'POST',
+      {url: `/presencas/lote/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: presencaLoteRequest,
         params
@@ -38,14 +119,20 @@ export const doacoesPresencasLoteCreate = (
  * Retorna todas as presenças da turma na data, incluindo alunos sem registro (como ausentes).
  * @summary Lista presenças de uma turma em uma data
  */
-export const doacoesPresencasPorTurmaDataList = (
-    params?: DoacoesPresencasPorTurmaDataListParams,
+export const presencasPorTurmaDataList = (
+    params?: PresencasPorTurmaDataListParams,
  ) => {
       return api<PaginatedPresencaList>(
-      {url: `/doacoes/presencas/por-turma-data/`, method: 'GET',
+      {url: `/presencas/por-turma-data/`, method: 'GET',
         params
     },
       );
     }
-  export type DoacoesPresencasLoteCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesPresencasLoteCreate>>>
-export type DoacoesPresencasPorTurmaDataListResult = NonNullable<Awaited<ReturnType<typeof doacoesPresencasPorTurmaDataList>>>
+  export type PresencasListResult = NonNullable<Awaited<ReturnType<typeof presencasList>>>
+export type PresencasCreateResult = NonNullable<Awaited<ReturnType<typeof presencasCreate>>>
+export type PresencasRetrieveResult = NonNullable<Awaited<ReturnType<typeof presencasRetrieve>>>
+export type PresencasUpdateResult = NonNullable<Awaited<ReturnType<typeof presencasUpdate>>>
+export type PresencasPartialUpdateResult = NonNullable<Awaited<ReturnType<typeof presencasPartialUpdate>>>
+export type PresencasDestroyResult = NonNullable<Awaited<ReturnType<typeof presencasDestroy>>>
+export type PresencasLoteCreateResult = NonNullable<Awaited<ReturnType<typeof presencasLoteCreate>>>
+export type PresencasPorTurmaDataListResult = NonNullable<Awaited<ReturnType<typeof presencasPorTurmaDataList>>>

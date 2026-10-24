@@ -16,7 +16,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { ArrowRight, Check, Copy, CreditCard, QrCode, TriangleAlert } from 'lucide-react'
 
-import { doacoesDoacoesCreate } from '@/api/generated/doacoes/doacoes'
+import { doacoesCreate } from '@/api/generated/doacoes/doacoes'
 import type { DoacaoPublicCreateRequest } from '@/api/generated/model/doacaoPublicCreateRequest'
 import { Eyebrow, Section, SectionLead, SectionTitle } from '@/components/ui/Section'
 import { Reveal } from '@/components/ui/Reveal'
@@ -141,7 +141,7 @@ export function DonationSection() {
   const formaPagamento = useWatch({ control, name: 'formaPagamento' })
 
   const mutacao = useMutation({
-    mutationFn: doacoesDoacoesCreate,
+    mutationFn: doacoesCreate,
     onSuccess: () => reset(),
   })
 

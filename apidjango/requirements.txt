@@ -22,3 +22,6 @@ gunicorn~=26.2.0
 
 # Servir arquivos estaticos atras do container, sem Nginx
 whitenoise~=6.12.0
+
+# Necessário para ImageField (documentos do aluno)
+Pillow~=13.0.0

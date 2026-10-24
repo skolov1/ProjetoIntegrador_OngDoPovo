@@ -41,5 +41,5 @@ urlpatterns = [
     # --- Apps de dominio ---
     # prefixo /api/v1 declarado no include, e tambem em
     # SPECTACULAR_SETTINGS['SCHEMA_PATH_PREFIX'] (ver settings.py)
-    path('api/v1/doacoes/', include('doacoes.urls')),
+    path('api/v1/', include('doacoes.urls')),
 ]

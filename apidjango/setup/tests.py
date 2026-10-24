@@ -76,7 +76,7 @@ class TestLogin:
         response = client.post(URL_TOKEN, CREDENCIAIS, format="json")
 
         # Path restrito impede o cookie de ir em toda requisicao.
-        assert response.cookies[NOME_COOKIE]["path"] == "api/v1/auth/"
+        assert response.cookies[NOME_COOKIE]["path"] == "/api/v1/auth/"
 
     def test_retorna_dados_do_usuario(self, client, user):
         """O React usa esses dados para o header sem chamar /auth/me/."""
