@@ -1,28 +1,83 @@
 /**
- * Faça Parte — formulário de pré-cadastro de aluno.
+ * Faça Parte — inscrição por WhatsApp.
  *
- * Os formulários ainda NÃO apontam para a API: enviam os próprios dados e
- * mostram confirmação local. Ligar ao `POST /api/v1/alunos/` é trabalho da
- * Fase 3, junto com o app `alunos` do Django. O botão só aparece na Fase 2.
+ * O formulário não grava nada: valida os dados, monta a mensagem e abre a
+ * conversa com a ONG (`wa.me/...?text=`). Os documentos são levados na matrícula
+ * presencial e por isso não são campos aqui. As regras ficam em `lib/inscricao.ts`.
  */
 import { useState } from 'react'
-import { Check, Send } from 'lucide-react'
+import { MessageCircle } from 'lucide-react'
 
 import { Eyebrow, Section, SectionLead, SectionTitle } from '@/components/ui/Section'
 import { Reveal } from '@/components/ui/Reveal'
+import {
+  CURSOS,
+  IDADE_MINIMA_CURSO,
+  MAIORIDADE,
+  MENSALIDADE_POR_ATIVIDADE,
+  MODALIDADES,
+  calcularIdade,
+  calcularMensalidade,
+  formatarReais,
+  montarMensagemInscricao,
+  validarInscricao,
+  type DadosInscricao,
+} from '@/lib/inscricao'
+import { linkWhatsapp } from '@/lib/whatsapp'
 
+const CAMPO =
+  'mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition placeholder:text-slate-400 focus:border-verde focus:ring-4 focus:ring-verde/10'
+const ROTULO = 'text-sm font-bold text-verde-escuro'
+const ERRO = 'mt-1 text-xs font-semibold text-vermelho'
 
-const INTERESSES = [
-  'Esporte',
-  'Saúde',
-  'Educação',
-  'Cursos profissionalizantes',
-  'Voluntariado',
-  'Outro',
-] as const
+const VAZIO: DadosInscricao = {
+  nome: '',
+  nascimento: '',
+  modalidades: [],
+  cursos: [],
+  telefone: '',
+  responsavelNome: '',
+  responsavelTelefone: '',
+}
+
+const DOCUMENTOS_MAIOR = [
+  'RG',
+  'CPF',
+  'Comprovante de residência',
+  'Título de eleitor',
+  'Valor da mensalidade',
+]
+const DOCUMENTOS_MENOR = [
+  'RG, CPF, comprovante de residência e título de eleitor do responsável',
+  'RG ou certidão de nascimento do aluno',
+  'Atestado médico de aptidão física',
+]
+
+function alternar(lista: string[], item: string): string[] {
+  return lista.includes(item) ? lista.filter((i) => i !== item) : [...lista, item]
+}
 
 export function PreRegisterSection() {
-  const [enviado, setEnviado] = useState(false)
+  const [dados, setDados] = useState<DadosInscricao>(VAZIO)
+  const [tentouEnviar, setTentouEnviar] = useState(false)
+  const [linkEnviado, setLinkEnviado] = useState<string | null>(null)
+
+  const idade = calcularIdade(dados.nascimento)
+  const menor = idade !== null && idade < MAIORIDADE
+  const total = dados.modalidades.length + dados.cursos.length
+  const erros = tentouEnviar ? validarInscricao(dados) : {}
+
+  const atualizar = (parcial: Partial<DadosInscricao>) => setDados((d) => ({ ...d, ...parcial }))
+
+  function enviar(e: React.FormEvent) {
+    e.preventDefault()
+    setTentouEnviar(true)
+    if (Object.keys(validarInscricao(dados)).length > 0) return
+
+    const link = linkWhatsapp(montarMensagemInscricao(dados))
+    setLinkEnviado(link)
+    window.open(link, '_blank', 'noopener,noreferrer')
+  }
 
   return (
     <Section id="participar" tom="claro">
@@ -32,89 +87,200 @@ export function PreRegisterSection() {
           <Eyebrow>Faça parte</Eyebrow>
           <SectionTitle>Quer matricular seu filho ou praticar um esporte?</SectionTitle>
           <SectionLead>
-            Preencha o formulário e nossa coordenação entra em contato para completar a
-            inscrição. A mensalidade é de R$ 20,00 por modalidade, curso ou capacitação, paga por PIX ou dinheiro trocado (não aceitamos cartão).
+            Preencha os dados e enviaremos a sua inscrição pelo WhatsApp para a
+            coordenação. A mensalidade é de {formatarReais(MENSALIDADE_POR_ATIVIDADE)} por
+            modalidade, curso ou capacitação, paga por PIX ou dinheiro trocado (não
+            aceitamos cartão).
           </SectionLead>
 
-          {enviado ? (
-            <div className="mt-8 flex items-start gap-4 rounded-2xl border border-verde/20 bg-mist-50 p-6">
-              <span className="grid size-11 shrink-0 place-items-center rounded-full bg-verde text-white">
-                <Check className="size-5" aria-hidden="true" />
-              </span>
-              <div>
-                <p className="font-extrabold text-verde-escuro">Pré-cadastro registrado!</p>
-                <p className="mt-1 text-sm leading-relaxed text-grafite/70">
-                  Nossa equipe vai entrar em contato pelo telefone informado. Enquanto isso,
-                  pode conferir a{' '}
-                  <a href="#programas" className="font-bold text-verde underline-offset-4 hover:underline">
-                    grade de horários
-                  </a>
-                  .
+          <form className="mt-8 space-y-5" onSubmit={enviar} noValidate>
+            <label className={`block ${ROTULO}`}>
+              Nome completo do aluno
+              <input
+                type="text"
+                autoComplete="name"
+                placeholder="Nome e sobrenome"
+                value={dados.nome}
+                onChange={(e) => atualizar({ nome: e.target.value })}
+                aria-invalid={erros.nome ? 'true' : undefined}
+                className={`${CAMPO} ${erros.nome ? 'border-vermelho' : ''}`}
+              />
+              {erros.nome && <span className={`block ${ERRO}`}>{erros.nome}</span>}
+            </label>
+
+            <label className={`block ${ROTULO}`}>
+              Data de nascimento
+              <input
+                type="date"
+                value={dados.nascimento}
+                max={new Date().toISOString().slice(0, 10)}
+                onChange={(e) => atualizar({ nascimento: e.target.value })}
+                aria-invalid={erros.nascimento ? 'true' : undefined}
+                className={`${CAMPO} ${erros.nascimento ? 'border-vermelho' : ''}`}
+              />
+              {idade !== null && (
+                <span className="mt-1 block text-xs font-normal text-grafite/60">
+                  {idade} anos
+                </span>
+              )}
+              {erros.nascimento && <span className={`block ${ERRO}`}>{erros.nascimento}</span>}
+            </label>
+
+            <fieldset>
+              <legend className={ROTULO}>Modalidades de interesse</legend>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {MODALIDADES.map((nome) => (
+                  <Opcao
+                    key={nome}
+                    nome={nome}
+                    marcado={dados.modalidades.includes(nome)}
+                    aoAlternar={() => atualizar({ modalidades: alternar(dados.modalidades, nome) })}
+                  />
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend className={ROTULO}>
+                Cursos{' '}
+                <span className="font-normal text-grafite/50">
+                  (lista de espera, a partir de {IDADE_MINIMA_CURSO} anos)
+                </span>
+              </legend>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {CURSOS.map((nome) => (
+                  <Opcao
+                    key={nome}
+                    nome={nome}
+                    marcado={dados.cursos.includes(nome)}
+                    aoAlternar={() => atualizar({ cursos: alternar(dados.cursos, nome) })}
+                  />
+                ))}
+              </div>
+              {erros.cursos && <p className={ERRO}>{erros.cursos}</p>}
+            </fieldset>
+            {erros.atividades && <p className={ERRO}>{erros.atividades}</p>}
+
+            {menor && (
+              <div className="space-y-4 rounded-2xl border border-amarelo/50 bg-amarelo/10 p-5">
+                <p className="text-sm leading-relaxed text-verde-escuro">
+                  <strong>Aluno menor de {MAIORIDADE} anos.</strong> A matrícula só pode ser feita
+                  por pai, mãe ou guardião legal.
                 </p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className={ROTULO}>
+                    Nome do responsável
+                    <input
+                      type="text"
+                      autoComplete="off"
+                      placeholder="Nome completo"
+                      value={dados.responsavelNome}
+                      onChange={(e) => atualizar({ responsavelNome: e.target.value })}
+                      aria-invalid={erros.responsavelNome ? 'true' : undefined}
+                      className={`${CAMPO} ${erros.responsavelNome ? 'border-vermelho' : ''}`}
+                    />
+                    {erros.responsavelNome && (
+                      <span className={`block ${ERRO}`}>{erros.responsavelNome}</span>
+                    )}
+                  </label>
+                  <label className={ROTULO}>
+                    Telefone do responsável
+                    <input
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="off"
+                      placeholder="(13) 90000-0000"
+                      value={dados.responsavelTelefone}
+                      onChange={(e) => atualizar({ responsavelTelefone: e.target.value })}
+                      aria-invalid={erros.responsavelTelefone ? 'true' : undefined}
+                      className={`${CAMPO} ${erros.responsavelTelefone ? 'border-vermelho' : ''}`}
+                    />
+                    {erros.responsavelTelefone && (
+                      <span className={`block ${ERRO}`}>{erros.responsavelTelefone}</span>
+                    )}
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {idade !== null && !menor && dados.cursos.length > 0 && (
+              <label className={`block ${ROTULO}`}>
+                Telefone para contato
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="(13) 90000-0000"
+                  value={dados.telefone}
+                  onChange={(e) => atualizar({ telefone: e.target.value })}
+                  aria-invalid={erros.telefone ? 'true' : undefined}
+                  className={`${CAMPO} ${erros.telefone ? 'border-vermelho' : ''}`}
+                />
+                {erros.telefone && <span className={`block ${ERRO}`}>{erros.telefone}</span>}
+              </label>
+            )}
+
+            <p
+              className="rounded-xl bg-mist-50 px-4 py-3 text-sm text-verde-escuro"
+              aria-live="polite"
+            >
+              Mensalidade estimada: <strong>{formatarReais(calcularMensalidade(total))}</strong>{' '}
+              <span className="text-grafite/60">
+                ({total} {total === 1 ? 'atividade' : 'atividades'} ×{' '}
+                {formatarReais(MENSALIDADE_POR_ATIVIDADE)})
+              </span>
+            </p>
+
+            <button
+              type="submit"
+              className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-verde px-7 py-3.5 text-sm font-bold uppercase tracking-wider text-white shadow-lg shadow-verde/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-verde/35 sm:w-auto"
+            >
+              <MessageCircle className="size-4" aria-hidden="true" />
+              Enviar inscrição pelo WhatsApp
+            </button>
+
+            {linkEnviado && (
+              <p className="text-sm text-grafite/70" role="status">
+                Abrimos o WhatsApp com a sua mensagem. Se nada abriu,{' '}
+                <a
+                  href={linkEnviado}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="font-bold text-verde underline-offset-4 hover:underline"
+                >
+                  clique aqui
+                </a>
+                .
+              </p>
+            )}
+          </form>
+
+          {/* Documentos: levados na matrícula presencial, não são campos do site. */}
+          <div className="mt-8 rounded-2xl border border-slate-200/70 bg-white p-5">
+            <h3 className="font-extrabold text-verde-escuro">Na matrícula presencial, leve</h3>
+            <div className="mt-3 grid gap-4 sm:grid-cols-2">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-grafite/50">
+                  Maior de idade
+                </p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-grafite/75">
+                  {DOCUMENTOS_MAIOR.map((d) => (
+                    <li key={d}>{d}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-grafite/50">
+                  Menor de idade
+                </p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-grafite/75">
+                  {DOCUMENTOS_MENOR.map((d) => (
+                    <li key={d}>{d}</li>
+                  ))}
+                </ul>
               </div>
             </div>
-          ) : (
-            <form
-              className="mt-8 space-y-4"
-              onSubmit={(e) => {
-                e.preventDefault()
-                setEnviado(true)
-              }}
-            >
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="text-sm font-bold text-verde-escuro">
-                  Nome do responsável
-                  <input
-                    type="text"
-                    name="responsavel"
-                    required
-                    autoComplete="name"
-                    placeholder="Nome completo"
-                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition placeholder:text-slate-400 focus:border-verde focus:ring-4 focus:ring-verde/10"
-                  />
-                </label>
-
-                <label className="text-sm font-bold text-verde-escuro">
-                  Telefone de contato
-                  <input
-                    type="tel"
-                    name="telefone"
-                    required
-                    inputMode="tel"
-                    autoComplete="tel"
-                    placeholder="(11) 90000-0000"
-                    className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition placeholder:text-slate-400 focus:border-verde focus:ring-4 focus:ring-verde/10"
-                  />
-                </label>
-              </div>
-
-              <label className="block text-sm font-bold text-verde-escuro">
-                Tem algum interesse?
-                <select
-                  name="interesse"
-                  defaultValue={INTERESSES[0]}
-                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-verde focus:ring-4 focus:ring-verde/10"
-                >
-                  {INTERESSES.map((interesse) => (
-                    <option key={interesse} value={interesse}>
-                      {interesse}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <button
-                type="submit"
-                className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-verde px-7 py-3.5 text-sm font-bold uppercase tracking-wider text-white shadow-lg shadow-verde/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-verde/35 sm:w-auto"
-              >
-                Enviar pré-cadastro
-                <Send
-                  className="size-4 transition-transform duration-300 group-hover:translate-x-1"
-                  aria-hidden="true"
-                />
-              </button>
-            </form>
-          )}
+          </div>
         </Reveal>
 
         {/* Foto */}
@@ -146,5 +312,28 @@ export function PreRegisterSection() {
         </Reveal>
       </div>
     </Section>
+  )
+}
+
+function Opcao({
+  nome,
+  marcado,
+  aoAlternar,
+}: {
+  nome: string
+  marcado: boolean
+  aoAlternar: () => void
+}) {
+  return (
+    <label
+      className={`cursor-pointer rounded-full border-2 px-4 py-2 text-sm font-semibold transition-colors ${
+        marcado
+          ? 'border-verde bg-verde/10 text-verde'
+          : 'border-slate-200 text-grafite/70 hover:border-slate-300'
+      }`}
+    >
+      <input type="checkbox" checked={marcado} onChange={aoAlternar} className="sr-only" />
+      {nome}
+    </label>
   )
 }
