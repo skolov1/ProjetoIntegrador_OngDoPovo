@@ -7,13 +7,17 @@
  *  3. Marca a seção visível no scroll (scroll-spy), para o usuário saber onde está
  */
 import { useEffect, useState } from 'react'
-import { Menu, X } from 'lucide-react'
+import { Lock, Menu, X } from 'lucide-react'
 
 import { InstagramIcon } from '@/components/ui/BrandIcons'
 
 import { LinkBotao } from '@/components/ui/Button'
 import { useScrollY } from '@/lib/useReveal'
 import { NAVEGACAO, ONG } from '@/features/home/data'
+
+/** Entrada da equipe (administrador e recepção) no painel. Troque o texto aqui. */
+const ROTULO_AREA_RESTRITA = 'Área restrita'
+const URL_AREA_RESTRITA = '/login.html'
 
 export function Header() {
   const scrollY = useScrollY()
@@ -152,6 +156,19 @@ export function Header() {
             <InstagramIcon className="size-4" />
           </a>
 
+          <a
+            href={URL_AREA_RESTRITA}
+            aria-label={ROTULO_AREA_RESTRITA}
+            className={`hidden h-10 items-center justify-center gap-2 rounded-full text-sm font-semibold transition-all duration-300 sm:inline-flex sm:w-10 lg:w-auto lg:px-4 ${
+              rolou || menuAberto
+                ? 'bg-white/10 text-white hover:bg-white/20'
+                : 'bg-verde/10 text-verde hover:bg-verde/20'
+            }`}
+          >
+            <Lock className="size-4" aria-hidden="true" />
+            <span className="hidden lg:inline">{ROTULO_AREA_RESTRITA}</span>
+          </a>
+
           {/*<LinkBotao
             href="#doe"
             variante="secundaria"
@@ -189,7 +206,7 @@ export function Header() {
       <div
         id="menu-mobile"
         className={`overflow-hidden border-t border-white/10 transition-all duration-400 ease-smooth lg:hidden ${
-          menuAberto ? 'max-h-[26rem] opacity-100' : 'max-h-0 opacity-0'
+          menuAberto ? 'max-h-[32rem] opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
         <nav className="flex flex-col gap-1 px-6 py-5" aria-label="Navegação mobile">
@@ -209,6 +226,14 @@ export function Header() {
           <LinkBotao href="#doe" variante="secundaria" tamanho="md" className="mt-3 w-full">
             Quero doar
           </LinkBotao>
+          <a
+            href={URL_AREA_RESTRITA}
+            onClick={(e) => e.stopPropagation()}
+            className="mt-1 flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            <Lock className="size-4" aria-hidden="true" />
+            {ROTULO_AREA_RESTRITA}
+          </a>
         </nav>
       </div>
     </header>
