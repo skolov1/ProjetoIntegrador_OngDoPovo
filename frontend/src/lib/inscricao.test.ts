@@ -13,12 +13,14 @@ import {
 const HOJE = new Date(2026, 9, 24) // 24/10/2026
 
 const base: DadosInscricao = {
-  nome: 'Ana Souza',
+  nome: 'Ana',
+  sobrenome: 'Souza',
   nascimento: '1990-05-10',
   modalidades: ['Muay Thai'],
   cursos: [],
   telefone: '',
   responsavelNome: '',
+  responsavelSobrenome: '',
   responsavelTelefone: '',
 }
 
@@ -50,9 +52,10 @@ describe('validarInscricao', () => {
     expect(validarInscricao(base, HOJE)).toEqual({})
   })
 
-  it('exige nome completo e pelo menos uma atividade', () => {
-    const erros = validarInscricao({ ...base, nome: 'Ana', modalidades: [] }, HOJE)
+  it('exige nome, sobrenome e pelo menos uma atividade', () => {
+    const erros = validarInscricao({ ...base, nome: '', sobrenome: ' ', modalidades: [] }, HOJE)
     expect(erros.nome).toBeDefined()
+    expect(erros.sobrenome).toBeDefined()
     expect(erros.atividades).toBeDefined()
   })
 
@@ -60,11 +63,13 @@ describe('validarInscricao', () => {
     const menor = { ...base, nascimento: '2015-05-10' }
     const erros = validarInscricao(menor, HOJE)
     expect(erros.responsavelNome).toBeDefined()
+    expect(erros.responsavelSobrenome).toBeDefined()
     expect(erros.responsavelTelefone).toBeDefined()
 
     const ok = {
       ...menor,
-      responsavelNome: 'Maria Souza',
+      responsavelNome: 'Maria',
+      responsavelSobrenome: 'Souza',
       responsavelTelefone: '(13) 99999-0000',
     }
     expect(validarInscricao(ok, HOJE)).toEqual({})
@@ -75,7 +80,11 @@ describe('validarInscricao', () => {
   })
 
   it('curso só a partir de 14 anos (inclusive)', () => {
-    const responsavel = { responsavelNome: 'Maria Souza', responsavelTelefone: '13999990000' }
+    const responsavel = {
+      responsavelNome: 'Maria',
+      responsavelSobrenome: 'Souza',
+      responsavelTelefone: '13999990000',
+    }
     const aos13 = { ...base, ...responsavel, nascimento: '2013-10-25', modalidades: [], cursos: ['Tranças'] }
     expect(validarInscricao(aos13, HOJE).cursos).toBeDefined()
 
@@ -107,7 +116,8 @@ describe('montarMensagemInscricao', () => {
         nascimento: '2010-03-02',
         modalidades: ['Futsal'],
         cursos: ['Manicure'],
-        responsavelNome: 'Maria Souza',
+        responsavelNome: 'Maria',
+        responsavelSobrenome: 'Souza',
         responsavelTelefone: '(13) 99999-0000',
       },
       HOJE,

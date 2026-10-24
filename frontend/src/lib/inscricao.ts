@@ -29,6 +29,7 @@ export const MAIORIDADE = 18
 
 export type DadosInscricao = {
   nome: string
+  sobrenome: string
   /** AAAA-MM-DD, como vem do <input type="date">. */
   nascimento: string
   modalidades: string[]
@@ -36,6 +37,7 @@ export type DadosInscricao = {
   /** Telefone do próprio aluno (maior de idade que escolheu curso). */
   telefone: string
   responsavelNome: string
+  responsavelSobrenome: string
   responsavelTelefone: string
 }
 
@@ -76,9 +78,8 @@ export function formatarReais(valor: number): string {
 export function validarInscricao(dados: DadosInscricao, hoje: Date = new Date()): ErrosInscricao {
   const erros: ErrosInscricao = {}
 
-  if (dados.nome.trim().split(/\s+/).filter(Boolean).length < 2) {
-    erros.nome = 'Informe o nome completo'
-  }
+  if (dados.nome.trim().length < 2) erros.nome = 'Informe o nome'
+  if (dados.sobrenome.trim().length < 2) erros.sobrenome = 'Informe o sobrenome'
 
   const idade = calcularIdade(dados.nascimento, hoje)
   if (idade === null || idade > 120) {
@@ -93,8 +94,11 @@ export function validarInscricao(dados: DadosInscricao, hoje: Date = new Date())
 
   const menor = idade < MAIORIDADE
   if (menor) {
-    if (dados.responsavelNome.trim().split(/\s+/).filter(Boolean).length < 2) {
-      erros.responsavelNome = 'Informe o nome completo do responsável'
+    if (dados.responsavelNome.trim().length < 2) {
+      erros.responsavelNome = 'Informe o nome do responsável'
+    }
+    if (dados.responsavelSobrenome.trim().length < 2) {
+      erros.responsavelSobrenome = 'Informe o sobrenome do responsável'
     }
     if (soDigitos(dados.responsavelTelefone).length < 10) {
       erros.responsavelTelefone = 'Informe o telefone do responsável com DDD'
@@ -113,6 +117,8 @@ export function validarInscricao(dados: DadosInscricao, hoje: Date = new Date())
   return erros
 }
 
+const nomeCompleto = (nome: string, sobrenome: string) => `${nome.trim()} ${sobrenome.trim()}`
+
 function dataBr(iso: string): string {
   const [ano, mes, dia] = iso.split('-')
   return `${dia}/${mes}/${ano}`
@@ -126,7 +132,7 @@ export function montarMensagemInscricao(dados: DadosInscricao, hoje: Date = new 
   const linhas = [
     'Olá, ONG do Povo! Quero fazer uma inscrição.',
     '',
-    `Aluno: ${dados.nome.trim()}`,
+    `Aluno: ${nomeCompleto(dados.nome, dados.sobrenome)}`,
     `Data de nascimento: ${dataBr(dados.nascimento)} (${idade} anos)`,
   ]
   if (dados.modalidades.length > 0) linhas.push(`Modalidades: ${dados.modalidades.join(', ')}`)
@@ -134,7 +140,8 @@ export function montarMensagemInscricao(dados: DadosInscricao, hoje: Date = new 
 
   if (idade !== null && idade < MAIORIDADE) {
     linhas.push(
-      `Responsável: ${dados.responsavelNome.trim()} — ${dados.responsavelTelefone.trim()}`,
+      `Responsável: ${nomeCompleto(dados.responsavelNome, dados.responsavelSobrenome)} — ` +
+        dados.responsavelTelefone.trim(),
     )
   } else if (dados.cursos.length > 0) {
     linhas.push(`Telefone para contato: ${dados.telefone.trim()}`)

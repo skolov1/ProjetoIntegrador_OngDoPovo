@@ -32,11 +32,13 @@ const ERRO = 'mt-1 text-xs font-semibold text-vermelho'
 
 const VAZIO: DadosInscricao = {
   nome: '',
+  sobrenome: '',
   nascimento: '',
   modalidades: [],
   cursos: [],
   telefone: '',
   responsavelNome: '',
+  responsavelSobrenome: '',
   responsavelTelefone: '',
 }
 
@@ -94,19 +96,34 @@ export function PreRegisterSection() {
           </SectionLead>
 
           <form className="mt-8 space-y-5" onSubmit={enviar} noValidate>
-            <label className={`block ${ROTULO}`}>
-              Nome completo do aluno
-              <input
-                type="text"
-                autoComplete="name"
-                placeholder="Nome e sobrenome"
-                value={dados.nome}
-                onChange={(e) => atualizar({ nome: e.target.value })}
-                aria-invalid={erros.nome ? 'true' : undefined}
-                className={`${CAMPO} ${erros.nome ? 'border-vermelho' : ''}`}
-              />
-              {erros.nome && <span className={`block ${ERRO}`}>{erros.nome}</span>}
-            </label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className={ROTULO}>
+                Nome do aluno
+                <input
+                  type="text"
+                  autoComplete="given-name"
+                  placeholder="Nome"
+                  value={dados.nome}
+                  onChange={(e) => atualizar({ nome: e.target.value })}
+                  aria-invalid={erros.nome ? 'true' : undefined}
+                  className={`${CAMPO} ${erros.nome ? 'border-vermelho' : ''}`}
+                />
+                {erros.nome && <span className={`block ${ERRO}`}>{erros.nome}</span>}
+              </label>
+              <label className={ROTULO}>
+                Sobrenome
+                <input
+                  type="text"
+                  autoComplete="family-name"
+                  placeholder="Sobrenome"
+                  value={dados.sobrenome}
+                  onChange={(e) => atualizar({ sobrenome: e.target.value })}
+                  aria-invalid={erros.sobrenome ? 'true' : undefined}
+                  className={`${CAMPO} ${erros.sobrenome ? 'border-vermelho' : ''}`}
+                />
+                {erros.sobrenome && <span className={`block ${ERRO}`}>{erros.sobrenome}</span>}
+              </label>
+            </div>
 
             <label className={`block ${ROTULO}`}>
               Data de nascimento
@@ -173,7 +190,7 @@ export function PreRegisterSection() {
                     <input
                       type="text"
                       autoComplete="off"
-                      placeholder="Nome completo"
+                      placeholder="Nome"
                       value={dados.responsavelNome}
                       onChange={(e) => atualizar({ responsavelNome: e.target.value })}
                       aria-invalid={erros.responsavelNome ? 'true' : undefined}
@@ -184,22 +201,37 @@ export function PreRegisterSection() {
                     )}
                   </label>
                   <label className={ROTULO}>
-                    Telefone do responsável
+                    Sobrenome do responsável
                     <input
-                      type="tel"
-                      inputMode="tel"
+                      type="text"
                       autoComplete="off"
-                      placeholder="(13) 90000-0000"
-                      value={dados.responsavelTelefone}
-                      onChange={(e) => atualizar({ responsavelTelefone: e.target.value })}
-                      aria-invalid={erros.responsavelTelefone ? 'true' : undefined}
-                      className={`${CAMPO} ${erros.responsavelTelefone ? 'border-vermelho' : ''}`}
+                      placeholder="Sobrenome"
+                      value={dados.responsavelSobrenome}
+                      onChange={(e) => atualizar({ responsavelSobrenome: e.target.value })}
+                      aria-invalid={erros.responsavelSobrenome ? 'true' : undefined}
+                      className={`${CAMPO} ${erros.responsavelSobrenome ? 'border-vermelho' : ''}`}
                     />
-                    {erros.responsavelTelefone && (
-                      <span className={`block ${ERRO}`}>{erros.responsavelTelefone}</span>
+                    {erros.responsavelSobrenome && (
+                      <span className={`block ${ERRO}`}>{erros.responsavelSobrenome}</span>
                     )}
                   </label>
                 </div>
+                <label className={`block ${ROTULO}`}>
+                  Telefone do responsável
+                  <input
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="off"
+                    placeholder="(13) 90000-0000"
+                    value={dados.responsavelTelefone}
+                    onChange={(e) => atualizar({ responsavelTelefone: e.target.value })}
+                    aria-invalid={erros.responsavelTelefone ? 'true' : undefined}
+                    className={`${CAMPO} ${erros.responsavelTelefone ? 'border-vermelho' : ''}`}
+                  />
+                  {erros.responsavelTelefone && (
+                    <span className={`block ${ERRO}`}>{erros.responsavelTelefone}</span>
+                  )}
+                </label>
               </div>
             )}
 
