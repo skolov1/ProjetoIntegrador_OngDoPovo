@@ -1,21 +1,22 @@
 /**
  * Contato — canal de mensagem + dados + mapa.
  *
- * O formulário ainda não envia para a API (app `contato` do Django é Fase 3);
- * hoje mostra confirmação local.
+ * Todo contato vai para o WhatsApp: o formulário não grava nada, só monta a
+ * mensagem e abre a conversa com a ONG já escrita.
  */
-import { useState } from 'react'
-import { Check, Mail, MapPin, Send, Clock } from 'lucide-react'
+import { Mail, MapPin, MessageCircle, Send, Clock } from 'lucide-react'
 
 import { InstagramIcon } from '@/components/ui/BrandIcons'
 
 import { Eyebrow, Section, SectionLead, SectionTitle } from '@/components/ui/Section'
 import { Reveal } from '@/components/ui/Reveal'
 import { ONG } from '@/features/home/data'
+import { linkWhatsapp } from '@/lib/whatsapp'
 
 const ASSUNTOS = ['Dúvida geral', 'Voluntariado', 'Doações', 'Parceria', 'Imprensa'] as const
 
 const CANAIS = [
+  { Icon: MessageCircle, rotulo: 'WhatsApp', valor: ONG.telefone, href: ONG.whatsapp },
   { Icon: MapPin, rotulo: 'Sede', valor: ONG.endereco, href: ONG.linkMaps },
   { Icon: Mail, rotulo: 'E-mail', valor: ONG.email, href: `mailto:${ONG.email}` },
   {
@@ -29,7 +30,18 @@ const CANAIS = [
 ] as const
 
 export function ContactSection() {
-  const [enviado, setEnviado] = useState(false)
+  function abrirWhatsapp(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const dados = new FormData(e.currentTarget)
+    const mensagem = [
+      'Olá, ONG do Povo!',
+      `Meu nome é ${dados.get('nome')}.`,
+      `Assunto: ${dados.get('assunto')}`,
+      '',
+      String(dados.get('mensagem')),
+    ].join('\n')
+    window.open(linkWhatsapp(mensagem), '_blank', 'noopener,noreferrer')
+  }
 
   return (
     <Section id="contato" tom="claro">
@@ -80,28 +92,13 @@ export function ContactSection() {
 
         {/* Formulário */}
         <Reveal delay={140}>
-          {enviado ? (
-            <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-verde/20 bg-mist-50 p-10 text-center">
-              <span className="grid size-14 place-items-center rounded-full bg-verde text-white">
-                <Check className="size-7" aria-hidden="true" />
-              </span>
-              <p className="mt-5 text-xl font-extrabold text-verde-escuro">Mensagem enviada!</p>
-              <p className="mt-2 max-w-sm text-sm leading-relaxed text-grafite/70">
-                Recebemos o seu contato e retornaremos pelo e-mail informado o mais
-                breve possível.
-              </p>
-            </div>
-          ) : (
-            <form
+          <form
               className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm sm:p-8"
-              onSubmit={(e) => {
-                e.preventDefault()
-                setEnviado(true)
-              }}
+              onSubmit={abrirWhatsapp}
             >
               <h3 className="text-xl font-extrabold text-verde-escuro">Envie uma mensagem</h3>
               <p className="mt-1 text-sm text-grafite/60">
-                Retornaremos assim que possível.
+                Ao enviar, abrimos o WhatsApp com a sua mensagem pronta.
               </p>
 
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -117,17 +114,6 @@ export function ContactSection() {
                   />
                 </label>
                 <label className="text-sm font-bold text-verde-escuro">
-                  E-mail
-                  <input
-                    type="email"
-                    name="email"
-                    required
-                    autoComplete="email"
-                    placeholder="voce@email.com"
-                    className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 font-normal outline-none transition placeholder:text-slate-400 focus:border-verde focus:ring-4 focus:ring-verde/10"
-                  />
-                </label>
-                <label className="text-sm font-bold text-verde-escuro sm:col-span-2">
                   Assunto
                   <select
                     name="assunto"
@@ -157,14 +143,13 @@ export function ContactSection() {
                 type="submit"
                 className="group mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-verde px-6 py-3.5 text-sm font-bold uppercase tracking-wider text-white shadow-lg shadow-verde/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-verde/35"
               >
-                Enviar mensagem
+                Enviar pelo WhatsApp
                 <Send
                   className="size-4 transition-transform duration-300 group-hover:translate-x-1"
                   aria-hidden="true"
                 />
               </button>
-            </form>
-          )}
+          </form>
         </Reveal>
       </div>
     </Section>

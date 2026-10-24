@@ -35,7 +35,7 @@ export const ONG = {
   /** CNPJ da ONG — também é a chave PIX (somente dígitos). */
   cnpj: '53.289.941/0001-53',
   chavePix: '53289941000153',
-  email: 'contato@ongdopovo.com.br',
+  email: 'ongdopovo@outlook.com',
   horarioAtendimento: '9:00~12:00 e 14:00~17:00',
   horarioFuncionamento: '9:00~22:00',
 } as const

@@ -2,12 +2,13 @@
  * Nós ajudamos com você — convite ao voluntariado.
  * Seção clara com duas "fronteiras" de atuação, como na referência.
  */
-import { Mail } from 'lucide-react'
+import { MessageCircle } from 'lucide-react'
 
 import { LinkBotao } from '@/components/ui/Button'
 import { Eyebrow, Section, SectionLead, SectionTitle } from '@/components/ui/Section'
 import { Reveal } from '@/components/ui/Reveal'
-import { FRONTEIRAS_VOLUNTARIADO, ONG } from '@/features/home/data'
+import { FRONTEIRAS_VOLUNTARIADO } from '@/features/home/data'
+import { linkWhatsapp } from '@/lib/whatsapp'
 
 export function VolunteerSection() {
   return (
@@ -54,13 +55,13 @@ export function VolunteerSection() {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <LinkBotao href="#contato">Quero ser voluntário</LinkBotao>
               <LinkBotao
-                href={`mailto:${ONG.email}`}
+                href={linkWhatsapp('Olá! Quero ser voluntário(a) na ONG do Povo. Podem me explicar como funciona?')}
                 variante="contorno-claro"
                 seta={false}
                 externa
               >
-                <Mail className="size-4" aria-hidden="true" />
-                Falar com nosso time
+                <MessageCircle className="size-4" aria-hidden="true" />
+                Falar com nosso time no WhatsApp
               </LinkBotao>
             </div>
           </Reveal>
