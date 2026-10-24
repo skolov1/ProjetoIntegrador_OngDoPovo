@@ -33,7 +33,7 @@ export function PreRegisterSection() {
           <SectionTitle>Quer matricular seu filho ou praticar um esporte?</SectionTitle>
           <SectionLead>
             Preencha o formulário e nossa coordenação entra em contato para completar a
-            inscrição. As atividades são gratuitas.
+            inscrição. A mensalidade é de R$ 20,00 por modalidade, curso ou capacitação, paga por PIX ou dinheiro trocado (não aceitamos cartão).
           </SectionLead>
 
           {enviado ? (
@@ -136,10 +136,10 @@ export function PreRegisterSection() {
             {/* Card flutuante de destaque */}
             <div className="absolute -bottom-6 -right-2 rounded-2xl bg-amarelo px-5 py-4 shadow-2xl sm:-right-6">
               <p className="text-3xl font-extrabold leading-none text-verde-escuro">
-                100%
+                R$ 20
               </p>
               <p className="mt-1 text-xs font-bold uppercase tracking-wider text-verde-escuro/70">
-                Gratuito
+                por modalidade
               </p>
             </div>
           </div>

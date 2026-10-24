@@ -101,7 +101,6 @@ export const INDICADORES = [
   { valor: 450, sufixo: '+', rotulo: 'Alunos Ativos' },
   { valor: 1200, sufixo: '+', rotulo: 'Eventos de Vida' },
   { valor: 15, sufixo: '+', rotulo: 'Programas e Modalidades' },
-  { valor: 150, sufixo: '+', rotulo: 'Famílias Ajudadas' },
 ] as const
 
 /* -------------------------------------------------------------------------- */
@@ -145,9 +144,9 @@ export const PROGRAMAS = [
   {
     slug: 'saude-visual',
     nome: 'Exames de Vista e Óculos',
-    resumo: 'Mutirões de saúde visual com distribuição de óculos.',
+    resumo: 'Exame de vista gratuito. Você paga apenas a armação.',
     descricao:
-      'Ações de encaminhamento para mutirões de exames de visão e distribuição de óculos de forma gratuita.',
+      'O exame de vista é gratuito. Quem precisar de óculos paga apenas a armação.',
     categoria: 'saude',
     cor: 'azul',
     icone: 'olhos',

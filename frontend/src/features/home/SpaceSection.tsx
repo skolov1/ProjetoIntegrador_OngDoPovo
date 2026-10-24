@@ -82,7 +82,7 @@ export function SpaceSection() {
                 </p>
               </div>
               <span className="hidden rounded-full bg-verde px-3 py-1 text-xs font-bold uppercase tracking-wider text-white sm:inline">
-                Grátis
+                R$ 20 por modalidade
               </span>
             </div>
 
