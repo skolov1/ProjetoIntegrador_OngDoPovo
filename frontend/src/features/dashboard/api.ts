@@ -22,6 +22,7 @@ import type {
   PaginatedAlunoListList,
   PaginatedProfessorList,
   PaginatedDoacaoAdminList,
+  DoacaoResumo,
 } from '@/api/generated/model'
 
 // Helper para extrair data da resposta do axios
@@ -148,7 +149,7 @@ export function useDoacoesAdmin(params?: import('@/api/generated/model').Doacoes
 }
 
 export function useDoacoesResumo() {
-  return useQuery<any>({
+  return useQuery<DoacaoResumo>({
     queryKey: ['doacoes', 'resumo'],
     queryFn: () => doacoesResumoRetrieve().then(extractData),
     staleTime: 60_000,

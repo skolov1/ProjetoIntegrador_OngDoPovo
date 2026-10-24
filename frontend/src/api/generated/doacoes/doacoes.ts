@@ -11,6 +11,7 @@ import type {
   DoacaoCriada,
   DoacaoPublic,
   DoacaoPublicCreateRequest,
+  DoacaoResumo,
   DoacoesAdminCancelarCreateParams,
   DoacoesAdminConfirmarCreateParams,
   DoacoesAdminListParams,
@@ -194,7 +195,7 @@ export const doacoesPublicoList = (
 export const doacoesResumoRetrieve = (
 
  ) => {
-      return api<void>(
+      return api<DoacaoResumo>(
       {url: `/doacoes/resumo/`, method: 'GET'
     },
       );

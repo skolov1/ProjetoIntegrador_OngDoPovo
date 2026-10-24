@@ -786,7 +786,11 @@ paths:
       - {}
       responses:
         '200':
-          description: Totais da captação
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoacaoResumo'
+          description: ''
   /ping/:
     get:
       operationId: ping_retrieve
@@ -1953,6 +1957,51 @@ components:
       - forma_pagamento
       - nome
       - valor
+    DoacaoResumo:
+      type: object
+      description: Resposta do GET /doacoes/resumo/ (só descreve o contrato para o
+        Orval).
+      properties:
+        total:
+          type: string
+          readOnly: true
+        quantidade:
+          type: integer
+          readOnly: true
+        pendentes:
+          type: integer
+          readOnly: true
+        por_destino:
+          type: array
+          items:
+            $ref: '#/components/schemas/DoacaoResumoDestino'
+          readOnly: true
+      required:
+      - pendentes
+      - por_destino
+      - quantidade
+      - total
+    DoacaoResumoDestino:
+      type: object
+      description: 'Uma linha do resumo: total confirmado de uma destinação.'
+      properties:
+        destinacao:
+          type: string
+          readOnly: true
+        rotulo:
+          type: string
+          readOnly: true
+        total:
+          type: string
+          readOnly: true
+        quantidade:
+          type: integer
+          readOnly: true
+      required:
+      - destinacao
+      - quantidade
+      - rotulo
+      - total
     FormaPagamentoEnum:
       enum:
       - PIX

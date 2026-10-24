@@ -111,6 +111,24 @@ class DoacaoCriadaSerializer(serializers.Serializer):
     mensagem = serializers.CharField(read_only=True)
 
 
+class DoacaoResumoDestinoSerializer(serializers.Serializer):
+    """Uma linha do resumo: total confirmado de uma destinação."""
+
+    destinacao = serializers.CharField(read_only=True)
+    rotulo = serializers.CharField(read_only=True)
+    total = serializers.CharField(read_only=True)
+    quantidade = serializers.IntegerField(read_only=True)
+
+
+class DoacaoResumoSerializer(serializers.Serializer):
+    """Resposta do GET /doacoes/resumo/ (só descreve o contrato para o Orval)."""
+
+    total = serializers.CharField(read_only=True)
+    quantidade = serializers.IntegerField(read_only=True)
+    pendentes = serializers.IntegerField(read_only=True)
+    por_destino = DoacaoResumoDestinoSerializer(many=True, read_only=True)
+
+
 # =============================================================================
 # Turma
 # =============================================================================

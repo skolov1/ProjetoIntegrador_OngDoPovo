@@ -20,6 +20,8 @@ export * from './doacaoAdminRequest';
 export * from './doacaoCriada';
 export * from './doacaoPublic';
 export * from './doacaoPublicCreateRequest';
+export * from './doacaoResumo';
+export * from './doacaoResumoDestino';
 export * from './doacoesAdminCancelarCreateDestinacao';
 export * from './doacoesAdminCancelarCreateFormaPagamento';
 export * from './doacoesAdminCancelarCreateParams';

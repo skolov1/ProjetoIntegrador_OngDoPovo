@@ -24,6 +24,7 @@ from .serializers import (
     DoacaoCriadaSerializer,
     DoacaoPublicCreateSerializer,
     DoacaoPublicSerializer,
+    DoacaoResumoSerializer,
     PresencaCreateSerializer,
     PresencaLoteSerializer,
     PresencaSerializer,
@@ -128,7 +129,7 @@ class DoacaoResumoView(APIView):
             "Não inclui registros pendentes ou cancelados."
         ),
         tags=["doacoes"],
-        responses={200: OpenApiResponse(description="Totais da captação")},
+        responses={200: DoacaoResumoSerializer},
     )
     def get(self, request):
         from django.db.models import Count, Sum
