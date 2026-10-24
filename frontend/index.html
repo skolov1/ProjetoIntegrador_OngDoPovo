@@ -29,7 +29,36 @@
         <script type="module" src="/src/main.tsx"></script>
         <script>
             window._userway_config = window._userway_config || {};
-            window._userway_config.position = "2";
+            // 5 = canto inferior esquerdo (1 topo dir., 2 meio dir., 3 inf. dir.,
+            // 4 inf. centro, 5 inf. esq., 6 meio esq., 7 topo esq., 8 topo centro).
+            window._userway_config.position = "5";
+        </script>
+
+        <!-- VLibras (tradutor para Libras do governo federal). O plugin cria o
+             próprio botão; ele só aceita lado esquerdo/direito, sempre no meio da
+             altura da tela. Por isso, depois que o botão existe, subimos ele para
+             logo acima do botão do UserWay, no canto inferior esquerdo. -->
+        <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+        <script>
+            new window.VLibras.Widget({
+                rootPath: "https://vlibras.gov.br/app",
+                position: "L",
+            });
+
+            (function posicionarVLibras() {
+                var tentativas = 0;
+                var espera = setInterval(function () {
+                    var botao = window.VLibrasWidget && window.VLibrasWidget.access;
+                    if (botao) {
+                        clearInterval(espera);
+                        botao.style.top = "auto";
+                        botao.style.bottom = "88px";
+                        botao.style.left = "28px";
+                    } else if (++tentativas > 100) {
+                        clearInterval(espera);
+                    }
+                }, 50);
+            })();
         </script>
     </body>
 </html>
