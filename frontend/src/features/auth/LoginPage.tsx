@@ -8,7 +8,7 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import type { AxiosError } from 'axios'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Eye, EyeOff } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
 import { Eyebrow } from '@/components/ui/Section'
@@ -20,6 +20,7 @@ import type { CustomTokenObtainPairRequest, LoginResponse } from '@/api/generate
 export function LoginPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [mostrarSenha, setMostrarSenha] = useState(false)
   const [error, setError] = useState('')
 
   const loginMutation = useMutation({
@@ -103,17 +104,32 @@ export function LoginPage() {
             <label htmlFor="password" className="block text-sm font-bold text-verde-escuro mb-1.5">
               Senha
             </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-grafite outline-none focus:border-verde focus:ring-4 focus:ring-verde/10"
-              placeholder="Digite sua senha"
-              disabled={loginMutation.isPending}
-            />
+            <div className="relative">
+              <input
+                id="password"
+                type={mostrarSenha ? 'text' : 'password'}
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white py-3 pr-12 pl-4 text-grafite outline-none focus:border-verde focus:ring-4 focus:ring-verde/10"
+                placeholder="Digite sua senha"
+                disabled={loginMutation.isPending}
+              />
+              <button
+                type="button"
+                onClick={() => setMostrarSenha((v) => !v)}
+                aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
+                aria-pressed={mostrarSenha}
+                className="absolute top-1/2 right-2 mt-0.5 grid size-9 -translate-y-1/2 place-items-center rounded-lg text-grafite/50 transition-colors hover:bg-mist-100 hover:text-verde focus-visible:outline-2 focus-visible:outline-verde"
+              >
+                {mostrarSenha ? (
+                  <EyeOff className="size-5" aria-hidden="true" />
+                ) : (
+                  <Eye className="size-5" aria-hidden="true" />
+                )}
+              </button>
+            </div>
           </div>
 
           <Button disabled={loginMutation.isPending} className="w-full">
