@@ -37,7 +37,7 @@ import {
   useDoacoesAdmin,
   useDoacoesResumo,
 } from "@/features/dashboard/api";
-import { api, setAccessToken } from "@/lib/api";
+import { encerrarSessao, restaurarSessao } from "@/lib/api";
 // import types removed as they're not directly used
 
 type Screen = "presenca" | "alunos" | "doacoes" | "turmas" | "professores";
@@ -104,39 +104,13 @@ export function DashboardLayout() {
   const updateProfessor = useUpdateProfessor();
   const deleteProfessor = useDeleteProfessor();
 
-  // Check authentication on mount
+  // O access token fica so em memoria: ao abrir o painel, pedimos um novo pelo
+  // cookie httpOnly de refresh. Sem sessao valida, volta para o login.
   useEffect(() => {
-    const verifyAuth = async () => {
-      try {
-        console.log("[Dashboard] Checking auth...");
-        // First, try to get access token from sessionStorage (set on login)
-        const storedToken = sessionStorage.getItem("access_token");
-        console.log(
-          "[Dashboard] Stored token:",
-          storedToken ? "FOUND" : "NOT FOUND",
-        );
-        if (storedToken) {
-          setAccessToken(storedToken);
-          console.log("[Dashboard] Token set, auth successful");
-          setIsLoading(false);
-          return;
-        }
-
-        // Fallback: try to verify via API (for cookie-based sessions)
-        console.log("[Dashboard] Trying API fallback...");
-        const response = await api.get("/auth/me/");
-        if (response.status !== 200) {
-          throw new Error("Unauthorized");
-        }
-        console.log("[Dashboard] API auth successful");
-      } catch (error) {
-        console.log("[Dashboard] Auth failed, redirecting to login:", error);
-        window.location.href = "/login.html";
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    verifyAuth();
+    restaurarSessao().then((ok) => {
+      if (ok) setIsLoading(false);
+      else window.location.href = "/login.html";
+    });
   }, []);
 
   // Show loading while checking auth
@@ -544,8 +518,10 @@ export function DashboardLayout() {
         <div className="flex h-16 items-center justify-between px-6 border-b border-white/10">
           <h2 className="font-extrabold text-white">ONG do Povo</h2>
           <button
+            type="button"
+            onClick={() => void encerrarSessao()}
             className="p-2 rounded-md hover:bg-white/10 transition-colors"
-            aria-label="Logout"
+            aria-label="Sair"
           >
             <LogOut className="size-4" />
           </button>

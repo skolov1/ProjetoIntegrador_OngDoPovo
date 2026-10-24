@@ -7,7 +7,10 @@
  *
  * O access token fica so em memoria (nunca em localStorage). Se a pagina
  * recarregar, o interceptor chama /auth/token/refresh/ automaticamente usando o
- * cookie para recuperar a sessao — o usuario nao perceives o refresh.
+ * cookie para recuperar a sessao — o usuario nao percebe o refresh.
+ *
+ * Ao abrir o painel, `restaurarSessao()` faz esse refresh; `encerrarSessao()` apaga
+ * o cookie no servidor e volta ao login.
  */
 import axios, {
   type AxiosError,
@@ -70,6 +73,28 @@ async function renovarAccessToken(): Promise<string | null> {
   } catch {
     setAccessToken(null)
     return null
+  }
+}
+
+/**
+ * Pede um access token novo usando o cookie de refresh. Devolve `false` se nao ha
+ * sessao valida. Reaproveita o refresh em andamento (o React em modo estrito roda
+ * o efeito duas vezes em desenvolvimento, e dois refreshes seguidos se atropelam).
+ */
+export async function restaurarSessao(): Promise<boolean> {
+  refreshEmAndamento ??= renovarAccessToken().finally(() => {
+    refreshEmAndamento = null
+  })
+  return (await refreshEmAndamento) !== null
+}
+
+/** Apaga o cookie de refresh no servidor, limpa a memoria e volta ao login. */
+export async function encerrarSessao(): Promise<void> {
+  try {
+    await api.post('/auth/logout/')
+  } finally {
+    setAccessToken(null)
+    window.location.href = '/login.html'
   }
 }
 

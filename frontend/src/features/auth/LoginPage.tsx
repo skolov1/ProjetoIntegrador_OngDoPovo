@@ -7,12 +7,13 @@
 
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
+import type { AxiosError } from 'axios'
 import { AlertCircle } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
 import { Section, SectionTitle, SectionLead } from '@/components/ui/Section'
 import { Eyebrow } from '@/components/ui/Section'
-import { api, setAccessToken } from '@/lib/api'
+import { api } from '@/lib/api'
 
 import type { CustomTokenObtainPairRequest, LoginResponse } from '@/api/generated/model'
 
@@ -26,17 +27,12 @@ export function LoginPage() {
       const response = await api.post<LoginResponse>('/auth/token/', credentials)
       return response.data
     },
-    onSuccess: (data) => {
-      // Store access token in sessionStorage for dashboard load (new page load)
-      console.log('[Login] Login successful, storing token in sessionStorage')
-      sessionStorage.setItem('access_token', data.access)
-      // Also set in memory for any same-page navigation
-      setAccessToken(data.access)
-      // Full page navigation to separate dashboard entry point
-      console.log('[Login] Redirecting to dashboard...')
+    onSuccess: () => {
+      // O servidor gravou o cookie httpOnly de refresh. O painel (outra pagina)
+      // pede o access token a partir dele; nada de token em sessionStorage.
       window.location.href = '/dashboard.html'
     },
-    onError: (err: any) => {
+    onError: (err: AxiosError<{ detail?: string }>) => {
       setError(err.response?.data?.detail || 'Credenciais inválidas. Tente novamente.')
     },
   })
