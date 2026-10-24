@@ -17,6 +17,7 @@ import {
   Edit,
   Trash2,
   X,
+  type LucideIcon,
 } from "lucide-react";
 
 // import types only (Section removed from usage)
@@ -38,42 +39,83 @@ import {
   useDoacoesResumo,
 } from "@/features/dashboard/api";
 import { encerrarSessao, restaurarSessao } from "@/lib/api";
+import { alunosRetrieve } from "@/api/generated/alunos/alunos";
+import { professoresRetrieve } from "@/api/generated/professores/professores";
+import { turmasRetrieve } from "@/api/generated/turmas/turmas";
+import type { DiaSemanaEnum, SexoEnum } from "@/api/generated/model";
 // import types removed as they're not directly used
 
 type Screen = "presenca" | "alunos" | "doacoes" | "turmas" | "professores";
+type TipoCadastro = "turma" | "aluno" | "professor";
+
+const ITENS_MENU: { id: Screen; label: string; Icon: LucideIcon }[] = [
+  { id: "presenca", label: "Presenças", Icon: Users },
+  { id: "alunos", label: "Alunos", Icon: Shield },
+  { id: "turmas", label: "Turmas", Icon: Clipboard },
+  { id: "professores", label: "Professores", Icon: MessageCircle },
+  { id: "doacoes", label: "Doações", Icon: Clipboard },
+];
+
+type FormTurma = {
+  nome: string;
+  dia_semana: DiaSemanaEnum;
+  horario_inicio: string;
+  horario_fim: string;
+  data_inicio: string;
+  data_fim: string;
+  ativo: boolean;
+};
+type FormAluno = {
+  nome: string;
+  cpf: string;
+  rg: string;
+  data_nascimento: string;
+  sexo: SexoEnum;
+  mensalidade: string;
+  turma: number | undefined;
+  ativo: boolean;
+};
+type FormProfessor = {
+  nome: string;
+  cpf: string;
+  email: string;
+  telefone: string;
+  turmas: number[];
+  ativo: boolean;
+};
 
 export function DashboardLayout() {
   const [screen, setScreen] = useState<Screen>("presenca");
   const [showForm, setShowForm] = useState<
     "turma" | "aluno" | "professor" | null
   >(null);
-  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [formTurma, setFormTurma] = useState({
+  const [formTurma, setFormTurma] = useState<FormTurma>({
     nome: "",
-    dia_semana: "SEG" as const,
+    dia_semana: "SEG",
     horario_inicio: "08:00",
     horario_fim: "09:00",
     data_inicio: new Date().toISOString().split("T")[0],
     data_fim: "",
     ativo: true,
   });
-  const [formAluno, setFormAluno] = useState({
+  const [formAluno, setFormAluno] = useState<FormAluno>({
     nome: "",
     cpf: "",
     rg: "",
     data_nascimento: "",
-    sexo: "N" as const,
+    sexo: "N",
     mensalidade: "20.00",
-    turma: undefined as number | undefined,
+    turma: undefined,
     ativo: true,
   });
-  const [formProfessor, setFormProfessor] = useState({
+  const [formProfessor, setFormProfessor] = useState<FormProfessor>({
     nome: "",
     cpf: "",
     email: "",
     telefone: "",
-    turmas: [] as number[],
+    turmas: [],
     ativo: true,
   });
 
@@ -123,14 +165,14 @@ export function DashboardLayout() {
   }
 
   // Extract results from paginated responses
-  const turmas: any[] = turmasData?.results || [];
-  const alunos: any[] = alunosData?.results || [];
+  const turmas = turmasData?.results ?? [];
+  const alunos = alunosData?.results ?? [];
   const professores = professoresData?.results || [];
 
   // Helper functions
   const closeForm = () => {
     setShowForm(null);
-    setEditingItem(null);
+    setEditingId(null);
     setFormTurma({
       nome: "",
       dia_semana: "SEG",
@@ -179,8 +221,8 @@ export function DashboardLayout() {
   const handleSubmitTurma = (e: React.FormEvent) => {
     e.preventDefault();
     const payload = { ...formTurma, data_fim: formTurma.data_fim || null };
-    if (editingItem && "dia_semana" in editingItem) {
-      updateTurma.mutate({ id: editingItem.id, data: payload }, aoSalvar);
+    if (editingId !== null) {
+      updateTurma.mutate({ id: editingId, data: payload }, aoSalvar);
     } else {
       createTurma.mutate(payload, aoSalvar);
     }
@@ -189,8 +231,8 @@ export function DashboardLayout() {
   const handleSubmitAluno = (e: React.FormEvent) => {
     e.preventDefault();
     const payload = { ...formAluno };
-    if (editingItem && "mensalidade" in editingItem) {
-      updateAluno.mutate({ id: editingItem.id, data: payload }, aoSalvar);
+    if (editingId !== null) {
+      updateAluno.mutate({ id: editingId, data: payload }, aoSalvar);
     } else {
       createAluno.mutate(payload, aoSalvar);
     }
@@ -199,48 +241,55 @@ export function DashboardLayout() {
   const handleSubmitProfessor = (e: React.FormEvent) => {
     e.preventDefault();
     const payload = { ...formProfessor };
-    if (editingItem && "turmas" in editingItem) {
-      updateProfessor.mutate({ id: editingItem.id, data: payload }, aoSalvar);
+    if (editingId !== null) {
+      updateProfessor.mutate({ id: editingId, data: payload }, aoSalvar);
     } else {
       createProfessor.mutate(payload, aoSalvar);
     }
   };
 
-  const handleEdit = (item: any) => {
-    setEditingItem(item);
-    if ("dia_semana" in item) {
-      setFormTurma({
-        nome: item.nome,
-        dia_semana: item.dia_semana,
-        horario_inicio: item.horario_inicio.slice(0, 5),
-        horario_fim: item.horario_fim.slice(0, 5),
-        data_inicio: item.data_inicio,
-        data_fim: item.data_fim || "",
-        ativo: item.ativo,
-      });
-      setShowForm("turma");
-    } else if ("mensalidade" in item) {
-      setFormAluno({
-        nome: item.nome,
-        cpf: item.cpf,
-        rg: item.rg,
-        data_nascimento: item.data_nascimento,
-        sexo: item.sexo,
-        mensalidade: String(item.mensalidade),
-        turma: item.turma,
-        ativo: item.ativo,
-      });
-      setShowForm("aluno");
-    } else {
-      setFormProfessor({
-        nome: item.nome,
-        cpf: item.cpf,
-        email: item.email || "",
-        telefone: item.telefone || "",
-        turmas: (item.turmas || []).map((t: any) => t.id),
-        ativo: item.ativo,
-      });
-      setShowForm("professor");
+  // A lista traz só um resumo de cada cadastro; para editar, carregamos o
+  // cadastro completo do servidor (o formulário precisa de todos os campos).
+  const handleEdit = async (tipo: TipoCadastro, id: number) => {
+    try {
+      if (tipo === "turma") {
+        const t = (await turmasRetrieve(id)).data;
+        setFormTurma({
+          nome: t.nome,
+          dia_semana: t.dia_semana,
+          horario_inicio: t.horario_inicio.slice(0, 5),
+          horario_fim: t.horario_fim.slice(0, 5),
+          data_inicio: t.data_inicio,
+          data_fim: t.data_fim ?? "",
+          ativo: t.ativo ?? true,
+        });
+      } else if (tipo === "aluno") {
+        const a = (await alunosRetrieve(id)).data;
+        setFormAluno({
+          nome: a.nome,
+          cpf: a.cpf,
+          rg: a.rg,
+          data_nascimento: a.data_nascimento,
+          sexo: a.sexo ?? "N",
+          mensalidade: String(a.mensalidade ?? "20.00"),
+          turma: a.turma ?? undefined,
+          ativo: a.ativo ?? true,
+        });
+      } else {
+        const p = (await professoresRetrieve(id)).data;
+        setFormProfessor({
+          nome: p.nome,
+          cpf: p.cpf,
+          email: p.email ?? "",
+          telefone: p.telefone ?? "",
+          turmas: p.turmas ?? [],
+          ativo: p.ativo ?? true,
+        });
+      }
+      setEditingId(id);
+      setShowForm(tipo);
+    } catch {
+      alert("Não foi possível carregar o cadastro para edição.");
     }
   };
 
@@ -255,7 +304,7 @@ export function DashboardLayout() {
     if (showForm === "turma")
       return (
         <FormModal
-          title={editingItem ? "Editar Turma" : "Nova Turma"}
+          title={editingId !== null ? "Editar Turma" : "Nova Turma"}
           onClose={closeForm}
           onSubmit={handleSubmitTurma}
           submitting={createTurma.isPending || updateTurma.isPending}
@@ -273,7 +322,7 @@ export function DashboardLayout() {
             name="dia_semana"
             value={formTurma.dia_semana}
             onChange={(e) =>
-              setFormTurma({ ...formTurma, dia_semana: e.target.value as any })
+              setFormTurma({ ...formTurma, dia_semana: e.target.value as DiaSemanaEnum })
             }
             required
           >
@@ -335,7 +384,7 @@ export function DashboardLayout() {
     if (showForm === "aluno")
       return (
         <FormModal
-          title={editingItem ? "Editar Aluno" : "Novo Aluno"}
+          title={editingId !== null ? "Editar Aluno" : "Novo Aluno"}
           onClose={closeForm}
           onSubmit={handleSubmitAluno}
           submitting={createAluno.isPending || updateAluno.isPending}
@@ -383,7 +432,7 @@ export function DashboardLayout() {
             name="sexo"
             value={formAluno.sexo}
             onChange={(e) =>
-              setFormAluno({ ...formAluno, sexo: e.target.value as any })
+              setFormAluno({ ...formAluno, sexo: e.target.value as SexoEnum })
             }
             className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-grafite outline-none focus:border-verde focus:ring-4 focus:ring-verde/10"
 
@@ -439,7 +488,7 @@ export function DashboardLayout() {
     if (showForm === "professor")
       return (
         <FormModal
-          title={editingItem ? "Editar Professor" : "Novo Professor"}
+          title={editingId !== null ? "Editar Professor" : "Novo Professor"}
           onClose={closeForm}
           onSubmit={handleSubmitProfessor}
           submitting={createProfessor.isPending || updateProfessor.isPending}
@@ -528,16 +577,10 @@ export function DashboardLayout() {
         </div>
 
         <nav className="flex flex-col gap-2 px-6 py-8">
-          {[
-            { id: "presenca", label: "Presenças", Icon: Users },
-            { id: "alunos", label: "Alunos", Icon: Shield },
-            { id: "turmas", label: "Turmas", Icon: Clipboard },
-            { id: "professores", label: "Professores", Icon: MessageCircle },
-            { id: "doacoes", label: "Doações", Icon: Clipboard },
-          ].map(({ id, label, Icon }) => (
+          {ITENS_MENU.map(({ id, label, Icon }) => (
             <button
               key={id}
-              onClick={() => setScreen(id as any)}
+              onClick={() => setScreen(id)}
               className={`flex items-center gap-3 rounded-lg px-4 py-3 text-left font-medium transition-colors ${screen === id ? "bg-white/10 text-verde hover:bg-white/20" : "text-white/70 hover:text-white/100"}`}
             >
               <Icon className="size-4" />
@@ -580,7 +623,7 @@ export function DashboardLayout() {
                 variante="secundaria"
                 onClick={() => {
                   closeForm();
-                  setEditingItem(null);
+                  setEditingId(null);
                   setFormTurma({
                     nome: "",
                     dia_semana: "SEG",
@@ -615,17 +658,7 @@ export function DashboardLayout() {
                     <div className="mt-3 flex gap-2">
                       <Button
                         variante="contorno-claro"
-                        onClick={() =>
-                          handleEdit({
-                            id: t.id,
-                            nome: t.nome,
-                            dia_semana: "SEG",
-                            horario_inicio: "08:00",
-                            horario_fim: "09:00",
-                            data_inicio: t.horario_formatado,
-                            ativo: t.ativo,
-                          })
-                        }
+                        onClick={() => void handleEdit("turma", t.id)}
                       >
                         <Edit className="size-4" />
                       </Button>
@@ -652,7 +685,7 @@ export function DashboardLayout() {
                 variante="secundaria"
                 onClick={() => {
                   closeForm();
-                  setEditingItem(null);
+                  setEditingId(null);
                   setFormAluno({
                     nome: "",
                     cpf: "",
@@ -711,7 +744,7 @@ export function DashboardLayout() {
                           <div className="flex gap-2">
                             <Button
                               variante="contorno-claro"
-                              onClick={() => handleEdit(a)}
+                              onClick={() => void handleEdit("aluno", a.id)}
                             >
                               <Edit className="size-4" />
                             </Button>
@@ -741,7 +774,7 @@ export function DashboardLayout() {
                 variante="secundaria"
                 onClick={() => {
                   closeForm();
-                  setEditingItem(null);
+                  setEditingId(null);
                   setFormProfessor({
                     nome: "",
                     cpf: "",
@@ -774,7 +807,7 @@ export function DashboardLayout() {
                     <div className="mt-3 flex gap-2">
                       <Button
                         variante="contorno-claro"
-                        onClick={() => handleEdit(p)}
+                        onClick={() => void handleEdit("professor", p.id)}
                       >
                         <Edit className="size-4" />
                       </Button>
@@ -828,7 +861,7 @@ export function DashboardLayout() {
                   </tr>
                 </thead>
                 <tbody>
-                  {doacoesAdminData?.results?.map((d: any) => (
+                  {doacoesAdminData?.results?.map((d) => (
                     <tr key={d.id} className="border-t border-mist-200">
                       <td className="p-3 font-medium text-grafite">
                         {d.anonimo ? "Anônimo" : d.nome}
