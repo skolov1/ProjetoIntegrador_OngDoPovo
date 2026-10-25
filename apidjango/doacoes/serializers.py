@@ -184,7 +184,7 @@ class TurmaListSerializer(TurmaSerializer):
 
 
 class DoacaoItemSerializer(serializers.ModelSerializer):
-    item_rotulo = serializers.CharField(source="get_item_display", read_only=True)
+    item_rotulo = serializers.CharField(source="item_exibido", read_only=True)
     doador_exibido = serializers.CharField(read_only=True)
 
     class Meta:
@@ -192,6 +192,7 @@ class DoacaoItemSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "item",
+            "item_descricao",
             "item_rotulo",
             "quantidade",
             "doador_nome",
@@ -201,6 +202,28 @@ class DoacaoItemSerializer(serializers.ModelSerializer):
             "criado_em",
         ]
         read_only_fields = ["criado_em", "item_rotulo", "doador_exibido"]
+
+    # Dinheiro não se registra aqui: o PIX a ONG confere no extrato do banco.
+    PALAVRAS_PROIBIDAS = ("dinheiro", "pix", "r$", "reais")
+
+    def validate(self, attrs):
+        item = attrs.get("item", getattr(self.instance, "item", None))
+        descricao = attrs.get(
+            "item_descricao", getattr(self.instance, "item_descricao", "")
+        ).strip()
+        if item == DoacaoItem.Item.OUTRO:
+            if not descricao:
+                raise serializers.ValidationError(
+                    {"item_descricao": "Escreva qual item foi doado."}
+                )
+            if any(p in descricao.lower() for p in self.PALAVRAS_PROIBIDAS):
+                raise serializers.ValidationError(
+                    {"item_descricao": "Dinheiro não é registrado aqui, só itens."}
+                )
+        else:
+            descricao = ""
+        attrs["item_descricao"] = descricao
+        return attrs
 
 
 class DoacaoItemResumoSerializer(serializers.Serializer):

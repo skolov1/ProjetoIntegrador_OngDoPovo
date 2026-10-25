@@ -14,4 +14,5 @@ export const DoacoesItensResumoListItem = {
   CADEIRA_BANHO: 'CADEIRA_BANHO',
   CADEIRA_RODAS: 'CADEIRA_RODAS',
   MULETAS: 'MULETAS',
+  OUTRO: 'OUTRO',
 } as const;

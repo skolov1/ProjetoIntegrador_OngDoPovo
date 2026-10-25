@@ -10,6 +10,8 @@ import type { ItemEnum } from './itemEnum';
 export interface DoacaoItem {
   readonly id: number;
   item: ItemEnum;
+  /** @maxLength 100 */
+  item_descricao?: string;
   readonly item_rotulo: string;
   /**
      * @minimum 1

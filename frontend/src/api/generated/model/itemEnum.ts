@@ -11,6 +11,7 @@
  * * `CADEIRA_RODAS` - Cadeira de rodas
  * * `MULETAS` - Muletas
  * * `CADEIRA_BANHO` - Cadeira de banho
+ * * `OUTRO` - Outro
  */
 export type ItemEnum = typeof ItemEnum[keyof typeof ItemEnum];
 
@@ -20,4 +21,5 @@ export const ItemEnum = {
   CADEIRA_RODAS: 'CADEIRA_RODAS',
   MULETAS: 'MULETAS',
   CADEIRA_BANHO: 'CADEIRA_BANHO',
+  OUTRO: 'OUTRO',
 } as const;

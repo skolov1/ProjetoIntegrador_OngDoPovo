@@ -9,6 +9,8 @@ import type { ItemEnum } from './itemEnum';
 
 export interface DoacaoItemRequest {
   item: ItemEnum;
+  /** @maxLength 100 */
+  item_descricao?: string;
   /**
      * @minimum 1
      * @maximum 2147483647

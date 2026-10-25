@@ -136,11 +136,13 @@ const ITENS_DOACAO: [ItemEnum, string][] = [
   ["CADEIRA_RODAS", "Cadeira de rodas"],
   ["MULETAS", "Muletas"],
   ["CADEIRA_BANHO", "Cadeira de banho"],
+  ["OUTRO", "Outro (escrever)"],
 ];
 
 const hoje = () => new Date().toISOString().split("T")[0];
 const DOACAO_VAZIA = (): FormDoacao => ({
   item: "ALIMENTOS",
+  item_descricao: "",
   quantidade: "1",
   doador_nome: "",
   recebido_em: hoje(),
@@ -159,6 +161,7 @@ type Confirmacao = {
 };
 type FormDoacao = {
   item: ItemEnum;
+  item_descricao: string;
   quantidade: string;
   doador_nome: string;
   recebido_em: string;
@@ -356,7 +359,15 @@ export function DashboardLayout() {
       return;
     }
     setErroForm("");
-    const payload = { ...formDoacao, quantidade };
+    if (formDoacao.item === "OUTRO" && !formDoacao.item_descricao.trim()) {
+      setErroForm("Escreva qual item foi doado.");
+      return;
+    }
+    const payload = {
+      ...formDoacao,
+      item_descricao: formDoacao.item === "OUTRO" ? formDoacao.item_descricao.trim() : "",
+      quantidade,
+    };
     if (editingId !== null) {
       updateDoacao.mutate({ id: editingId, data: payload }, aoSalvar);
     } else {
@@ -491,6 +502,22 @@ export function DashboardLayout() {
               ))}
             </select>
           </label>
+          {formDoacao.item === "OUTRO" && (
+            <label className="text-sm text-grafite/70 lg:col-span-2">
+              Qual item?
+              <input
+                name="item_descricao"
+                placeholder="Ex.: bola de futsal, cobertores, brinquedos"
+                maxLength={100}
+                value={formDoacao.item_descricao}
+                onChange={(e) =>
+                  setFormDoacao({ ...formDoacao, item_descricao: e.target.value })
+                }
+                required
+                className={`${CLASSE_CAMPO} mt-1`}
+              />
+            </label>
+          )}
           <label className="text-sm text-grafite/70">
             Quantidade
             <input
@@ -1320,7 +1347,7 @@ export function DashboardLayout() {
                 Registrar doação
               </Button>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
               {(doacoesResumo ?? []).map((r) => (
                 <div key={r.item} className="rounded-xl bg-white p-6 shadow">
                   <p className="text-3xl font-bold text-verde">{r.total}</p>
@@ -1365,6 +1392,7 @@ export function DashboardLayout() {
                               closeForm();
                               setFormDoacao({
                                 item: d.item,
+                                item_descricao: d.item_descricao ?? "",
                                 quantidade: String(d.quantidade),
                                 doador_nome: d.doador_nome ?? "",
                                 recebido_em: d.recebido_em ?? hoje(),

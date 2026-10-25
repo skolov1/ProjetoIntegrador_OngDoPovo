@@ -760,11 +760,13 @@ paths:
           - CADEIRA_BANHO
           - CADEIRA_RODAS
           - MULETAS
+          - OUTRO
         description: |-
           * `ALIMENTOS` - Alimentos não perecíveis
           * `CADEIRA_RODAS` - Cadeira de rodas
           * `MULETAS` - Muletas
           * `CADEIRA_BANHO` - Cadeira de banho
+          * `OUTRO` - Outro
       - name: ordering
         required: false
         in: query
@@ -945,11 +947,13 @@ paths:
           - CADEIRA_BANHO
           - CADEIRA_RODAS
           - MULETAS
+          - OUTRO
         description: |-
           * `ALIMENTOS` - Alimentos não perecíveis
           * `CADEIRA_RODAS` - Cadeira de rodas
           * `MULETAS` - Muletas
           * `CADEIRA_BANHO` - Cadeira de banho
+          * `OUTRO` - Outro
       - name: ordering
         required: false
         in: query
@@ -2214,6 +2218,10 @@ components:
           readOnly: true
         item:
           $ref: '#/components/schemas/ItemEnum'
+        item_descricao:
+          type: string
+          title: Descrição do item
+          maxLength: 100
         item_rotulo:
           type: string
           readOnly: true
@@ -2251,6 +2259,10 @@ components:
       properties:
         item:
           $ref: '#/components/schemas/ItemEnum'
+        item_descricao:
+          type: string
+          title: Descrição do item
+          maxLength: 100
         quantidade:
           type: integer
           maximum: 2147483647
@@ -2431,12 +2443,14 @@ components:
       - CADEIRA_RODAS
       - MULETAS
       - CADEIRA_BANHO
+      - OUTRO
       type: string
       description: |-
         * `ALIMENTOS` - Alimentos não perecíveis
         * `CADEIRA_RODAS` - Cadeira de rodas
         * `MULETAS` - Muletas
         * `CADEIRA_BANHO` - Cadeira de banho
+        * `OUTRO` - Outro
     LoginResponse:
       type: object
       description: |-
@@ -2760,6 +2774,10 @@ components:
       properties:
         item:
           $ref: '#/components/schemas/ItemEnum'
+        item_descricao:
+          type: string
+          title: Descrição do item
+          maxLength: 100
         quantidade:
           type: integer
           maximum: 2147483647

@@ -13,6 +13,7 @@ export type DoacoesItensListParams = {
  * * `CADEIRA_RODAS` - Cadeira de rodas
  * * `MULETAS` - Muletas
  * * `CADEIRA_BANHO` - Cadeira de banho
+ * * `OUTRO` - Outro
  */
 item?: DoacoesItensListItem;
 /**

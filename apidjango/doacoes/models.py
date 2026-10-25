@@ -127,8 +127,11 @@ class DoacaoItem(models.Model):
         CADEIRA_RODAS = "CADEIRA_RODAS", "Cadeira de rodas"
         MULETAS = "MULETAS", "Muletas"
         CADEIRA_BANHO = "CADEIRA_BANHO", "Cadeira de banho"
+        OUTRO = "OUTRO", "Outro"
 
     item = models.CharField("item", max_length=20, choices=Item.choices)
+    # Só quando item = OUTRO: o que foi doado, escrito pela equipe.
+    item_descricao = models.CharField("descrição do item", max_length=100, blank=True)
     quantidade = models.PositiveIntegerField(
         "quantidade", default=1, validators=[MinValueValidator(1)]
     )
@@ -145,7 +148,14 @@ class DoacaoItem(models.Model):
         indexes = [models.Index(fields=["item"], name="doacaoitem_item_idx")]
 
     def __str__(self) -> str:
-        return f"{self.quantidade}x {self.get_item_display()} - {self.doador_exibido}"
+        return f"{self.quantidade}x {self.item_exibido} - {self.doador_exibido}"
+
+    @property
+    def item_exibido(self) -> str:
+        """Nome do item; para OUTRO, o que a equipe escreveu."""
+        if self.item == self.Item.OUTRO and self.item_descricao:
+            return self.item_descricao
+        return self.get_item_display()
 
     @property
     def doador_exibido(self) -> str:

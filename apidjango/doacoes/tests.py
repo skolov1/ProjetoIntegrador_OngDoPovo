@@ -793,6 +793,7 @@ class TestDoacaoItem:
             "CADEIRA_RODAS": 0,
             "MULETAS": 5,
             "CADEIRA_BANHO": 0,
+            "OUTRO": 0,
         }
 
     def test_filtra_por_item_e_edita_e_exclui(self, staff):
@@ -805,3 +806,40 @@ class TestDoacaoItem:
         ] == 4
         assert staff.delete(f"{self.URL}{a.id}/").status_code == 204
         assert DoacaoItem.objects.count() == 1
+
+    def test_item_outro_usa_o_texto_escrito(self, staff):
+        response = staff.post(
+            self.URL,
+            {"item": "OUTRO", "item_descricao": "Bola de futsal", "quantidade": 3},
+            format="json",
+        )
+
+        assert response.status_code == 201
+        assert response.data["item_rotulo"] == "Bola de futsal"
+
+    def test_item_outro_exige_descricao(self, staff):
+        response = staff.post(
+            self.URL, {"item": "OUTRO", "item_descricao": "  ", "quantidade": 1}, format="json"
+        )
+
+        assert response.status_code == 400
+        assert "item_descricao" in response.data
+
+    @pytest.mark.parametrize("texto", ["Dinheiro", "pix de 50", "R$ 20", "100 reais"])
+    def test_item_outro_nao_aceita_dinheiro(self, staff, texto):
+        response = staff.post(
+            self.URL, {"item": "OUTRO", "item_descricao": texto, "quantidade": 1}, format="json"
+        )
+
+        assert response.status_code == 400
+        assert "item_descricao" in response.data
+
+    def test_descricao_e_ignorada_quando_o_item_nao_e_outro(self, staff):
+        response = staff.post(
+            self.URL,
+            {"item": "MULETAS", "item_descricao": "qualquer coisa", "quantidade": 1},
+            format="json",
+        )
+
+        assert response.data["item_descricao"] == ""
+        assert response.data["item_rotulo"] == "Muletas"
