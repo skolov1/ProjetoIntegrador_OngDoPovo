@@ -496,6 +496,7 @@ export function DashboardLayout() {
       return (
         <FormModal
           title={editingId !== null ? "Editar Aluno" : "Novo Aluno"}
+          largura="max-w-3xl"
           onClose={closeForm}
           onSubmit={handleSubmitAluno}
           submitting={createAluno.isPending || updateAluno.isPending}
@@ -1207,9 +1208,11 @@ function FormModal({
   onClose,
   onSubmit,
   submitting,
+  largura = "max-w-md",
   children,
 }: {
   title: string;
+  largura?: string;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
   submitting: boolean;
@@ -1219,7 +1222,7 @@ function FormModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <form
         onSubmit={onSubmit}
-        className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+        className={`bg-white rounded-2xl p-6 w-full ${largura} max-h-[90vh] overflow-y-auto`}
       >
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-bold text-verde-escuro">{title}</h3>
