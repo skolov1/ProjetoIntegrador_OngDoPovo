@@ -13,7 +13,16 @@ from django.db import transaction
 from rest_framework import serializers
 
 from .documentos import cpf_valido, so_digitos, telefone_valido
-from .models import VERSAO_TERMO, Aluno, Consentimento, Doacao, Presenca, Professor, Turma
+from .models import (
+    VERSAO_TERMO,
+    Aluno,
+    Consentimento,
+    Doacao,
+    DoacaoItem,
+    Presenca,
+    Professor,
+    Turma,
+)
 
 # =============================================================================
 # Doação
@@ -167,6 +176,39 @@ class TurmaListSerializer(TurmaSerializer):
 
     class Meta(TurmaSerializer.Meta):
         fields = ["id", "nome", "horario_formatado", "ativo"]
+
+
+# =============================================================================
+# Doação de itens (registro da equipe no painel)
+# =============================================================================
+
+
+class DoacaoItemSerializer(serializers.ModelSerializer):
+    item_rotulo = serializers.CharField(source="get_item_display", read_only=True)
+    doador_exibido = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = DoacaoItem
+        fields = [
+            "id",
+            "item",
+            "item_rotulo",
+            "quantidade",
+            "doador_nome",
+            "doador_exibido",
+            "recebido_em",
+            "observacao",
+            "criado_em",
+        ]
+        read_only_fields = ["criado_em", "item_rotulo", "doador_exibido"]
+
+
+class DoacaoItemResumoSerializer(serializers.Serializer):
+    """Total recebido de cada item (soma das quantidades)."""
+
+    item = serializers.CharField()
+    item_rotulo = serializers.CharField()
+    total = serializers.IntegerField()
 
 
 # =============================================================================

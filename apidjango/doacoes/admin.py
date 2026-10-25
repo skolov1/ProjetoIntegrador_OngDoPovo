@@ -11,7 +11,7 @@ digitação rápida; o painel vira leitura e visualização.
 from django.contrib import admin
 from django.utils import timezone
 
-from .models import Aluno, Consentimento, Doacao, Presenca, Professor, Turma
+from .models import Aluno, Consentimento, Doacao, DoacaoItem, Presenca, Professor, Turma
 
 
 @admin.register(Doacao)
@@ -233,6 +233,14 @@ class AlunoAdmin(admin.ModelAdmin):
     @admin.display(description="CPF")
     def cpf_mascarado(self, obj: Aluno) -> str:
         return obj.cpf_mascarado or "—"
+
+
+@admin.register(DoacaoItem)
+class DoacaoItemAdmin(admin.ModelAdmin):
+    list_display = ("recebido_em", "item", "quantidade", "doador_exibido", "observacao")
+    list_filter = ("item", "recebido_em")
+    search_fields = ("doador_nome", "observacao")
+    date_hierarchy = "recebido_em"
 
 
 @admin.register(Presenca)

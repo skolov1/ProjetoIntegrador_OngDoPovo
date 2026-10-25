@@ -16,13 +16,20 @@ import {
   professoresUpdate,
   professoresDestroy,
 } from '@/api/generated/professores/professores'
-import { doacoesAdminList, doacoesResumoRetrieve } from '@/api/generated/doacoes/doacoes'
+import {
+  doacoesItensList,
+  doacoesItensCreate,
+  doacoesItensUpdate,
+  doacoesItensDestroy,
+  doacoesItensResumoList,
+} from '@/api/generated/doacoes/doacoes'
 import type {
   PaginatedTurmaListList,
   PaginatedAlunoListList,
   PaginatedProfessorList,
-  PaginatedDoacaoAdminList,
-  DoacaoResumo,
+  PaginatedDoacaoItemList,
+  DoacaoItemResumo,
+  DoacaoItemRequest,
 } from '@/api/generated/model'
 
 // Helper para extrair data da resposta do axios
@@ -150,18 +157,43 @@ export function useDeleteProfessor() {
 // DOAÇÕES
 // ============================================================================
 
-export function useDoacoesAdmin(params?: import('@/api/generated/model').DoacoesDoacoesAdminListParams) {
-  return useQuery<PaginatedDoacaoAdminList>({
-    queryKey: ['doacoes', 'admin', params],
-    queryFn: () => doacoesAdminList(params).then(extractData),
+export function useDoacoesItens(params?: import('@/api/generated/model').DoacoesItensListParams) {
+  return useQuery<PaginatedDoacaoItemList>({
+    queryKey: ['doacoes-itens', params],
+    queryFn: () => doacoesItensList(params).then(extractData),
     staleTime: 30_000,
   })
 }
 
-export function useDoacoesResumo() {
-  return useQuery<DoacaoResumo>({
-    queryKey: ['doacoes', 'resumo'],
-    queryFn: () => doacoesResumoRetrieve().then(extractData),
-    staleTime: 60_000,
+export function useDoacoesItensResumo() {
+  return useQuery<DoacaoItemResumo[]>({
+    queryKey: ['doacoes-itens', 'resumo'],
+    queryFn: () => doacoesItensResumoList().then(extractData),
+    staleTime: 30_000,
+  })
+}
+
+export function useCreateDoacaoItem() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: DoacaoItemRequest) => doacoesItensCreate(data).then(extractData),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['doacoes-itens'] }),
+  })
+}
+
+export function useUpdateDoacaoItem() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: DoacaoItemRequest }) =>
+      doacoesItensUpdate(id, data).then(extractData),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['doacoes-itens'] }),
+  })
+}
+
+export function useDeleteDoacaoItem() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => doacoesItensDestroy(id).then(extractData),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['doacoes-itens'] }),
   })
 }

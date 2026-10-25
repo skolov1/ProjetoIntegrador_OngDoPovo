@@ -38,8 +38,11 @@ import {
   useCreateProfessor,
   useUpdateProfessor,
   useDeleteProfessor,
-  useDoacoesAdmin,
-  useDoacoesResumo,
+  useDoacoesItens,
+  useDoacoesItensResumo,
+  useCreateDoacaoItem,
+  useUpdateDoacaoItem,
+  useDeleteDoacaoItem,
 } from "@/features/dashboard/api";
 import { encerrarSessao, restaurarSessao } from "@/lib/api";
 import { alunosRetrieve } from "@/api/generated/alunos/alunos";
@@ -49,6 +52,7 @@ import type {
   ComprovanteResidenciaEnum,
   DiaSemanaEnum,
   ExameAptidaoEnum,
+  ItemEnum,
   SexoEnum,
   TituloEleitorEnum,
 } from "@/api/generated/model";
@@ -126,6 +130,23 @@ const ALUNO_VAZIO: FormAluno = {
   ativo: true,
 };
 
+// Mesmos itens que a página do site pede além do PIX (dinheiro fica de fora).
+const ITENS_DOACAO: [ItemEnum, string][] = [
+  ["ALIMENTOS", "Alimentos não perecíveis"],
+  ["CADEIRA_RODAS", "Cadeira de rodas"],
+  ["MULETAS", "Muletas"],
+  ["CADEIRA_BANHO", "Cadeira de banho"],
+];
+
+const hoje = () => new Date().toISOString().split("T")[0];
+const DOACAO_VAZIA = (): FormDoacao => ({
+  item: "ALIMENTOS",
+  quantidade: "1",
+  doador_nome: "",
+  recebido_em: hoje(),
+  observacao: "",
+});
+
 const CLASSE_CAMPO =
   "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-grafite outline-none focus:border-verde focus:ring-4 focus:ring-verde/10";
 
@@ -135,6 +156,13 @@ type Confirmacao = {
   texto: string;
   rotulo: string;
   onConfirm: () => void;
+};
+type FormDoacao = {
+  item: ItemEnum;
+  quantidade: string;
+  doador_nome: string;
+  recebido_em: string;
+  observacao: string;
 };
 type FormProfessor = {
   nome: string;
@@ -166,7 +194,7 @@ function erroDoAluno(f: FormAluno, menor: boolean): string {
 export function DashboardLayout() {
   const [screen, setScreen] = useState<Screen>("presenca");
   const [showForm, setShowForm] = useState<
-    "turma" | "aluno" | "professor" | null
+    "turma" | "aluno" | "professor" | "doacao" | null
   >(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -180,6 +208,7 @@ export function DashboardLayout() {
     ativo: true,
   });
   const [formAluno, setFormAluno] = useState<FormAluno>(ALUNO_VAZIO);
+  const [formDoacao, setFormDoacao] = useState<FormDoacao>(DOACAO_VAZIA());
   const [erroForm, setErroForm] = useState("");
   const [confirmacao, setConfirmacao] = useState<Confirmacao | null>(null);
   const [formProfessor, setFormProfessor] = useState<FormProfessor>({
@@ -202,8 +231,8 @@ export function DashboardLayout() {
     isLoading: loadingAlunos,
     error: errorAlunos,
   } = useAlunos();
-  const { data: doacoesResumo } = useDoacoesResumo();
-  const { data: doacoesAdminData } = useDoacoesAdmin();
+  const { data: doacoesResumo } = useDoacoesItensResumo();
+  const { data: doacoesData } = useDoacoesItens();
   const { data: professoresData, isLoading: loadingProfessores } =
     useProfessores();
 
@@ -215,6 +244,9 @@ export function DashboardLayout() {
   const updateAluno = useUpdateAluno();
   const deleteAluno = useDeleteAluno();
   const alterarAtivoAluno = useAlterarAtivoAluno();
+  const createDoacao = useCreateDoacaoItem();
+  const updateDoacao = useUpdateDoacaoItem();
+  const deleteDoacao = useDeleteDoacaoItem();
   const createProfessor = useCreateProfessor();
   const updateProfessor = useUpdateProfessor();
   const deleteProfessor = useDeleteProfessor();
@@ -256,6 +288,7 @@ export function DashboardLayout() {
       ativo: true,
     });
     setFormAluno(ALUNO_VAZIO);
+    setFormDoacao(DOACAO_VAZIA());
     setErroForm("");
     setFormProfessor({
       nome: "",
@@ -312,6 +345,22 @@ export function DashboardLayout() {
       updateAluno.mutate({ id: editingId, data: payload }, aoSalvar);
     } else {
       createAluno.mutate(payload, aoSalvar);
+    }
+  };
+
+  const handleSubmitDoacao = (e: React.FormEvent) => {
+    e.preventDefault();
+    const quantidade = Number(formDoacao.quantidade);
+    if (!Number.isInteger(quantidade) || quantidade < 1) {
+      setErroForm("A quantidade precisa ser um número inteiro, de 1 para cima.");
+      return;
+    }
+    setErroForm("");
+    const payload = { ...formDoacao, quantidade };
+    if (editingId !== null) {
+      updateDoacao.mutate({ id: editingId, data: payload }, aoSalvar);
+    } else {
+      createDoacao.mutate(payload, aoSalvar);
     }
   };
 
@@ -381,7 +430,10 @@ export function DashboardLayout() {
     }
   };
 
-  const handleDelete = (id: number, type: "turma" | "aluno" | "professor") => {
+  const handleDelete = (
+    id: number,
+    type: "turma" | "aluno" | "professor" | "doacao",
+  ) => {
     const definitiva =
       type === "aluno"
         ? "Isso apaga de vez o cadastro, o consentimento e as presenças deste aluno. Não dá para desfazer."
@@ -393,6 +445,7 @@ export function DashboardLayout() {
       onConfirm: () => {
         if (type === "turma") deleteTurma.mutate(id);
         else if (type === "aluno") deleteAluno.mutate(id);
+        else if (type === "doacao") deleteDoacao.mutate(id);
         else deleteProfessor.mutate(id);
       },
     });
@@ -412,6 +465,90 @@ export function DashboardLayout() {
   const menor = ehMenor(formAluno.data_nascimento);
 
   const renderFormModal = () => {
+    if (showForm === "doacao")
+      return (
+        <FormModal
+          title={editingId !== null ? "Editar doação" : "Registrar doação"}
+          largura="max-w-3xl"
+          onClose={closeForm}
+          onSubmit={handleSubmitDoacao}
+          submitting={createDoacao.isPending || updateDoacao.isPending}
+        >
+          <label className="text-sm text-grafite/70">
+            Item
+            <select
+              name="item"
+              value={formDoacao.item}
+              onChange={(e) =>
+                setFormDoacao({ ...formDoacao, item: e.target.value as ItemEnum })
+              }
+              className={`${CLASSE_CAMPO} mt-1`}
+            >
+              {ITENS_DOACAO.map(([valor, rotulo]) => (
+                <option key={valor} value={valor}>
+                  {rotulo}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm text-grafite/70">
+            Quantidade
+            <input
+              type="number"
+              min={1}
+              step={1}
+              name="quantidade"
+              value={formDoacao.quantidade}
+              onChange={(e) =>
+                setFormDoacao({ ...formDoacao, quantidade: e.target.value })
+              }
+              required
+              className={`${CLASSE_CAMPO} mt-1`}
+            />
+          </label>
+          <label className="text-sm text-grafite/70">
+            Doador (vazio = anônimo)
+            <input
+              name="doador_nome"
+              value={formDoacao.doador_nome}
+              onChange={(e) =>
+                setFormDoacao({ ...formDoacao, doador_nome: e.target.value })
+              }
+              className={`${CLASSE_CAMPO} mt-1`}
+            />
+          </label>
+          <label className="text-sm text-grafite/70">
+            Recebido em
+            <input
+              type="date"
+              name="recebido_em"
+              value={formDoacao.recebido_em}
+              onChange={(e) =>
+                setFormDoacao({ ...formDoacao, recebido_em: e.target.value })
+              }
+              required
+              className={`${CLASSE_CAMPO} mt-1`}
+            />
+          </label>
+          <label className="text-sm text-grafite/70 lg:col-span-2">
+            Observação (opcional)
+            <input
+              name="observacao"
+              placeholder="Ex.: 2 kg de arroz, cadeira usada"
+              value={formDoacao.observacao}
+              onChange={(e) =>
+                setFormDoacao({ ...formDoacao, observacao: e.target.value })
+              }
+              className={`${CLASSE_CAMPO} mt-1`}
+            />
+          </label>
+          {erroForm && (
+            <p role="alert" className="lg:col-span-2 text-sm text-vermelho">
+              {erroForm}
+            </p>
+          )}
+        </FormModal>
+      );
     if (showForm === "turma")
       return (
         <FormModal
@@ -1165,65 +1302,98 @@ export function DashboardLayout() {
           </div>
         )}
 
-        {/* DOAÇÕES */}
+        {/* DOAÇÕES (só itens; o PIX a ONG confere no extrato) */}
         {screen === "doacoes" && (
           <div className="mt-6 space-y-4">
-            <h3 className="text-xl font-bold text-verde">Doações</h3>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="rounded-xl bg-white p-6 shadow">
-                <p className="text-3xl font-bold text-verde">
-                  R$ {doacoesResumo?.total || "0,00"}
-                </p>
-                <p className="text-sm text-grafite/60">Confirmadas</p>
-              </div>
-              <div className="rounded-xl bg-white p-6 shadow">
-                <p className="text-3xl font-bold text-vermelho">
-                  {doacoesAdminData?.count || 0}
-                </p>
-                <p className="text-sm text-grafite/60">Total</p>
-              </div>
-              <div className="rounded-xl bg-white p-6 shadow">
-                <p className="text-3xl font-bold text-grafite">
-                  {doacoesAdminData?.count || 0}
-                </p>
-                <p className="text-sm text-grafite/60">Total de doações</p>
-              </div>
+            <div className="flex justify-between items-center">
+              <h3 className="text-xl font-bold text-verde">
+                Doações de itens
+              </h3>
+              <Button
+                variante="secundaria"
+                onClick={() => {
+                  closeForm();
+                  setShowForm("doacao");
+                }}
+              >
+                <Plus className="size-4 mr-2" />
+                Registrar doação
+              </Button>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {(doacoesResumo ?? []).map((r) => (
+                <div key={r.item} className="rounded-xl bg-white p-6 shadow">
+                  <p className="text-3xl font-bold text-verde">{r.total}</p>
+                  <p className="text-sm text-grafite/60">{r.item_rotulo}</p>
+                </div>
+              ))}
             </div>
             <div className="overflow-x-auto">
               <table className="w-full bg-white rounded-xl shadow">
                 <thead className="bg-mist-100">
                   <tr className="text-left text-grafite/70 text-sm">
-                    <th className="p-3">Doador</th>
-                    <th className="p-3">Valor</th>
-                    <th className="p-3">Destinação</th>
-                    <th className="p-3">Status</th>
                     <th className="p-3">Data</th>
+                    <th className="p-3">Item</th>
+                    <th className="p-3">Qtd.</th>
+                    <th className="p-3">Doador</th>
+                    <th className="p-3">Observação</th>
+                    <th className="p-3">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {doacoesAdminData?.results?.map((d) => (
+                  {(doacoesData?.results ?? []).map((d) => (
                     <tr key={d.id} className="border-t border-mist-200">
-                      <td className="p-3 font-medium text-grafite">
-                        {d.anonimo ? "Anônimo" : d.nome}
+                      <td className="p-3 text-grafite/60 text-sm">
+                        {new Date(`${d.recebido_em}T00:00:00`).toLocaleDateString("pt-BR")}
                       </td>
-                      <td className="p-3 text-grafite/60">
-                        R$ {Number(d.valor).toFixed(2)}
+                      <td className="p-3 font-medium text-grafite">
+                        {d.item_rotulo}
+                      </td>
+                      <td className="p-3 text-grafite/60">{d.quantidade}</td>
+                      <td className="p-3 text-grafite/60 text-sm">
+                        {d.doador_exibido}
                       </td>
                       <td className="p-3 text-grafite/60 text-sm">
-                        {d.destinacao}
+                        {d.observacao || "—"}
                       </td>
                       <td className="p-3">
-                        <span
-                          className={`px-2 py-1 rounded text-xs ${d.status === "CONFIRMADA" ? "bg-verde/10 text-verde" : d.status === "PENDENTE" ? "bg-amarelo/10 text-amarelo" : "bg-vermelho/10 text-vermelho"}`}
-                        >
-                          {d.status}
-                        </span>
-                      </td>
-                      <td className="p-3 text-grafite/60 text-sm">
-                        {new Date(d.criado_em).toLocaleDateString("pt-BR")}
+                        <div className="flex gap-2">
+                          <Button
+                            variante="contorno-claro"
+                            aria-label="Editar doação"
+                            onClick={() => {
+                              closeForm();
+                              setFormDoacao({
+                                item: d.item,
+                                quantidade: String(d.quantidade),
+                                doador_nome: d.doador_nome ?? "",
+                                recebido_em: d.recebido_em ?? hoje(),
+                                observacao: d.observacao ?? "",
+                              });
+                              setEditingId(d.id);
+                              setShowForm("doacao");
+                            }}
+                          >
+                            <Edit className="size-4" />
+                          </Button>
+                          <Button
+                            variante="contorno-claro"
+                            aria-label="Excluir doação"
+                            onClick={() => handleDelete(d.id, "doacao")}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
+                  {doacoesData?.results?.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="p-6 text-center text-grafite/50">
+                        Nenhuma doação de item registrada ainda.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

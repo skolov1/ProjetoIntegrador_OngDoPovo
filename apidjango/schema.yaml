@@ -745,6 +745,236 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedDoacaoAdminList'
           description: ''
+  /doacoes/itens/:
+    get:
+      operationId: doacoes_itens_list
+      description: Registro de doações de itens (alimentos, cadeiras, muletas), só
+        da equipe.
+      parameters:
+      - in: query
+        name: item
+        schema:
+          type: string
+          enum:
+          - ALIMENTOS
+          - CADEIRA_BANHO
+          - CADEIRA_RODAS
+          - MULETAS
+        description: |-
+          * `ALIMENTOS` - Alimentos não perecíveis
+          * `CADEIRA_RODAS` - Cadeira de rodas
+          * `MULETAS` - Muletas
+          * `CADEIRA_BANHO` - Cadeira de banho
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - doacoes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDoacaoItemList'
+          description: ''
+    post:
+      operationId: doacoes_itens_create
+      description: Registro de doações de itens (alimentos, cadeiras, muletas), só
+        da equipe.
+      tags:
+      - doacoes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoacaoItemRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DoacaoItemRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DoacaoItemRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoacaoItem'
+          description: ''
+  /doacoes/itens/{id}/:
+    get:
+      operationId: doacoes_itens_retrieve
+      description: Registro de doações de itens (alimentos, cadeiras, muletas), só
+        da equipe.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Doação de item.
+        required: true
+      tags:
+      - doacoes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoacaoItem'
+          description: ''
+    put:
+      operationId: doacoes_itens_update
+      description: Registro de doações de itens (alimentos, cadeiras, muletas), só
+        da equipe.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Doação de item.
+        required: true
+      tags:
+      - doacoes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoacaoItemRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DoacaoItemRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DoacaoItemRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoacaoItem'
+          description: ''
+    patch:
+      operationId: doacoes_itens_partial_update
+      description: Registro de doações de itens (alimentos, cadeiras, muletas), só
+        da equipe.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Doação de item.
+        required: true
+      tags:
+      - doacoes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDoacaoItemRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDoacaoItemRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDoacaoItemRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoacaoItem'
+          description: ''
+    delete:
+      operationId: doacoes_itens_destroy
+      description: Registro de doações de itens (alimentos, cadeiras, muletas), só
+        da equipe.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Doação de item.
+        required: true
+      tags:
+      - doacoes
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /doacoes/itens/resumo/:
+    get:
+      operationId: doacoes_itens_resumo_list
+      description: Soma das quantidades por item, incluindo os que ainda estão em
+        zero.
+      summary: Total recebido de cada item
+      parameters:
+      - in: query
+        name: item
+        schema:
+          type: string
+          enum:
+          - ALIMENTOS
+          - CADEIRA_BANHO
+          - CADEIRA_RODAS
+          - MULETAS
+        description: |-
+          * `ALIMENTOS` - Alimentos não perecíveis
+          * `CADEIRA_RODAS` - Cadeira de rodas
+          * `MULETAS` - Muletas
+          * `CADEIRA_BANHO` - Cadeira de banho
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - doacoes
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DoacaoItemResumo'
+          description: ''
   /doacoes/publico/:
     get:
       operationId: doacoes_publico_list
@@ -1976,6 +2206,82 @@ components:
       - id
       - mensagem
       - status
+    DoacaoItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        item:
+          $ref: '#/components/schemas/ItemEnum'
+        item_rotulo:
+          type: string
+          readOnly: true
+        quantidade:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+        doador_nome:
+          type: string
+          title: Doador
+          maxLength: 150
+        doador_exibido:
+          type: string
+          readOnly: true
+        recebido_em:
+          type: string
+          format: date
+        observacao:
+          type: string
+          title: Observação
+          maxLength: 255
+        criado_em:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Registrado em
+      required:
+      - criado_em
+      - doador_exibido
+      - id
+      - item
+      - item_rotulo
+    DoacaoItemRequest:
+      type: object
+      properties:
+        item:
+          $ref: '#/components/schemas/ItemEnum'
+        quantidade:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+        doador_nome:
+          type: string
+          title: Doador
+          maxLength: 150
+        recebido_em:
+          type: string
+          format: date
+        observacao:
+          type: string
+          title: Observação
+          maxLength: 255
+      required:
+      - item
+    DoacaoItemResumo:
+      type: object
+      description: Total recebido de cada item (soma das quantidades).
+      properties:
+        item:
+          type: string
+        item_rotulo:
+          type: string
+        total:
+          type: integer
+      required:
+      - item
+      - item_rotulo
+      - total
     DoacaoPublic:
       type: object
       description: |-
@@ -2119,6 +2425,18 @@ components:
         * `DINHEIRO` - Dinheiro
         * `CARTAO` - Cartão
         * `TRANSFERENCIA` - Transferência
+    ItemEnum:
+      enum:
+      - ALIMENTOS
+      - CADEIRA_RODAS
+      - MULETAS
+      - CADEIRA_BANHO
+      type: string
+      description: |-
+        * `ALIMENTOS` - Alimentos não perecíveis
+        * `CADEIRA_RODAS` - Cadeira de rodas
+        * `MULETAS` - Muletas
+        * `CADEIRA_BANHO` - Cadeira de banho
     LoginResponse:
       type: object
       description: |-
@@ -2225,6 +2543,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DoacaoAdmin'
+    PaginatedDoacaoItemList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DoacaoItem'
     PaginatedPresencaList:
       type: object
       required:
@@ -2414,6 +2755,26 @@ components:
           $ref: '#/components/schemas/StatusEnum'
         mensagem:
           type: string
+    PatchedDoacaoItemRequest:
+      type: object
+      properties:
+        item:
+          $ref: '#/components/schemas/ItemEnum'
+        quantidade:
+          type: integer
+          maximum: 2147483647
+          minimum: 1
+        doador_nome:
+          type: string
+          title: Doador
+          maxLength: 150
+        recebido_em:
+          type: string
+          format: date
+        observacao:
+          type: string
+          title: Observação
+          maxLength: 255
     PatchedPresencaRequest:
       type: object
       description: Serializer completo da presença.

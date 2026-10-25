@@ -12,6 +12,7 @@ from . import views
 
 router = DefaultRouter()
 router.register("doacoes/admin", views.DoacaoAdminViewSet, basename="doacao-admin")
+router.register("doacoes/itens", views.DoacaoItemViewSet, basename="doacao-item")
 router.register("turmas", views.TurmaViewSet, basename="turma")
 router.register("alunos", views.AlunoViewSet, basename="aluno")
 router.register("presencas", views.PresencaViewSet, basename="presenca")

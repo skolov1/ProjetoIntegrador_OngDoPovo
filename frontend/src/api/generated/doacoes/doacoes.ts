@@ -9,15 +9,22 @@ import type {
   DoacaoAdmin,
   DoacaoAdminRequest,
   DoacaoCriada,
+  DoacaoItem,
+  DoacaoItemRequest,
+  DoacaoItemResumo,
   DoacaoPublic,
   DoacaoPublicCreateRequest,
   DoacaoResumo,
   DoacoesAdminCancelarCreateParams,
   DoacoesAdminConfirmarCreateParams,
   DoacoesAdminListParams,
+  DoacoesItensListParams,
+  DoacoesItensResumoListParams,
   DoacoesPublicoListParams,
   PaginatedDoacaoAdminList,
-  PatchedDoacaoAdminRequest
+  PaginatedDoacaoItemList,
+  PatchedDoacaoAdminRequest,
+  PatchedDoacaoItemRequest
 } from '../model';
 
 import { api } from '../../../lib/api';
@@ -175,6 +182,94 @@ export const doacoesAdminConfirmarCreate = (
       );
     }
   /**
+ * Registro de doações de itens (alimentos, cadeiras, muletas), só da equipe.
+ */
+export const doacoesItensList = (
+    params?: DoacoesItensListParams,
+ ) => {
+      return api<PaginatedDoacaoItemList>(
+      {url: `/doacoes/itens/`, method: 'GET',
+        params
+    },
+      );
+    }
+  /**
+ * Registro de doações de itens (alimentos, cadeiras, muletas), só da equipe.
+ */
+export const doacoesItensCreate = (
+    doacaoItemRequest: DoacaoItemRequest,
+ ) => {
+      return api<DoacaoItem>(
+      {url: `/doacoes/itens/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: doacaoItemRequest
+    },
+      );
+    }
+  /**
+ * Registro de doações de itens (alimentos, cadeiras, muletas), só da equipe.
+ */
+export const doacoesItensRetrieve = (
+    id: number,
+ ) => {
+      return api<DoacaoItem>(
+      {url: `/doacoes/itens/${id}/`, method: 'GET'
+    },
+      );
+    }
+  /**
+ * Registro de doações de itens (alimentos, cadeiras, muletas), só da equipe.
+ */
+export const doacoesItensUpdate = (
+    id: number,
+    doacaoItemRequest: DoacaoItemRequest,
+ ) => {
+      return api<DoacaoItem>(
+      {url: `/doacoes/itens/${id}/`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: doacaoItemRequest
+    },
+      );
+    }
+  /**
+ * Registro de doações de itens (alimentos, cadeiras, muletas), só da equipe.
+ */
+export const doacoesItensPartialUpdate = (
+    id: number,
+    patchedDoacaoItemRequest?: PatchedDoacaoItemRequest,
+ ) => {
+      return api<DoacaoItem>(
+      {url: `/doacoes/itens/${id}/`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: patchedDoacaoItemRequest
+    },
+      );
+    }
+  /**
+ * Registro de doações de itens (alimentos, cadeiras, muletas), só da equipe.
+ */
+export const doacoesItensDestroy = (
+    id: number,
+ ) => {
+      return api<void>(
+      {url: `/doacoes/itens/${id}/`, method: 'DELETE'
+    },
+      );
+    }
+  /**
+ * Soma das quantidades por item, incluindo os que ainda estão em zero.
+ * @summary Total recebido de cada item
+ */
+export const doacoesItensResumoList = (
+    params?: DoacoesItensResumoListParams,
+ ) => {
+      return api<DoacaoItemResumo[]>(
+      {url: `/doacoes/itens/resumo/`, method: 'GET',
+        params
+    },
+      );
+    }
+  /**
  * GET /api/v1/doacoes/publico/
  *
  * Mural de doações. Só CONFIRMADAS e sem nenhum dado pessoal.
@@ -210,5 +305,12 @@ export type DoacoesAdminDestroyResult = NonNullable<Awaited<ReturnType<typeof do
 export type DoacoesAdminConfirmadaCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesAdminConfirmadaCreate>>>
 export type DoacoesAdminCancelarCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesAdminCancelarCreate>>>
 export type DoacoesAdminConfirmarCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesAdminConfirmarCreate>>>
+export type DoacoesItensListResult = NonNullable<Awaited<ReturnType<typeof doacoesItensList>>>
+export type DoacoesItensCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesItensCreate>>>
+export type DoacoesItensRetrieveResult = NonNullable<Awaited<ReturnType<typeof doacoesItensRetrieve>>>
+export type DoacoesItensUpdateResult = NonNullable<Awaited<ReturnType<typeof doacoesItensUpdate>>>
+export type DoacoesItensPartialUpdateResult = NonNullable<Awaited<ReturnType<typeof doacoesItensPartialUpdate>>>
+export type DoacoesItensDestroyResult = NonNullable<Awaited<ReturnType<typeof doacoesItensDestroy>>>
+export type DoacoesItensResumoListResult = NonNullable<Awaited<ReturnType<typeof doacoesItensResumoList>>>
 export type DoacoesPublicoListResult = NonNullable<Awaited<ReturnType<typeof doacoesPublicoList>>>
 export type DoacoesResumoRetrieveResult = NonNullable<Awaited<ReturnType<typeof doacoesResumoRetrieve>>>

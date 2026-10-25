@@ -115,6 +115,43 @@ class Doacao(models.Model):
         self.save(update_fields=["status"])
 
 
+class DoacaoItem(models.Model):
+    """Doação de item físico registrada pela equipe no painel.
+
+    Os itens são os que a página do site pede além do PIX. Dinheiro não entra
+    aqui: o PIX a ONG confere no extrato do banco.
+    """
+
+    class Item(models.TextChoices):
+        ALIMENTOS = "ALIMENTOS", "Alimentos não perecíveis"
+        CADEIRA_RODAS = "CADEIRA_RODAS", "Cadeira de rodas"
+        MULETAS = "MULETAS", "Muletas"
+        CADEIRA_BANHO = "CADEIRA_BANHO", "Cadeira de banho"
+
+    item = models.CharField("item", max_length=20, choices=Item.choices)
+    quantidade = models.PositiveIntegerField(
+        "quantidade", default=1, validators=[MinValueValidator(1)]
+    )
+    # Só o necessário: o nome é opcional (vazio = doador anônimo).
+    doador_nome = models.CharField("doador", max_length=150, blank=True)
+    recebido_em = models.DateField("recebido em", default=timezone.localdate)
+    observacao = models.CharField("observação", max_length=255, blank=True)
+    criado_em = models.DateTimeField("registrado em", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Doação de item"
+        verbose_name_plural = "Doações de itens"
+        ordering = ["-recebido_em", "-criado_em"]
+        indexes = [models.Index(fields=["item"], name="doacaoitem_item_idx")]
+
+    def __str__(self) -> str:
+        return f"{self.quantidade}x {self.get_item_display()} - {self.doador_exibido}"
+
+    @property
+    def doador_exibido(self) -> str:
+        return self.doador_nome or "Anônimo"
+
+
 # =============================================================================
 # Modelos de Presença / Alunos / Turmas / Professores
 # =============================================================================

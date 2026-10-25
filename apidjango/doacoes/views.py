@@ -7,6 +7,7 @@ sobre o risco de um doador se auto-declarar CONFIRMADA.
 
 from datetime import date
 from django.db import transaction
+from django.db.models import Sum
 from django.utils import timezone
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import mixins, status, viewsets
@@ -16,12 +17,14 @@ from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Aluno, Doacao, Presenca, Professor, Turma
+from .models import Aluno, Doacao, DoacaoItem, Presenca, Professor, Turma
 from .serializers import (
     AlunoListSerializer,
     AlunoSerializer,
     DoacaoAdminSerializer,
     DoacaoCriadaSerializer,
+    DoacaoItemResumoSerializer,
+    DoacaoItemSerializer,
     DoacaoPublicCreateSerializer,
     DoacaoPublicSerializer,
     DoacaoResumoSerializer,
@@ -242,6 +245,42 @@ class DoacaoAdminViewSet(
 # =============================================================================
 # Turma
 # =============================================================================
+
+
+class DoacaoItemViewSet(
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet,
+):
+    """Registro de doações de itens (alimentos, cadeiras, muletas), só da equipe."""
+
+    queryset = DoacaoItem.objects.all()
+    serializer_class = DoacaoItemSerializer
+    permission_classes = [IsAdminUser]
+    filterset_fields = ["item"]
+    search_fields = ["doador_nome", "observacao"]
+    ordering_fields = ["recebido_em", "quantidade"]
+    ordering = ["-recebido_em", "-criado_em"]
+
+    @extend_schema(
+        summary="Total recebido de cada item",
+        tags=["doacoes"],
+        responses={200: DoacaoItemResumoSerializer(many=True)},
+    )
+    @action(detail=False, methods=["get"], url_path="resumo", pagination_class=None)
+    def resumo(self, request):
+        """Soma das quantidades por item, incluindo os que ainda estão em zero."""
+        totais = dict(
+            DoacaoItem.objects.values_list("item").annotate(total=Sum("quantidade"))
+        )
+        dados = [
+            {"item": valor, "item_rotulo": rotulo, "total": totais.get(valor, 0)}
+            for valor, rotulo in DoacaoItem.Item.choices
+        ]
+        return Response(DoacaoItemResumoSerializer(dados, many=True).data)
 
 
 class TurmaViewSet(

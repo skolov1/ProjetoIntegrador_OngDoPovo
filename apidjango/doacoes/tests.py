@@ -14,7 +14,7 @@ from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 
 from .documentos import cpf_valido, mascarar_cpf, telefone_valido
-from .models import Aluno, Consentimento, Doacao, Turma
+from .models import Aluno, Consentimento, Doacao, DoacaoItem, Turma
 
 pytestmark = pytest.mark.django_db
 
@@ -726,3 +726,82 @@ class TestAlunoLGPD:
         item = staff.get(self.URL).data["results"][0]
 
         assert item["documentos_pendentes"] == []
+
+
+class TestDoacaoItem:
+    URL = "/api/v1/doacoes/itens/"
+
+    @pytest.fixture
+    def staff(self, cliente, admin):
+        cliente.force_authenticate(admin)
+        return cliente
+
+    def test_anonimo_nao_acessa(self, cliente):
+        assert cliente.get(self.URL).status_code in (401, 403)
+        assert cliente.post(self.URL, {"item": "MULETAS"}, format="json").status_code in (
+            401,
+            403,
+        )
+
+    def test_usuario_sem_staff_nao_acessa(self, cliente, nao_admin):
+        cliente.force_authenticate(nao_admin)
+
+        assert cliente.get(self.URL).status_code == 403
+
+    def test_registra_doacao_de_item(self, staff):
+        response = staff.post(
+            self.URL,
+            {"item": "MULETAS", "quantidade": 2, "doador_nome": "Joana", "observacao": "usadas"},
+            format="json",
+        )
+
+        assert response.status_code == 201
+        assert response.data["item_rotulo"] == "Muletas"
+        assert response.data["doador_exibido"] == "Joana"
+        assert DoacaoItem.objects.count() == 1
+
+    def test_doador_vazio_aparece_como_anonimo(self, staff):
+        response = staff.post(self.URL, {"item": "ALIMENTOS", "quantidade": 5}, format="json")
+
+        assert response.data["doador_exibido"] == "Anônimo"
+
+    @pytest.mark.parametrize("item", ["DINHEIRO", "PIX", "", "BOLA"])
+    def test_so_aceita_os_itens_da_pagina(self, staff, item):
+        response = staff.post(self.URL, {"item": item, "quantidade": 1}, format="json")
+
+        assert response.status_code == 400
+        assert "item" in response.data
+
+    @pytest.mark.parametrize("quantidade", [0, -1])
+    def test_quantidade_precisa_ser_positiva(self, staff, quantidade):
+        response = staff.post(
+            self.URL, {"item": "MULETAS", "quantidade": quantidade}, format="json"
+        )
+
+        assert response.status_code == 400
+        assert "quantidade" in response.data
+
+    def test_resumo_soma_por_item_e_lista_os_zerados(self, staff):
+        DoacaoItem.objects.create(item="MULETAS", quantidade=2)
+        DoacaoItem.objects.create(item="MULETAS", quantidade=3)
+        DoacaoItem.objects.create(item="ALIMENTOS", quantidade=10)
+
+        totais = {r["item"]: r["total"] for r in staff.get(self.URL + "resumo/").data}
+
+        assert totais == {
+            "ALIMENTOS": 10,
+            "CADEIRA_RODAS": 0,
+            "MULETAS": 5,
+            "CADEIRA_BANHO": 0,
+        }
+
+    def test_filtra_por_item_e_edita_e_exclui(self, staff):
+        a = DoacaoItem.objects.create(item="MULETAS", quantidade=1)
+        DoacaoItem.objects.create(item="ALIMENTOS", quantidade=1)
+
+        assert staff.get(self.URL, {"item": "MULETAS"}).data["count"] == 1
+        assert staff.patch(f"{self.URL}{a.id}/", {"quantidade": 4}, format="json").data[
+            "quantidade"
+        ] == 4
+        assert staff.delete(f"{self.URL}{a.id}/").status_code == 204
+        assert DoacaoItem.objects.count() == 1
