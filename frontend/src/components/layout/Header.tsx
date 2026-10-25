@@ -101,11 +101,11 @@ export function Header() {
               {ONG.nome}
             </span>
             <span
-              className={`mt-0.5 text-[0.6rem] font-bold uppercase tracking-[0.15em] transition-colors ${
+              className={`mt-0.5 text-[0.5rem] font-bold uppercase tracking-[0.15em] transition-colors ${
                 rolou || menuAberto ? 'text-mist-200' : 'text-verde'
               }`}
             >
-              {ONG.areas.join(' · ')}
+              {ONG.slogan}
             </span>
           </span>
         </a>

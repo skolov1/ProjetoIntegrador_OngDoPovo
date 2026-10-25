@@ -62,7 +62,7 @@ export function ImpactSection() {
         rays={28}
         fill={0.05}
         spin={false}
-        className="pointer-events-none absolute -top-32 -left-40 text-white opacity-30 select-none"
+        className="pointer-events-none absolute -bottom-40 -right-48 text-white opacity-30 select-none"
       />
 
       <div className="relative">

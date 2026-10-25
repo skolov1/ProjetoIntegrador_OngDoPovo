@@ -41,7 +41,8 @@ export function DonationSection() {
         size={620}
         rays={30}
         fill={0.05}
-        className="pointer-events-none absolute -right-40 -bottom-48 text-white opacity-25 select-none"
+        spin={false}
+        className="pointer-events-none absolute -right-44 -bottom-48 text-white opacity-25 select-none"
       />
 
       <div className="relative grid items-center gap-10 lg:grid-cols-[1fr_1fr] lg:gap-14">
