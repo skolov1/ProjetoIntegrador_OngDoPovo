@@ -134,7 +134,6 @@ pnpm dev                  # roda em http://localhost:5173
 * API schema: <http://localhost:8000/api/schema/>
 * Swagger UI: <http://localhost:8000/api/docs/>
 * Dashboard admin: <http://localhost:5173/dashboard> (login com JWT cookie)
-```
 
 ---
 
@@ -166,6 +165,6 @@ pnpm dev                  # roda em http://localhost:5173
 
 ## 📸prints e Referências
 
-* Landing page redesign: confira `refs/site-ong-do-povo (1).png`.
+* Landing page redesign: [confira aqui](https://github.com/skolov1/ProjetoIntegrador_OngDoPovo/blob/voloki/refs/site_ongdopovo_print.png).
 * Decisões de arquitetura: `ALTERACOES_FASE0_E_LANDING.md` e `PLANO_REMODELAGEM.md`.
 * Documentação detalhada de anotações: `refs/AnotacoesFormatadas08-10.md`.
