@@ -59,6 +59,7 @@ export * from './doacoesProfessoresListParams';
 export * from './doacoesPublicoListParams';
 export * from './doacoesTurmasListDiaSemana';
 export * from './doacoesTurmasListParams';
+export * from './exameAptidaoEnum';
 export * from './formaPagamentoEnum';
 export * from './loginResponse';
 export * from './loginUser';

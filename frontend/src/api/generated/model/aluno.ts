@@ -5,10 +5,15 @@
  * API do Sistema ONG do Povo (Projeto Integrador). O schema em /api/schema/ alimenta o gerador de client do frontend.
  * OpenAPI spec version: 1.0.0
  */
+import type { ExameAptidaoEnum } from './exameAptidaoEnum';
 import type { SexoEnum } from './sexoEnum';
 
 /**
  * Serializer completo do aluno (admin).
+ *
+ * Regras de LGPD: menor de 18 anos não tem CPF próprio (o CPF fica no
+ * responsável) e só salva com a autorização do responsável, que vira um
+ * registro de `Consentimento`.
  */
 export interface Aluno {
   readonly id: number;
@@ -17,25 +22,28 @@ export interface Aluno {
   data_nascimento: string;
   sexo?: SexoEnum;
   /** @maxLength 20 */
-  rg: string;
+  rg?: string;
+  /**
+     * @maxLength 14
+     * @nullable
+     */
+  cpf?: string | null;
+  /** @maxLength 150 */
+  nome_responsavel?: string;
   /** @maxLength 14 */
-  cpf: string;
+  cpf_responsavel?: string;
+  /** @maxLength 20 */
+  rg_responsavel?: string;
+  /** @maxLength 20 */
+  telefone_responsavel?: string;
+  /** @maxLength 255 */
+  endereco_responsavel?: string;
+  exame_aptidao?: ExameAptidaoEnum;
   /** @nullable */
-  comprovante_residencia?: string | null;
-  /**
-     * @maxLength 20
-     * @nullable
-     */
-  titulo_eleitor?: string | null;
-  /**
-     * @maxLength 20
-     * @nullable
-     */
-  rg_responsavel?: string | null;
+  exame_validade?: string | null;
   /** @nullable */
-  certificado_nascimento?: string | null;
-  /** @nullable */
-  atestado_medico?: string | null;
+  readonly exame_situacao: string | null;
+  readonly consentimento_registrado: boolean;
   /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */
   mensalidade?: string;
   /** @nullable */

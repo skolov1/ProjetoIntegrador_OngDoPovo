@@ -1514,7 +1514,12 @@ components:
       - access
     Aluno:
       type: object
-      description: Serializer completo do aluno (admin).
+      description: |-
+        Serializer completo do aluno (admin).
+
+        Regras de LGPD: menor de 18 anos não tem CPF próprio (o CPF fica no
+        responsável) e só salva com a autorização do responsável, que vira um
+        registro de `Consentimento`.
       properties:
         id:
           type: integer
@@ -1531,35 +1536,48 @@ components:
           $ref: '#/components/schemas/SexoEnum'
         rg:
           type: string
+          title: RG ou certidão de nascimento
           maxLength: 20
         cpf:
           type: string
+          nullable: true
           maxLength: 14
-        comprovante_residencia:
+        nome_responsavel:
           type: string
-          format: uri
-          nullable: true
-          title: Comprovante de residência
-        titulo_eleitor:
+          title: Nome do responsável
+          maxLength: 150
+        cpf_responsavel:
           type: string
-          nullable: true
-          title: Título de eleitor
-          maxLength: 20
+          title: CPF do responsável
+          maxLength: 14
         rg_responsavel:
           type: string
-          nullable: true
           title: RG do responsável
           maxLength: 20
-        certificado_nascimento:
+        telefone_responsavel:
           type: string
-          format: uri
-          nullable: true
-          title: Certidão de nascimento
-        atestado_medico:
+          title: Telefone do responsável
+          maxLength: 20
+        endereco_responsavel:
           type: string
-          format: uri
+          title: Endereço do responsável
+          maxLength: 255
+        exame_aptidao:
+          allOf:
+          - $ref: '#/components/schemas/ExameAptidaoEnum'
+          title: Exame de aptidão física
+        exame_validade:
+          type: string
+          format: date
           nullable: true
-          title: Atestado médico de aptidão física
+          title: Validade do exame
+        exame_situacao:
+          type: string
+          readOnly: true
+          nullable: true
+        consentimento_registrado:
+          type: boolean
+          readOnly: true
         mensalidade:
           type: string
           format: decimal
@@ -1595,18 +1613,22 @@ components:
       required:
       - atualizado_em
       - campos_obrigatorios_faltando
-      - cpf
+      - consentimento_registrado
       - criado_em
       - data_nascimento
       - eh_maior_de_idade
+      - exame_situacao
       - id
       - idade
       - nome
-      - rg
       - turma_nome
     AlunoList:
       type: object
-      description: Listagem leve para tabelas.
+      description: |-
+        Listagem leve para tabelas.
+
+        Não traz o CPF completo (só mascarado, e só para maior de idade) nem dados do
+        responsável: o cadastro completo aparece ao abrir a edição.
       properties:
         id:
           type: integer
@@ -1615,12 +1637,20 @@ components:
           type: string
           title: Nome completo
           maxLength: 150
-        cpf:
+        cpf_mascarado:
           type: string
-          maxLength: 14
+          readOnly: true
+          nullable: true
         idade:
           type: integer
           readOnly: true
+        eh_maior_de_idade:
+          type: boolean
+          readOnly: true
+        exame_situacao:
+          type: string
+          readOnly: true
+          nullable: true
         turma:
           type: integer
           nullable: true
@@ -1634,14 +1664,21 @@ components:
         ativo:
           type: boolean
       required:
-      - cpf
+      - cpf_mascarado
+      - eh_maior_de_idade
+      - exame_situacao
       - id
       - idade
       - nome
       - turma_nome
     AlunoRequest:
       type: object
-      description: Serializer completo do aluno (admin).
+      description: |-
+        Serializer completo do aluno (admin).
+
+        Regras de LGPD: menor de 18 anos não tem CPF próprio (o CPF fica no
+        responsável) e só salva com a autorização do responsável, que vira um
+        registro de `Consentimento`.
       properties:
         nome:
           type: string
@@ -1656,37 +1693,44 @@ components:
           $ref: '#/components/schemas/SexoEnum'
         rg:
           type: string
-          minLength: 1
+          title: RG ou certidão de nascimento
           maxLength: 20
         cpf:
           type: string
-          minLength: 1
+          nullable: true
           maxLength: 14
-        comprovante_residencia:
+        nome_responsavel:
           type: string
-          format: binary
-          nullable: true
-          title: Comprovante de residência
-        titulo_eleitor:
+          title: Nome do responsável
+          maxLength: 150
+        cpf_responsavel:
           type: string
-          nullable: true
-          title: Título de eleitor
-          maxLength: 20
+          title: CPF do responsável
+          maxLength: 14
         rg_responsavel:
           type: string
-          nullable: true
           title: RG do responsável
           maxLength: 20
-        certificado_nascimento:
+        telefone_responsavel:
           type: string
-          format: binary
-          nullable: true
-          title: Certidão de nascimento
-        atestado_medico:
+          title: Telefone do responsável
+          maxLength: 20
+        endereco_responsavel:
           type: string
-          format: binary
+          title: Endereço do responsável
+          maxLength: 255
+        exame_aptidao:
+          allOf:
+          - $ref: '#/components/schemas/ExameAptidaoEnum'
+          title: Exame de aptidão física
+        exame_validade:
+          type: string
+          format: date
           nullable: true
-          title: Atestado médico de aptidão física
+          title: Validade do exame
+        consentimento_responsavel:
+          type: boolean
+          writeOnly: true
         mensalidade:
           type: string
           format: decimal
@@ -1697,10 +1741,8 @@ components:
         ativo:
           type: boolean
       required:
-      - cpf
       - data_nascimento
       - nome
-      - rg
     CustomTokenObtainPairRequest:
       type: object
       description: |-
@@ -2002,6 +2044,16 @@ components:
       - quantidade
       - rotulo
       - total
+    ExameAptidaoEnum:
+      enum:
+      - pendente
+      - apto
+      - nao_apto
+      type: string
+      description: |-
+        * `pendente` - Pendente
+        * `apto` - Apto
+        * `nao_apto` - Não apto
     FormaPagamentoEnum:
       enum:
       - PIX
@@ -2191,7 +2243,12 @@ components:
             $ref: '#/components/schemas/TurmaList'
     PatchedAlunoRequest:
       type: object
-      description: Serializer completo do aluno (admin).
+      description: |-
+        Serializer completo do aluno (admin).
+
+        Regras de LGPD: menor de 18 anos não tem CPF próprio (o CPF fica no
+        responsável) e só salva com a autorização do responsável, que vira um
+        registro de `Consentimento`.
       properties:
         nome:
           type: string
@@ -2206,37 +2263,44 @@ components:
           $ref: '#/components/schemas/SexoEnum'
         rg:
           type: string
-          minLength: 1
+          title: RG ou certidão de nascimento
           maxLength: 20
         cpf:
           type: string
-          minLength: 1
+          nullable: true
           maxLength: 14
-        comprovante_residencia:
+        nome_responsavel:
           type: string
-          format: binary
-          nullable: true
-          title: Comprovante de residência
-        titulo_eleitor:
+          title: Nome do responsável
+          maxLength: 150
+        cpf_responsavel:
           type: string
-          nullable: true
-          title: Título de eleitor
-          maxLength: 20
+          title: CPF do responsável
+          maxLength: 14
         rg_responsavel:
           type: string
-          nullable: true
           title: RG do responsável
           maxLength: 20
-        certificado_nascimento:
+        telefone_responsavel:
           type: string
-          format: binary
-          nullable: true
-          title: Certidão de nascimento
-        atestado_medico:
+          title: Telefone do responsável
+          maxLength: 20
+        endereco_responsavel:
           type: string
-          format: binary
+          title: Endereço do responsável
+          maxLength: 255
+        exame_aptidao:
+          allOf:
+          - $ref: '#/components/schemas/ExameAptidaoEnum'
+          title: Exame de aptidão física
+        exame_validade:
+          type: string
+          format: date
           nullable: true
-          title: Atestado médico de aptidão física
+          title: Validade do exame
+        consentimento_responsavel:
+          type: boolean
+          writeOnly: true
         mensalidade:
           type: string
           format: decimal

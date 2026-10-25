@@ -16,6 +16,8 @@ import {
   Plus,
   Edit,
   Trash2,
+  UserCheck,
+  UserX,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -31,6 +33,7 @@ import {
   useCreateAluno,
   useUpdateAluno,
   useDeleteAluno,
+  useAlterarAtivoAluno,
   useProfessores,
   useCreateProfessor,
   useUpdateProfessor,
@@ -42,7 +45,17 @@ import { encerrarSessao, restaurarSessao } from "@/lib/api";
 import { alunosRetrieve } from "@/api/generated/alunos/alunos";
 import { professoresRetrieve } from "@/api/generated/professores/professores";
 import { turmasRetrieve } from "@/api/generated/turmas/turmas";
-import type { DiaSemanaEnum, SexoEnum } from "@/api/generated/model";
+import type {
+  DiaSemanaEnum,
+  ExameAptidaoEnum,
+  SexoEnum,
+} from "@/api/generated/model";
+import {
+  cpfValido,
+  ehMenor,
+  soDigitos,
+  telefoneValido,
+} from "@/lib/aluno";
 // import types removed as they're not directly used
 
 type Screen = "presenca" | "alunos" | "doacoes" | "turmas" | "professores";
@@ -71,9 +84,47 @@ type FormAluno = {
   rg: string;
   data_nascimento: string;
   sexo: SexoEnum;
+  nome_responsavel: string;
+  cpf_responsavel: string;
+  rg_responsavel: string;
+  telefone_responsavel: string;
+  endereco_responsavel: string;
+  exame_aptidao: ExameAptidaoEnum;
+  exame_validade: string;
+  consentimento_responsavel: boolean;
   mensalidade: string;
   turma: number | undefined;
   ativo: boolean;
+};
+
+const ALUNO_VAZIO: FormAluno = {
+  nome: "",
+  cpf: "",
+  rg: "",
+  data_nascimento: "",
+  sexo: "N",
+  nome_responsavel: "",
+  cpf_responsavel: "",
+  rg_responsavel: "",
+  telefone_responsavel: "",
+  endereco_responsavel: "",
+  exame_aptidao: "pendente",
+  exame_validade: "",
+  consentimento_responsavel: false,
+  mensalidade: "20.00",
+  turma: undefined,
+  ativo: true,
+};
+
+const CLASSE_CAMPO =
+  "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-grafite outline-none focus:border-verde focus:ring-4 focus:ring-verde/10";
+
+// Ação que espera confirmação num popup antes de rodar.
+type Confirmacao = {
+  titulo: string;
+  texto: string;
+  rotulo: string;
+  onConfirm: () => void;
 };
 type FormProfessor = {
   nome: string;
@@ -83,6 +134,22 @@ type FormProfessor = {
   turmas: number[];
   ativo: boolean;
 };
+
+// Primeira regra que o cadastro do aluno quebra, ou "" se está tudo certo.
+function erroDoAluno(f: FormAluno, menor: boolean): string {
+  if (!f.data_nascimento) return "Informe a data de nascimento.";
+  if (menor) {
+    if (!f.nome_responsavel.trim()) return "Informe o nome do responsável.";
+    if (!cpfValido(f.cpf_responsavel)) return "CPF do responsável inválido.";
+    if (!telefoneValido(f.telefone_responsavel))
+      return "Telefone do responsável inválido. Use DDD + número.";
+    if (!f.consentimento_responsavel)
+      return "Marque que o responsável autorizou o tratamento dos dados do menor.";
+  } else if (f.cpf && !cpfValido(f.cpf)) {
+    return "CPF inválido.";
+  }
+  return "";
+}
 
 export function DashboardLayout() {
   const [screen, setScreen] = useState<Screen>("presenca");
@@ -100,16 +167,9 @@ export function DashboardLayout() {
     data_fim: "",
     ativo: true,
   });
-  const [formAluno, setFormAluno] = useState<FormAluno>({
-    nome: "",
-    cpf: "",
-    rg: "",
-    data_nascimento: "",
-    sexo: "N",
-    mensalidade: "20.00",
-    turma: undefined,
-    ativo: true,
-  });
+  const [formAluno, setFormAluno] = useState<FormAluno>(ALUNO_VAZIO);
+  const [erroForm, setErroForm] = useState("");
+  const [confirmacao, setConfirmacao] = useState<Confirmacao | null>(null);
   const [formProfessor, setFormProfessor] = useState<FormProfessor>({
     nome: "",
     cpf: "",
@@ -142,6 +202,7 @@ export function DashboardLayout() {
   const createAluno = useCreateAluno();
   const updateAluno = useUpdateAluno();
   const deleteAluno = useDeleteAluno();
+  const alterarAtivoAluno = useAlterarAtivoAluno();
   const createProfessor = useCreateProfessor();
   const updateProfessor = useUpdateProfessor();
   const deleteProfessor = useDeleteProfessor();
@@ -182,16 +243,8 @@ export function DashboardLayout() {
       data_fim: "",
       ativo: true,
     });
-    setFormAluno({
-      nome: "",
-      cpf: "",
-      rg: "",
-      data_nascimento: "",
-      sexo: "N",
-      mensalidade: "20.00",
-      turma: undefined,
-      ativo: true,
-    });
+    setFormAluno(ALUNO_VAZIO);
+    setErroForm("");
     setFormProfessor({
       nome: "",
       cpf: "",
@@ -230,7 +283,18 @@ export function DashboardLayout() {
 
   const handleSubmitAluno = (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = { ...formAluno };
+    const menor = ehMenor(formAluno.data_nascimento);
+    const erro = erroDoAluno(formAluno, menor);
+    setErroForm(erro);
+    if (erro) return;
+    // Menor não tem CPF próprio; a API também ignora, mas nem enviamos.
+    const payload = {
+      ...formAluno,
+      cpf: menor ? null : soDigitos(formAluno.cpf) || null,
+      cpf_responsavel: soDigitos(formAluno.cpf_responsavel),
+      telefone_responsavel: soDigitos(formAluno.telefone_responsavel),
+      exame_validade: formAluno.exame_validade || null,
+    };
     if (editingId !== null) {
       updateAluno.mutate({ id: editingId, data: payload }, aoSalvar);
     } else {
@@ -267,10 +331,19 @@ export function DashboardLayout() {
         const a = (await alunosRetrieve(id)).data;
         setFormAluno({
           nome: a.nome,
-          cpf: a.cpf,
-          rg: a.rg,
+          cpf: a.cpf ?? "",
+          rg: a.rg ?? "",
           data_nascimento: a.data_nascimento,
           sexo: a.sexo ?? "N",
+          nome_responsavel: a.nome_responsavel ?? "",
+          cpf_responsavel: a.cpf_responsavel ?? "",
+          rg_responsavel: a.rg_responsavel ?? "",
+          telefone_responsavel: a.telefone_responsavel ?? "",
+          endereco_responsavel: a.endereco_responsavel ?? "",
+          exame_aptidao: a.exame_aptidao ?? "pendente",
+          exame_validade: a.exame_validade ?? "",
+          // Já autorizado antes: o checkbox volta marcado.
+          consentimento_responsavel: a.consentimento_registrado,
           mensalidade: String(a.mensalidade ?? "20.00"),
           turma: a.turma ?? undefined,
           ativo: a.ativo ?? true,
@@ -294,11 +367,34 @@ export function DashboardLayout() {
   };
 
   const handleDelete = (id: number, type: "turma" | "aluno" | "professor") => {
-    if (!confirm("Tem certeza que deseja excluir?")) return;
-    if (type === "turma") deleteTurma.mutate(id);
-    else if (type === "aluno") deleteAluno.mutate(id);
-    else deleteProfessor.mutate(id);
+    const definitiva =
+      type === "aluno"
+        ? "Isso apaga de vez o cadastro, o consentimento e as presenças deste aluno. Não dá para desfazer."
+        : "Esta ação não pode ser desfeita.";
+    setConfirmacao({
+      titulo: "Excluir definitivamente?",
+      texto: definitiva,
+      rotulo: "Excluir",
+      onConfirm: () => {
+        if (type === "turma") deleteTurma.mutate(id);
+        else if (type === "aluno") deleteAluno.mutate(id);
+        else deleteProfessor.mutate(id);
+      },
+    });
   };
+
+  const handleAlterarAtivo = (id: number, nome: string, ativo: boolean) => {
+    setConfirmacao({
+      titulo: ativo ? "Reativar aluno?" : "Inativar aluno?",
+      texto: ativo
+        ? `${nome} volta a aparecer nas turmas e na lista de chamada.`
+        : `${nome} sai das turmas e da lista de chamada, mas o cadastro e o histórico ficam guardados.`,
+      rotulo: ativo ? "Reativar" : "Inativar",
+      onConfirm: () => alterarAtivoAluno.mutate({ id, ativo }),
+    });
+  };
+
+  const menor = ehMenor(formAluno.data_nascimento);
 
   const renderFormModal = () => {
     if (showForm === "turma")
@@ -400,21 +496,10 @@ export function DashboardLayout() {
             className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-grafite outline-none focus:border-verde focus:ring-4 focus:ring-verde/10"
           />
           <input
-            name="cpf"
-            placeholder="CPF"
-            value={formAluno.cpf}
-            onChange={(e) =>
-              setFormAluno({ ...formAluno, cpf: e.target.value })
-            }
-            required
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-grafite outline-none focus:border-verde focus:ring-4 focus:ring-verde/10"
-          />
-          <input
             name="rg"
-            placeholder="RG"
+            placeholder="RG ou certidão de nascimento (opcional)"
             value={formAluno.rg}
             onChange={(e) => setFormAluno({ ...formAluno, rg: e.target.value })}
-            required
             className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-grafite outline-none focus:border-verde focus:ring-4 focus:ring-verde/10"
           />
           <input
@@ -442,13 +527,130 @@ export function DashboardLayout() {
             <option value="O">Outro</option>
             <option value="N">Não informar</option>
           </select>
+          {menor ? (
+            <>
+              <p className="lg:col-span-2 text-sm font-bold text-verde-escuro">
+                Responsável (obrigatório para menor de 18 anos)
+              </p>
+              <input
+                name="nome_responsavel"
+                placeholder="Nome do responsável"
+                value={formAluno.nome_responsavel}
+                onChange={(e) =>
+                  setFormAluno({ ...formAluno, nome_responsavel: e.target.value })
+                }
+                required
+                className={CLASSE_CAMPO}
+              />
+              <input
+                name="cpf_responsavel"
+                placeholder="CPF do responsável"
+                inputMode="numeric"
+                value={formAluno.cpf_responsavel}
+                onChange={(e) =>
+                  setFormAluno({ ...formAluno, cpf_responsavel: e.target.value })
+                }
+                required
+                className={CLASSE_CAMPO}
+              />
+              <input
+                name="rg_responsavel"
+                placeholder="RG do responsável"
+                value={formAluno.rg_responsavel}
+                onChange={(e) =>
+                  setFormAluno({ ...formAluno, rg_responsavel: e.target.value })
+                }
+                className={CLASSE_CAMPO}
+              />
+              <input
+                type="tel"
+                name="telefone_responsavel"
+                placeholder="Telefone do responsável"
+                value={formAluno.telefone_responsavel}
+                onChange={(e) =>
+                  setFormAluno({
+                    ...formAluno,
+                    telefone_responsavel: e.target.value,
+                  })
+                }
+                required
+                className={CLASSE_CAMPO}
+              />
+              <input
+                name="endereco_responsavel"
+                placeholder="Endereço do responsável"
+                value={formAluno.endereco_responsavel}
+                onChange={(e) =>
+                  setFormAluno({
+                    ...formAluno,
+                    endereco_responsavel: e.target.value,
+                  })
+                }
+                className={`${CLASSE_CAMPO} lg:col-span-2`}
+              />
+              <label className="lg:col-span-2 flex items-start gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="mt-1"
+                  checked={formAluno.consentimento_responsavel}
+                  onChange={(e) =>
+                    setFormAluno({
+                      ...formAluno,
+                      consentimento_responsavel: e.target.checked,
+                    })
+                  }
+                />
+                Responsável autorizou o tratamento dos dados do menor
+              </label>
+              <p className="lg:col-span-2 text-sm font-bold text-verde-escuro">
+                Exame de aptidão física
+              </p>
+              <select
+                name="exame_aptidao"
+                value={formAluno.exame_aptidao}
+                onChange={(e) =>
+                  setFormAluno({
+                    ...formAluno,
+                    exame_aptidao: e.target.value as ExameAptidaoEnum,
+                  })
+                }
+                className={CLASSE_CAMPO}
+              >
+                <option value="pendente">Pendente</option>
+                <option value="apto">Apto</option>
+                <option value="nao_apto">Não apto</option>
+              </select>
+              <input
+                type="date"
+                name="exame_validade"
+                aria-label="Validade do exame"
+                value={formAluno.exame_validade}
+                onChange={(e) =>
+                  setFormAluno({ ...formAluno, exame_validade: e.target.value })
+                }
+                className={CLASSE_CAMPO}
+              />
+            </>
+          ) : (
+            <input
+              name="cpf"
+              placeholder="CPF (opcional)"
+              inputMode="numeric"
+              value={formAluno.cpf}
+              onChange={(e) => setFormAluno({ ...formAluno, cpf: e.target.value })}
+              className={CLASSE_CAMPO}
+            />
+          )}
           <input
             type="text"
             name="mensalidade"
             placeholder="Mensalidade (ex: 20.00)"
             value={"R$ " + formAluno.mensalidade}
             onChange={(e) =>
-              setFormAluno({ ...formAluno, mensalidade: e.target.value })
+              setFormAluno({
+                ...formAluno,
+                mensalidade: e.target.value.replace(/^R\$\s?/, ""),
+              })
             }
             required
             className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-grafite outline-none focus:border-verde focus:ring-4 focus:ring-verde/10"
@@ -483,6 +685,11 @@ export function DashboardLayout() {
             />{" "}
             Ativo
           </label>
+          {erroForm && (
+            <p role="alert" className="lg:col-span-2 text-sm text-vermelho">
+              {erroForm}
+            </p>
+          )}
         </FormModal>
       );
     if (showForm === "professor")
@@ -686,16 +893,7 @@ export function DashboardLayout() {
                 onClick={() => {
                   closeForm();
                   setEditingId(null);
-                  setFormAluno({
-                    nome: "",
-                    cpf: "",
-                    rg: "",
-                    data_nascimento: "",
-                    sexo: "N",
-                    mensalidade: "20.00",
-                    turma: undefined,
-                    ativo: true,
-                  });
+                  setFormAluno(ALUNO_VAZIO);
                   setShowForm("aluno");
                 }}
               >
@@ -716,6 +914,7 @@ export function DashboardLayout() {
                       <th className="p-3">CPF</th>
                       <th className="p-3">Turma</th>
                       <th className="p-3">Mensalidade</th>
+                      <th className="p-3">Exame</th>
                       <th className="p-3">Status</th>
                       <th className="p-3">Ações</th>
                     </tr>
@@ -726,12 +925,17 @@ export function DashboardLayout() {
                         <td className="p-3 font-medium text-grafite">
                           {a.nome}
                         </td>
-                        <td className="p-3 text-grafite/60 text-sm">{a.cpf}</td>
+                        <td className="p-3 text-grafite/60 text-sm">
+                          {a.cpf_mascarado ?? "—"}
+                        </td>
                         <td className="p-3 text-grafite/60 text-sm">
                           {a.turma_nome || "—"}
                         </td>
                         <td className="p-3 text-grafite/60">
                           R$ {Number(a.mensalidade).toFixed(2)}
+                        </td>
+                        <td className="p-3">
+                          <ExameBadge situacao={a.exame_situacao} />
                         </td>
                         <td className="p-3">
                           <span
@@ -750,6 +954,22 @@ export function DashboardLayout() {
                             </Button>
                             <Button
                               variante="contorno-claro"
+                              aria-label={a.ativo ? "Inativar aluno" : "Reativar aluno"}
+                              title={a.ativo ? "Inativar" : "Reativar"}
+                              onClick={() =>
+                                handleAlterarAtivo(a.id, a.nome, !a.ativo)
+                              }
+                            >
+                              {a.ativo ? (
+                                <UserX className="size-4" />
+                              ) : (
+                                <UserCheck className="size-4" />
+                              )}
+                            </Button>
+                            <Button
+                              variante="contorno-claro"
+                              aria-label="Excluir definitivamente"
+                              title="Excluir definitivamente"
                               onClick={() => handleDelete(a.id, "aluno")}
                             >
                               <Trash2 className="size-4" />
@@ -891,6 +1111,16 @@ export function DashboardLayout() {
         )}
 
         {renderFormModal()}
+        {confirmacao && (
+          <ConfirmModal
+            {...confirmacao}
+            onClose={() => setConfirmacao(null)}
+            onConfirm={() => {
+              confirmacao.onConfirm();
+              setConfirmacao(null);
+            }}
+          />
+        )}
       </main>
     </div>
   );
@@ -936,6 +1166,50 @@ function FormModal({
           </Button>
         </div>
       </form>
+    </div>
+  );
+}
+
+// Selo do exame de aptidão na listagem: só aparece para menor.
+function ExameBadge({ situacao }: { situacao?: string | null }) {
+  if (!situacao) return <span className="text-grafite/40 text-sm">—</span>;
+  const visual: Record<string, [string, string]> = {
+    valido: ["Em dia", "bg-verde/10 text-verde"],
+    vencido: ["Vencido", "bg-vermelho/10 text-vermelho"],
+    ausente: ["Ausente", "bg-amarelo/10 text-amarelo"],
+    nao_apto: ["Não apto", "bg-vermelho/10 text-vermelho"],
+  };
+  const [rotulo, classe] = visual[situacao] ?? ["—", ""];
+  return <span className={`px-2 py-1 rounded text-xs ${classe}`}>{rotulo}</span>;
+}
+
+// Popup de confirmação (no lugar do confirm() do navegador).
+function ConfirmModal({
+  titulo,
+  texto,
+  rotulo,
+  onConfirm,
+  onClose,
+}: Confirmacao & { onClose: () => void }) {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-titulo"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4"
+    >
+      <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+        <h3 id="confirm-titulo" className="text-lg font-bold text-verde-escuro">
+          {titulo}
+        </h3>
+        <p className="mt-2 text-sm text-grafite/70">{texto}</p>
+        <div className="mt-6 flex justify-end gap-3">
+          <Button variante="contorno-claro" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button onClick={onConfirm}>{rotulo}</Button>
+        </div>
+      </div>
     </div>
   );
 }

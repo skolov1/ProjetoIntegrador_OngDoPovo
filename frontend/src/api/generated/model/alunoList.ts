@@ -8,14 +8,20 @@
 
 /**
  * Listagem leve para tabelas.
+ *
+ * Não traz o CPF completo (só mascarado, e só para maior de idade) nem dados do
+ * responsável: o cadastro completo aparece ao abrir a edição.
  */
 export interface AlunoList {
   readonly id: number;
   /** @maxLength 150 */
   nome: string;
-  /** @maxLength 14 */
-  cpf: string;
+  /** @nullable */
+  readonly cpf_mascarado: string | null;
   readonly idade: number;
+  readonly eh_maior_de_idade: boolean;
+  /** @nullable */
+  readonly exame_situacao: string | null;
   /** @nullable */
   turma?: number | null;
   readonly turma_nome: string;

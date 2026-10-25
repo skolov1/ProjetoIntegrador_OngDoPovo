@@ -9,7 +9,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { turmasList, turmasCreate, turmasUpdate, turmasDestroy } from '@/api/generated/turmas/turmas'
-import { alunosList, alunosCreate, alunosUpdate, alunosDestroy } from '@/api/generated/alunos/alunos'
+import { alunosList, alunosCreate, alunosUpdate, alunosPartialUpdate, alunosDestroy } from '@/api/generated/alunos/alunos'
 import {
   professoresList,
   professoresCreate,
@@ -88,6 +88,16 @@ export function useUpdateAluno() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: import('@/api/generated/model').AlunoRequest }) => alunosUpdate(id, data).then(extractData),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['alunos'] }),
+  })
+}
+
+/** Inativar (ou reativar) é o padrão: o cadastro e o histórico de presença ficam. */
+export function useAlterarAtivoAluno() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ativo }: { id: number; ativo: boolean }) =>
+      alunosPartialUpdate(id, { ativo }).then(extractData),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['alunos'] }),
   })
 }
