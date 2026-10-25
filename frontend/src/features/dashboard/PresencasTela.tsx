@@ -60,6 +60,10 @@ export function PresencasTela() {
   const contagem = (situacao: SituacaoEnum) =>
     itens.filter((i) => situacaoDe(i.aluno_id, i.situacao) === situacao).length;
   const faltantes = itens.filter((i) => i.faltante).length;
+  // A chamada deste dia já está salva no servidor (e não há alteração pendente).
+  const chamadaSalva =
+    itens.some((i) => i.situacao) && Object.keys(edicoes).length === 0;
+  const dataBr = data.split("-").reverse().join("/");
 
   const mudarFiltro = (turma: string, dia: string) => {
     setTurmaId(turma);
@@ -90,7 +94,7 @@ export function PresencasTela() {
       {
         onSuccess: () => {
           setEdicoes({});
-          setAviso(`Chamada salva: ${presencas.length} aluno(s).`);
+          setAviso("");
         },
         onError: () =>
           setAviso("Não foi possível salvar a chamada. Confira a turma e tente de novo."),
@@ -247,18 +251,18 @@ export function PresencasTela() {
               {contagem("PRESENTE")} presentes · {contagem("AUSENTE")} ausentes ·{" "}
               {contagem("JUSTIFICADO")} justificados
             </span>
-            {aviso && (
-              <span
-                role="status"
-                className={`flex items-center gap-1 text-sm ${
-                  aviso.startsWith("Chamada salva") ? "text-verde" : "text-vermelho"
-                }`}
-              >
-                {aviso.startsWith("Chamada salva") && <Check className="size-4" />}
-                {aviso}
-              </span>
-            )}
           </div>
+          {aviso && (
+            <p role="alert" className="text-sm text-vermelho">
+              {aviso}
+            </p>
+          )}
+          {chamadaSalva && (
+            <p role="status" className="flex items-center gap-1 text-sm text-verde">
+              <Check className="size-4" aria-hidden="true" />
+              Chamada salva no dia {dataBr}
+            </p>
+          )}
         </>
       )}
     </div>
