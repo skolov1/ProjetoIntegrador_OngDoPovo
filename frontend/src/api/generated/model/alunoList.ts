@@ -22,6 +22,7 @@ export interface AlunoList {
   readonly eh_maior_de_idade: boolean;
   /** @nullable */
   readonly exame_situacao: string | null;
+  readonly documentos_pendentes: readonly string[];
   readonly turmas_nomes: readonly string[];
   /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */
   readonly mensalidade: string;

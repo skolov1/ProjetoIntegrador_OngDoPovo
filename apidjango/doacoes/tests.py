@@ -702,3 +702,27 @@ class TestAlunoLGPD:
         criado = staff.post(self.URL, self.menor(), format="json").data
 
         assert "Título de eleitor" not in criado["campos_obrigatorios_faltando"]
+
+    def test_listagem_traz_documentos_pendentes(self, staff):
+        staff.post(self.URL, self.maior(), format="json")
+        staff.post(self.URL, self.menor(), format="json")
+
+        itens = {a["nome"]: a for a in staff.get(self.URL).data["results"]}
+
+        assert itens["Carlos Adulto"]["documentos_pendentes"] == [
+            "Comprovante de residência",
+            "Título de eleitor",
+        ]
+        # Título de eleitor não é cobrado do menor.
+        assert itens["Ana Menor"]["documentos_pendentes"] == ["Comprovante de residência"]
+
+    def test_documentos_em_dia_nao_aparecem_como_pendentes(self, staff):
+        staff.post(
+            self.URL,
+            self.maior(comprovante_residencia="entregue", titulo_eleitor="entregue"),
+            format="json",
+        )
+
+        item = staff.get(self.URL).data["results"][0]
+
+        assert item["documentos_pendentes"] == []

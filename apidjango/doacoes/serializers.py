@@ -340,6 +340,7 @@ class AlunoListSerializer(serializers.ModelSerializer):
     eh_maior_de_idade = serializers.BooleanField(read_only=True)
     cpf_mascarado = serializers.CharField(read_only=True, allow_null=True)
     exame_situacao = serializers.CharField(read_only=True, allow_null=True)
+    documentos_pendentes = serializers.ListField(child=serializers.CharField(), read_only=True)
     turmas_nomes = serializers.SerializerMethodField()
     mensalidade = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
@@ -352,6 +353,7 @@ class AlunoListSerializer(serializers.ModelSerializer):
             "idade",
             "eh_maior_de_idade",
             "exame_situacao",
+            "documentos_pendentes",
             "turmas_nomes",
             "mensalidade",
             "ativo",

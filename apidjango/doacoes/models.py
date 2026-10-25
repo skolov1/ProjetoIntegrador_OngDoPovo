@@ -308,15 +308,20 @@ class Aluno(models.Model):
         return "valido"
 
     @property
+    def documentos_pendentes(self) -> list[str]:
+        """Documentos ainda não entregues. Título de eleitor só conta para maior de idade."""
+        pendentes = []
+        if self.comprovante_residencia == self.DocumentoSituacao.PENDENTE:
+            pendentes.append("Comprovante de residência")
+        if self.eh_maior_de_idade and self.titulo_eleitor == self.DocumentoSituacao.PENDENTE:
+            pendentes.append("Título de eleitor")
+        return pendentes
+
+    @property
     def campos_obrigatorios_faltando(self) -> list[str]:
         """Retorna lista de campos obrigatórios que estão vazios conforme a idade."""
-        faltando = []
-        if self.comprovante_residencia == self.DocumentoSituacao.PENDENTE:
-            faltando.append("Comprovante de residência")
-        if self.eh_maior_de_idade:
-            if self.titulo_eleitor == self.DocumentoSituacao.PENDENTE:
-                faltando.append("Título de eleitor")
-        else:
+        faltando = self.documentos_pendentes
+        if not self.eh_maior_de_idade:
             if not self.nome_responsavel:
                 faltando.append("Nome do responsável")
             if not self.cpf_responsavel:

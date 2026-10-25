@@ -985,6 +985,7 @@ export function DashboardLayout() {
                       <th className="p-3">CPF</th>
                       <th className="p-3">Turmas</th>
                       <th className="p-3">Mensalidade</th>
+                      <th className="p-3">Documentos</th>
                       <th className="p-3">Exame</th>
                       <th className="p-3">Status</th>
                       <th className="p-3">Ações</th>
@@ -1004,6 +1005,9 @@ export function DashboardLayout() {
                         </td>
                         <td className="p-3 text-grafite/60">
                           R$ {Number(a.mensalidade).toFixed(2)}
+                        </td>
+                        <td className="p-3">
+                          <DocumentosBadge pendentes={a.documentos_pendentes} />
                         </td>
                         <td className="p-3">
                           <ExameBadge situacao={a.exame_situacao} />
@@ -1238,6 +1242,24 @@ function FormModal({
         </div>
       </form>
     </div>
+  );
+}
+
+// Selo dos documentos na listagem: "Em dia" ou quantos faltam (nomes no tooltip).
+function DocumentosBadge({ pendentes }: { pendentes: readonly string[] }) {
+  if (pendentes.length === 0)
+    return (
+      <span className="px-2 py-1 rounded text-xs bg-verde/10 text-verde">
+        Em dia
+      </span>
+    );
+  return (
+    <span
+      title={`Pendentes: ${pendentes.join(", ")}`}
+      className="px-2 py-1 rounded text-xs bg-amarelo/10 text-amarelo"
+    >
+      {pendentes.length} pendente{pendentes.length > 1 ? "s" : ""}
+    </span>
   );
 }
 

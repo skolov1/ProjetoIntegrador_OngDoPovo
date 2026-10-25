@@ -1679,6 +1679,11 @@ components:
           type: string
           readOnly: true
           nullable: true
+        documentos_pendentes:
+          type: array
+          items:
+            type: string
+          readOnly: true
         turmas_nomes:
           type: array
           items:
@@ -1693,6 +1698,7 @@ components:
           type: boolean
       required:
       - cpf_mascarado
+      - documentos_pendentes
       - eh_maior_de_idade
       - exame_situacao
       - id
