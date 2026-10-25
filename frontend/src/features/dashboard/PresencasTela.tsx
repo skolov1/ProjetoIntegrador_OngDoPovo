@@ -2,7 +2,8 @@
  * Tela de presenças: lista de chamada de uma turma em uma data.
  *
  * A secretaria escolhe a turma e o dia, marca presente / ausente / justificado de
- * cada aluno e salva tudo de uma vez. O aviso de "faltante" (3 faltas seguidas,
+ * cada aluno e salva tudo de uma vez. Quem não foi marcado fica como AUSENTE
+ * (o padrão da chamada): basta marcar quem veio. O aviso de "faltante" (3 faltas seguidas,
  * sem contar as justificadas) vem calculado do servidor.
  */
 
@@ -47,15 +48,17 @@ export function PresencasTela() {
   const salvar = useSalvarChamada();
 
   const itens = chamada.data ?? [];
-  const situacaoDe = (id: number, doServidor: unknown) =>
-    edicoes[id] ?? ((doServidor as SituacaoEnum | null) || null);
+  // Padrão: ausente. Vale o que a secretaria marcou, senão o que já foi salvo.
+  const situacaoDe = (id: number, doServidor: unknown): SituacaoEnum =>
+    edicoes[id] ?? ((doServidor as SituacaoEnum | null) || "AUSENTE");
 
   const visiveis = itens.filter(
     (i) =>
       i.aluno_nome.toLowerCase().includes(busca.trim().toLowerCase()) &&
       (!soFaltantes || i.faltante),
   );
-  const marcados = itens.filter((i) => situacaoDe(i.aluno_id, i.situacao)).length;
+  const contagem = (situacao: SituacaoEnum) =>
+    itens.filter((i) => situacaoDe(i.aluno_id, i.situacao) === situacao).length;
   const faltantes = itens.filter((i) => i.faltante).length;
 
   const mudarFiltro = (turma: string, dia: string) => {
@@ -78,10 +81,10 @@ export function PresencasTela() {
   };
 
   const salvarChamada = () => {
-    const presencas = itens.flatMap((i) => {
-      const situacao = situacaoDe(i.aluno_id, i.situacao);
-      return situacao ? [{ aluno_id: i.aluno_id, situacao }] : [];
-    });
+    const presencas = itens.map((i) => ({
+      aluno_id: i.aluno_id,
+      situacao: situacaoDe(i.aluno_id, i.situacao),
+    }));
     salvar.mutate(
       { turma: Number(turmaId), data, presencas },
       {
@@ -237,11 +240,12 @@ export function PresencasTela() {
           </div>
 
           <div className="flex flex-wrap items-center gap-4">
-            <Button disabled={marcados === 0 || salvar.isPending} onClick={salvarChamada}>
+            <Button disabled={salvar.isPending} onClick={salvarChamada}>
               {salvar.isPending ? "Salvando..." : "Salvar chamada"}
             </Button>
             <span className="text-sm text-grafite/60">
-              {marcados} de {itens.length} marcados
+              {contagem("PRESENTE")} presentes · {contagem("AUSENTE")} ausentes ·{" "}
+              {contagem("JUSTIFICADO")} justificados
             </span>
             {aviso && (
               <span
