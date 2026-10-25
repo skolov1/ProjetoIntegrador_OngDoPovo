@@ -1546,6 +1546,14 @@ components:
           type: string
           nullable: true
           maxLength: 14
+        comprovante_residencia:
+          allOf:
+          - $ref: '#/components/schemas/ComprovanteResidenciaEnum'
+          title: Comprovante de residência
+        titulo_eleitor:
+          allOf:
+          - $ref: '#/components/schemas/TituloEleitorEnum'
+          title: Título de eleitor
         nome_responsavel:
           type: string
           title: Nome do responsável
@@ -1720,6 +1728,14 @@ components:
           type: string
           nullable: true
           maxLength: 14
+        comprovante_residencia:
+          allOf:
+          - $ref: '#/components/schemas/ComprovanteResidenciaEnum'
+          title: Comprovante de residência
+        titulo_eleitor:
+          allOf:
+          - $ref: '#/components/schemas/TituloEleitorEnum'
+          title: Título de eleitor
         nome_responsavel:
           type: string
           title: Nome do responsável
@@ -1766,6 +1782,14 @@ components:
       required:
       - data_nascimento
       - nome
+    ComprovanteResidenciaEnum:
+      enum:
+      - pendente
+      - entregue
+      type: string
+      description: |-
+        * `pendente` - Pendente
+        * `entregue` - Entregue
     CustomTokenObtainPairRequest:
       type: object
       description: |-
@@ -2292,6 +2316,14 @@ components:
           type: string
           nullable: true
           maxLength: 14
+        comprovante_residencia:
+          allOf:
+          - $ref: '#/components/schemas/ComprovanteResidenciaEnum'
+          title: Comprovante de residência
+        titulo_eleitor:
+          allOf:
+          - $ref: '#/components/schemas/TituloEleitorEnum'
+          title: Título de eleitor
         nome_responsavel:
           type: string
           title: Nome do responsável
@@ -2729,6 +2761,14 @@ components:
         * `PENDENTE` - Pendente
         * `CONFIRMADA` - Confirmada
         * `CANCELADA` - Cancelada
+    TituloEleitorEnum:
+      enum:
+      - pendente
+      - entregue
+      type: string
+      description: |-
+        * `pendente` - Pendente
+        * `entregue` - Entregue
     Turma:
       type: object
       description: Serializer base da turma.

@@ -668,3 +668,37 @@ class TestAlunoLGPD:
         resposta = staff.get(self.URL, {"turmas": t2.id}).data
 
         assert [a["nome"] for a in resposta["results"]] == ["Outro"]
+
+    def test_documentos_comecam_pendentes(self, staff):
+        criado = staff.post(self.URL, self.maior(), format="json").data
+
+        assert criado["comprovante_residencia"] == "pendente"
+        assert criado["titulo_eleitor"] == "pendente"
+        assert "Comprovante de residência" in criado["campos_obrigatorios_faltando"]
+        assert "Título de eleitor" in criado["campos_obrigatorios_faltando"]
+
+    def test_marcar_documentos_como_entregues(self, staff):
+        criado = staff.post(self.URL, self.maior(), format="json").data
+
+        editado = staff.patch(
+            f"{self.URL}{criado['id']}/",
+            {"comprovante_residencia": "entregue", "titulo_eleitor": "entregue"},
+            format="json",
+        ).data
+
+        assert editado["comprovante_residencia"] == "entregue"
+        assert editado["titulo_eleitor"] == "entregue"
+        assert editado["campos_obrigatorios_faltando"] == []
+
+    def test_situacao_de_documento_invalida_e_recusada(self, staff):
+        response = staff.post(
+            self.URL, self.maior(comprovante_residencia="enviado"), format="json"
+        )
+
+        assert response.status_code == 400
+        assert "comprovante_residencia" in response.data
+
+    def test_titulo_nao_e_cobrado_do_menor(self, staff):
+        criado = staff.post(self.URL, self.menor(), format="json").data
+
+        assert "Título de eleitor" not in criado["campos_obrigatorios_faltando"]

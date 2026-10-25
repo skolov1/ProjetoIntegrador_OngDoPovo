@@ -10,15 +10,16 @@ Este documento resume quais dados pessoais o painel da ONG do Povo guarda, por q
 | RG ou certidão de nascimento (opcional) | Aluno | Conferência na matrícula. |
 | CPF | Só aluno **maior de 18 anos** (opcional) | Identificação do adulto. O menor não tem CPF guardado. |
 | Nome, CPF, RG, telefone e endereço | Responsável do menor | Identificar quem responde pelo menor e permitir contato. Nome, CPF e telefone são obrigatórios. |
+| Comprovante de residência e título de eleitor: só a situação (pendente ou entregue) | Aluno (título só para maior) | Saber se a documentação da matrícula está completa. O documento em si não é guardado. |
 | Exame de aptidão física: situação (pendente, apto, não apto) e validade | Aluno menor | Saber se o menor pode praticar a atividade e quando o exame vence. |
 | Consentimento: nome do responsável, data e hora, versão do termo | Menor | Provar que o responsável autorizou o tratamento dos dados do menor. |
 | Turmas, situação (ativo/inativo) e presenças; a mensalidade é calculada (R$ 20 por turma), podendo ser ajustada por aluno | Aluno | Operação da ONG: turmas, cobrança e lista de chamada. |
 
 ## O que não é coletado
 
-- **Título de eleitor.** Nunca é pedido nem guardado.
+- **Número do título de eleitor e do comprovante de residência.** Só se guarda a situação (pendente ou entregue).
 - **Conteúdo do atestado médico.** O sistema guarda só a situação do exame e a validade. O documento fica com a ONG, em papel.
-- **Imagem ou arquivo de documento** (RG, CPF, comprovante de residência, certidão). Não há upload. Os documentos são conferidos na matrícula presencial.
+- **Imagem ou arquivo de documento** (RG, CPF, comprovante de residência, título, certidão). Não há upload. Os documentos são conferidos na matrícula presencial.
 - **CPF do menor.** Só o CPF do responsável é guardado.
 
 ## Como os dados são protegidos

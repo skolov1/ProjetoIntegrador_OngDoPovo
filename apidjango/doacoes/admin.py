@@ -136,7 +136,14 @@ class AlunoAdmin(admin.ModelAdmin):
         "ativo",
         "criado_em",
     )
-    list_filter = ("ativo", "turmas", "sexo", "exame_aptidao", "criado_em")
+    list_filter = (
+        "ativo",
+        "turmas",
+        "sexo",
+        "comprovante_residencia",
+        "exame_aptidao",
+        "criado_em",
+    )
     search_fields = ("nome",)
     date_hierarchy = "criado_em"
     list_per_page = 25
@@ -173,8 +180,19 @@ class AlunoAdmin(admin.ModelAdmin):
             },
         ),
         (
-            "Exame de aptidão física",
-            {"fields": ("exame_aptidao", "exame_validade")},
+            "Documentos e exame",
+            {
+                "fields": (
+                    "comprovante_residencia",
+                    "titulo_eleitor",
+                    "exame_aptidao",
+                    "exame_validade",
+                ),
+                "description": (
+                    "Só a situação (pendente/entregue). Os documentos ficam com a ONG, "
+                    "no papel. Título de eleitor: só maior de idade. Exame: só menor."
+                ),
+            },
         ),
         (
             "Vínculo e financeiro",

@@ -207,6 +207,8 @@ class AlunoSerializer(serializers.ModelSerializer):
             "sexo",
             "rg",
             "cpf",
+            "comprovante_residencia",
+            "titulo_eleitor",
             "nome_responsavel",
             "cpf_responsavel",
             "rg_responsavel",

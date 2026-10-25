@@ -46,9 +46,11 @@ import { alunosRetrieve } from "@/api/generated/alunos/alunos";
 import { professoresRetrieve } from "@/api/generated/professores/professores";
 import { turmasRetrieve } from "@/api/generated/turmas/turmas";
 import type {
+  ComprovanteResidenciaEnum,
   DiaSemanaEnum,
   ExameAptidaoEnum,
   SexoEnum,
+  TituloEleitorEnum,
 } from "@/api/generated/model";
 import {
   MENSALIDADE_POR_TURMA,
@@ -87,6 +89,8 @@ type FormAluno = {
   rg: string;
   data_nascimento: string;
   sexo: SexoEnum;
+  comprovante_residencia: ComprovanteResidenciaEnum;
+  titulo_eleitor: TituloEleitorEnum;
   nome_responsavel: string;
   cpf_responsavel: string;
   rg_responsavel: string;
@@ -107,6 +111,8 @@ const ALUNO_VAZIO: FormAluno = {
   rg: "",
   data_nascimento: "",
   sexo: "N",
+  comprovante_residencia: "pendente",
+  titulo_eleitor: "pendente",
   nome_responsavel: "",
   cpf_responsavel: "",
   rg_responsavel: "",
@@ -342,6 +348,8 @@ export function DashboardLayout() {
           rg: a.rg ?? "",
           data_nascimento: a.data_nascimento,
           sexo: a.sexo ?? "N",
+          comprovante_residencia: a.comprovante_residencia ?? "pendente",
+          titulo_eleitor: a.titulo_eleitor ?? "pendente",
           nome_responsavel: a.nome_responsavel ?? "",
           cpf_responsavel: a.cpf_responsavel ?? "",
           rg_responsavel: a.rg_responsavel ?? "",
@@ -648,6 +656,47 @@ export function DashboardLayout() {
               className={CLASSE_CAMPO}
             />
           )}
+          <fieldset className="lg:col-span-2 grid grid-cols-2 gap-4">
+            <legend className="mb-2 text-sm font-bold text-verde-escuro">
+              Documentos (só a situação; o papel fica com a ONG)
+            </legend>
+            <label className="text-sm text-grafite/70">
+              Comprovante de residência
+              <select
+                name="comprovante_residencia"
+                value={formAluno.comprovante_residencia}
+                onChange={(e) =>
+                  setFormAluno({
+                    ...formAluno,
+                    comprovante_residencia: e.target.value as ComprovanteResidenciaEnum,
+                  })
+                }
+                className={`${CLASSE_CAMPO} mt-1`}
+              >
+                <option value="pendente">Pendente</option>
+                <option value="entregue">Entregue</option>
+              </select>
+            </label>
+            {!menor && (
+              <label className="text-sm text-grafite/70">
+                Título de eleitor
+                <select
+                  name="titulo_eleitor"
+                  value={formAluno.titulo_eleitor}
+                  onChange={(e) =>
+                    setFormAluno({
+                      ...formAluno,
+                      titulo_eleitor: e.target.value as TituloEleitorEnum,
+                    })
+                  }
+                  className={`${CLASSE_CAMPO} mt-1`}
+                >
+                  <option value="pendente">Pendente</option>
+                  <option value="entregue">Entregue</option>
+                </select>
+              </label>
+            )}
+          </fieldset>
           <fieldset className="lg:col-span-2">
             <legend className="text-sm font-bold text-verde-escuro">
               Turmas

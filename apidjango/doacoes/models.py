@@ -161,9 +161,10 @@ class Turma(models.Model):
 class Aluno(models.Model):
     """Aluno. Menor de idade não tem CPF próprio: o CPF fica no responsável.
 
-    Por LGPD o sistema guarda só o necessário: nenhum arquivo ou imagem de
-    documento, nem título de eleitor. O exame de aptidão física é só uma etiqueta
-    de status (e a validade); o conteúdo do atestado fica com a ONG, no papel.
+    Por LGPD o sistema guarda só o necessário: nenhum arquivo, imagem ou número de
+    documento. Comprovante de residência, título de eleitor e exame de aptidão
+    física são só etiquetas de situação (o exame tem também a validade); os
+    documentos em si ficam com a ONG, no papel.
     """
 
     class Sexo(models.TextChoices):
@@ -184,6 +185,25 @@ class Aluno(models.Model):
     rg = models.CharField("RG ou certidão de nascimento", max_length=20, blank=True)
     # Só para maior de idade. Vazio (NULL) para menor; NULL não conflita com unique.
     cpf = models.CharField("CPF", max_length=14, unique=True, blank=True, null=True)
+
+    class DocumentoSituacao(models.TextChoices):
+        PENDENTE = "pendente", "Pendente"
+        ENTREGUE = "entregue", "Entregue"
+
+    # --- Documentos (só a situação, sem arquivo nem número) ---
+    comprovante_residencia = models.CharField(
+        "Comprovante de residência",
+        max_length=10,
+        choices=DocumentoSituacao.choices,
+        default=DocumentoSituacao.PENDENTE,
+    )
+    # Só se aplica a maior de idade.
+    titulo_eleitor = models.CharField(
+        "Título de eleitor",
+        max_length=10,
+        choices=DocumentoSituacao.choices,
+        default=DocumentoSituacao.PENDENTE,
+    )
 
     # --- Responsável (obrigatório para menor de 18 anos) ---
     nome_responsavel = models.CharField("Nome do responsável", max_length=150, blank=True)
@@ -291,7 +311,12 @@ class Aluno(models.Model):
     def campos_obrigatorios_faltando(self) -> list[str]:
         """Retorna lista de campos obrigatórios que estão vazios conforme a idade."""
         faltando = []
-        if not self.eh_maior_de_idade:
+        if self.comprovante_residencia == self.DocumentoSituacao.PENDENTE:
+            faltando.append("Comprovante de residência")
+        if self.eh_maior_de_idade:
+            if self.titulo_eleitor == self.DocumentoSituacao.PENDENTE:
+                faltando.append("Título de eleitor")
+        else:
             if not self.nome_responsavel:
                 faltando.append("Nome do responsável")
             if not self.cpf_responsavel:

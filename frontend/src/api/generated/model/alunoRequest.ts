@@ -5,8 +5,10 @@
  * API do Sistema ONG do Povo (Projeto Integrador). O schema em /api/schema/ alimenta o gerador de client do frontend.
  * OpenAPI spec version: 1.0.0
  */
+import type { ComprovanteResidenciaEnum } from './comprovanteResidenciaEnum';
 import type { ExameAptidaoEnum } from './exameAptidaoEnum';
 import type { SexoEnum } from './sexoEnum';
+import type { TituloEleitorEnum } from './tituloEleitorEnum';
 
 /**
  * Serializer completo do aluno (admin).
@@ -30,6 +32,8 @@ export interface AlunoRequest {
      * @nullable
      */
   cpf?: string | null;
+  comprovante_residencia?: ComprovanteResidenciaEnum;
+  titulo_eleitor?: TituloEleitorEnum;
   /** @maxLength 150 */
   nome_responsavel?: string;
   /** @maxLength 14 */
