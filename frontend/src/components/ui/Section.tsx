@@ -12,7 +12,7 @@ type Tom = 'claro' | 'mint' | 'escuro'
 const FUNDOS: Record<Tom, string> = {
   claro: 'bg-white text-grafite',
   mint: 'bg-mist-50 text-grafite',
-  escuro: 'bg-verde-escuro text-white',
+  escuro: 'from-verde-900 to-green-800 via-green-900 bg-linear-to-br text-white',
 }
 
 interface SectionProps {

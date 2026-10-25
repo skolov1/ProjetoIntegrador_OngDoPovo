@@ -37,7 +37,7 @@ export function HeroSection() {
   return (
     <section
       id="inicio"
-      className="relative overflow-hidden bg-linear-to-b from-mist-50 via-white to-mist-100 pt-28 pb-16 sm:pt-32 sm:pb-20 lg:pt-36 lg:pb-48"
+      className="relative overflow-hidden bg-linear-to-b from-mist-50 via-white to-mist-100 pt-28 pb-16 sm:pt-32 sm:pb-20 lg:pt-36 lg:pb-48 2xl:pb-89"
     >
       {/* Padrão de raios — o elemento gráfico do manual, em marca d'água */}
       <Sunburst
@@ -45,7 +45,7 @@ export function HeroSection() {
         size={720}
         rays={32}
         fill={0.06}
-        className="pointer-events-none absolute -top-40 -right-52 hidden text-verde opacity-70 select-none sm:block"
+        className="pointer-events-none absolute top-28 -right-2 hidden text-verde opacity-70 select-none sm:block"
       />
       <Sunburst
         tone="green"
@@ -59,7 +59,7 @@ export function HeroSection() {
 
       <Header />
 
-      <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-6 lg:grid-cols-[1fr_0.95fr] lg:gap-10 lg:px-8">
+      <div className="relative mx-auto top-20 grid max-w-7xl items-center gap-14 px-6 lg:grid-cols-[1fr_0.95fr] lg:gap-10 lg:px-8">
         {/* Coluna de texto */}
         <div>
           <Reveal>
@@ -125,7 +125,7 @@ export function HeroSection() {
             {/* Altura explicita: sem ela as linhas do grid colapsam para 0 e as fotos
                 somem — `h-full` dentro de row de altura auto não tem contra o
                 que se posicionar. */}
-            <div className="relative grid h-[24rem] grid-cols-3 grid-rows-2 gap-3 sm:h-[30rem]">
+            <div className="relative grid h-96 grid-cols-3 grid-rows-2 gap-3 sm:h-120">
               {FOTOS.map((foto, i) => (
                 <div
                   key={foto.src}
