@@ -134,7 +134,6 @@ pnpm dev                  # roda em http://localhost:5173
 * API schema: <http://localhost:8000/api/schema/>
 * Swagger UI: <http://localhost:8000/api/docs/>
 * Dashboard admin: <http://localhost:5173/dashboard> (login com JWT cookie)
-```
 
 ---
 
@@ -164,7 +163,7 @@ pnpm dev                  # roda em http://localhost:5173
 
 ---
 
-## 📸prints e Referências
+## 📸 Prints e Referências
 
 * Landing page redesign: confira `refs/site-ong-do-povo (1).png`.
 * Decisões de arquitetura: `ALTERACOES_FASE0_E_LANDING.md` e `PLANO_REMODELAGEM.md`.
