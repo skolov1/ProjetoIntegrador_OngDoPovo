@@ -80,36 +80,6 @@ class DoacaoPublicSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-class DoacaoAdminSerializer(serializers.ModelSerializer):
-    """CRUD da equipe — único serializer com dado pessoal.
-
-    Protegido por IsAdminUser na view. É o mesmo serializer que gera o client do
-    Orval para o painel da Fase 3, então quando ele existir o contrato já está
-    definido aqui.
-    """
-
-    nome_exibido = serializers.CharField(read_only=True)
-
-    class Meta:
-        model = Doacao
-        fields = [
-            "id",
-            "nome",
-            "nome_exibido",
-            "email",
-            "telefone",
-            "anonimo",
-            "valor",
-            "forma_pagamento",
-            "destinacao",
-            "status",
-            "mensagem",
-            "criado_em",
-            "confirmado_em",
-        ]
-        read_only_fields = ["criado_em", "confirmado_em", "nome_exibido"]
-
-
 class DoacaoCriadaSerializer(serializers.Serializer):
     """Resposta do POST público.
 

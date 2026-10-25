@@ -244,82 +244,19 @@ class TestLeituraPublica:
 
 
 # --------------------------------------------------------------------------- #
-# CRUD da equipe
+# O CRUD de doação em dinheiro saiu do painel
 # --------------------------------------------------------------------------- #
 
 
-class TestAcessoAdmin:
-    def test_exige_autenticacao(self, cliente):
-        assert cliente.get(URL_ADMIN).status_code in (401, 403)
+class TestCrudDeDinheiroRemovido:
+    @pytest.mark.parametrize(
+        "caminho", ["", "1/", "confirmar/", "cancelar/", "1/confirmada/"]
+    )
+    def test_rotas_do_painel_nao_existem_mais(self, cliente, admin, caminho):
+        cliente.force_authenticate(admin)
 
-    def test_usuario_comum_nao_acessa(self, cliente, nao_admin):
-        autenticar(cliente, nao_admin)
-
-        assert cliente.get(URL_ADMIN).status_code == 403
-
-    def test_staff_acessa(self, cliente, admin):
-        autenticar(cliente, admin)
-
-        assert cliente.get(URL_ADMIN).status_code == 200
-
-    def test_publico_nao_cria_pelo_admin(self, cliente):
-        """O formulário público não é o mesmo que o CRUD da equipe."""
-        resposta = cliente.post(
-            URL_ADMIN, {**PAGAMENTO, "status": Doacao.Status.CONFIRMADA}, format="json"
-        )
-
-        assert resposta.status_code in (401, 403)
-
-
-class TestGestaoDeStatus:
-    def test_acao_de_confirmar_em_lote(self, cliente, admin):
-        d1 = Doacao.objects.create(
-            nome="A", email="a@a.com", valor="10.00", forma_pagamento="PIX"
-        )
-        d2 = Doacao.objects.create(
-            nome="B", email="b@b.com", valor="20.00", forma_pagamento="PIX"
-        )
-        autenticar(cliente, admin)
-
-        response = cliente.post(
-            f"{URL_ADMIN}confirmar/", {"ids": [d1.id, d2.id]}, format="json"
-        )
-
-        assert response.status_code == 200
-        assert Doacao.objects.filter(status=Doacao.Status.CONFIRMADA).count() == 2
-
-    def test_confirmar_carimba_a_data(self, cliente, admin):
-        doacao = Doacao.objects.create(
-            nome="A", email="a@a.com", valor="10.00", forma_pagamento="PIX"
-        )
-        assert doacao.confirmado_em is None
-        autenticar(cliente, admin)
-
-        cliente.post(f"{URL_ADMIN}confirmar/", {"ids": [doacao.id]}, format="json")
-
-        doacao.refresh_from_db()
-        assert doacao.confirmado_em is not None
-
-    def test_acao_de_cancelar(self, cliente, admin):
-        doacao = Doacao.objects.create(
-            nome="A", email="a@a.com", valor="10.00", forma_pagamento="PIX"
-        )
-        autenticar(cliente, admin)
-
-        cliente.post(f"{URL_ADMIN}cancelar/", {"ids": [doacao.id]}, format="json")
-
-        doacao.refresh_from_db()
-        assert doacao.status == Doacao.Status.CANCELADA
-
-    def test_criar_pelo_admin_nasce_confirmada(self, cliente, admin):
-        """Quem cadastra pelo painel ja conferiu no extrato."""
-        autenticar(cliente, admin)
-
-        cliente.post(URL_ADMIN, PAGAMENTO, format="json")
-
-        doacao = Doacao.objects.get()
-        assert doacao.status == Doacao.Status.CONFIRMADA
-        assert doacao.confirmado_em is not None
+        for metodo in (cliente.get, cliente.post):
+            assert metodo(f"{URL_ADMIN}{caminho}").status_code == 404
 
 
 class TestAnonimo:

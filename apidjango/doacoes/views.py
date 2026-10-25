@@ -6,9 +6,9 @@ sobre o risco de um doador se auto-declarar CONFIRMADA.
 """
 
 from datetime import date
+
 from django.db import transaction
 from django.db.models import Sum
-from django.utils import timezone
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
@@ -21,7 +21,6 @@ from .models import Aluno, Doacao, DoacaoItem, Presenca, Professor, Turma
 from .serializers import (
     AlunoListSerializer,
     AlunoSerializer,
-    DoacaoAdminSerializer,
     DoacaoCriadaSerializer,
     DoacaoItemResumoSerializer,
     DoacaoItemSerializer,
@@ -161,84 +160,6 @@ class DoacaoResumoView(APIView):
                     for linha in por_destino
                 ],
             }
-        )
-
-
-class DoacaoAdminViewSet(
-    mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.DestroyModelMixin,
-    mixins.ListModelMixin,
-    viewsets.GenericViewSet,
-):
-    """CRUD da equipe da ONG.
-
-    Fica atrás de `IsAdminUser`. É o mesmo conjunto de dados que o Django admin
-    usa — aqui para quando o painel em React entrar na Fase 3.
-    """
-
-    queryset = Doacao.objects.all()
-    serializer_class = DoacaoAdminSerializer
-    permission_classes = [IsAdminUser]
-    filterset_fields = ["status", "forma_pagamento", "destinacao", "anonimo"]
-    search_fields = ["nome", "email", "telefone"]
-    ordering_fields = ["criado_em", "valor"]
-    ordering = ["-criado_em"]
-
-    @extend_schema(
-        summary="Confirma doações em lote",
-        tags=["doacoes"],
-        request=None,
-        responses={200: DoacaoAdminSerializer(many=True)},
-    )
-    @action(detail=False, methods=["post"], url_path="confirmar")
-    def confirmar(self, request):
-        """Marca as doações indicadas como CONFIRMADA e carimba a data."""
-        ids = request.data.get("ids", [])
-        atualizadas = []
-
-        for doacao in Doacao.objects.filter(id__in=ids, status=Doacao.Status.PENDENTE):
-            doacao.confirmar()
-            atualizadas.append(doacao)
-
-        return Response(self.get_serializer(atualizadas, many=True).data)
-
-    @extend_schema(
-        summary="Cancela doações em lote",
-        tags=["doacoes"],
-        request=None,
-        responses={200: DoacaoAdminSerializer(many=True)},
-    )
-    @action(detail=False, methods=["post"], url_path="cancelar")
-    def cancelar(self, request):
-        ids = request.data.get("ids", [])
-        atualizadas = []
-
-        for doacao in Doacao.objects.filter(id__in=ids).exclude(
-            status=Doacao.Status.CONFIRMADA
-        ):
-            doacao.cancelar()
-            atualizadas.append(doacao)
-
-        return Response(self.get_serializer(atualizadas, many=True).data)
-
-    @action(detail=True, methods=["post"], url_path="confirmada")
-    def marcar_confirmada(self, request, pk=None):
-        """Ações em massa pelo painel: `/doacoes/admin/12/confirmada/`."""
-        doacao = self.get_object()
-        doacao.confirmar()
-        return Response(self.get_serializer(doacao).data)
-
-    def perform_create(self, serializer):
-        """Criar pelo admin já nasce confirmada.
-
-        A equipe só cadastra pelo painel o que já conferiu no extrato — não faz
-        sentido criar um registro pendente por dentro da própria tela de gestão.
-        """
-        serializer.save(
-            status=Doacao.Status.CONFIRMADA,
-            confirmado_em=timezone.now(),
         )
 
 

@@ -6,8 +6,6 @@
  * OpenAPI spec version: 1.0.0
  */
 import type {
-  DoacaoAdmin,
-  DoacaoAdminRequest,
   DoacaoCriada,
   DoacaoItem,
   DoacaoItemRequest,
@@ -15,15 +13,10 @@ import type {
   DoacaoPublic,
   DoacaoPublicCreateRequest,
   DoacaoResumo,
-  DoacoesAdminCancelarCreateParams,
-  DoacoesAdminConfirmarCreateParams,
-  DoacoesAdminListParams,
   DoacoesItensListParams,
   DoacoesItensResumoListParams,
   DoacoesPublicoListParams,
-  PaginatedDoacaoAdminList,
   PaginatedDoacaoItemList,
-  PatchedDoacaoAdminRequest,
   PatchedDoacaoItemRequest
 } from '../model';
 
@@ -42,142 +35,6 @@ export const doacoesCreate = (
       {url: `/doacoes/`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: doacaoPublicCreateRequest
-    },
-      );
-    }
-  /**
- * CRUD da equipe da ONG.
- *
- * Fica atrás de `IsAdminUser`. É o mesmo conjunto de dados que o Django admin
- * usa — aqui para quando o painel em React entrar na Fase 3.
- */
-export const doacoesAdminList = (
-    params?: DoacoesAdminListParams,
- ) => {
-      return api<PaginatedDoacaoAdminList>(
-      {url: `/doacoes/admin/`, method: 'GET',
-        params
-    },
-      );
-    }
-  /**
- * CRUD da equipe da ONG.
- *
- * Fica atrás de `IsAdminUser`. É o mesmo conjunto de dados que o Django admin
- * usa — aqui para quando o painel em React entrar na Fase 3.
- */
-export const doacoesAdminCreate = (
-    doacaoAdminRequest: DoacaoAdminRequest,
- ) => {
-      return api<DoacaoAdmin>(
-      {url: `/doacoes/admin/`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: doacaoAdminRequest
-    },
-      );
-    }
-  /**
- * CRUD da equipe da ONG.
- *
- * Fica atrás de `IsAdminUser`. É o mesmo conjunto de dados que o Django admin
- * usa — aqui para quando o painel em React entrar na Fase 3.
- */
-export const doacoesAdminRetrieve = (
-    id: number,
- ) => {
-      return api<DoacaoAdmin>(
-      {url: `/doacoes/admin/${id}/`, method: 'GET'
-    },
-      );
-    }
-  /**
- * CRUD da equipe da ONG.
- *
- * Fica atrás de `IsAdminUser`. É o mesmo conjunto de dados que o Django admin
- * usa — aqui para quando o painel em React entrar na Fase 3.
- */
-export const doacoesAdminUpdate = (
-    id: number,
-    doacaoAdminRequest: DoacaoAdminRequest,
- ) => {
-      return api<DoacaoAdmin>(
-      {url: `/doacoes/admin/${id}/`, method: 'PUT',
-      headers: {'Content-Type': 'application/json', },
-      data: doacaoAdminRequest
-    },
-      );
-    }
-  /**
- * CRUD da equipe da ONG.
- *
- * Fica atrás de `IsAdminUser`. É o mesmo conjunto de dados que o Django admin
- * usa — aqui para quando o painel em React entrar na Fase 3.
- */
-export const doacoesAdminPartialUpdate = (
-    id: number,
-    patchedDoacaoAdminRequest?: PatchedDoacaoAdminRequest,
- ) => {
-      return api<DoacaoAdmin>(
-      {url: `/doacoes/admin/${id}/`, method: 'PATCH',
-      headers: {'Content-Type': 'application/json', },
-      data: patchedDoacaoAdminRequest
-    },
-      );
-    }
-  /**
- * CRUD da equipe da ONG.
- *
- * Fica atrás de `IsAdminUser`. É o mesmo conjunto de dados que o Django admin
- * usa — aqui para quando o painel em React entrar na Fase 3.
- */
-export const doacoesAdminDestroy = (
-    id: number,
- ) => {
-      return api<void>(
-      {url: `/doacoes/admin/${id}/`, method: 'DELETE'
-    },
-      );
-    }
-  /**
- * Ações em massa pelo painel: `/doacoes/admin/12/confirmada/`.
- */
-export const doacoesAdminConfirmadaCreate = (
-    id: number,
-    doacaoAdminRequest: DoacaoAdminRequest,
- ) => {
-      return api<DoacaoAdmin>(
-      {url: `/doacoes/admin/${id}/confirmada/`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: doacaoAdminRequest
-    },
-      );
-    }
-  /**
- * CRUD da equipe da ONG.
- *
- * Fica atrás de `IsAdminUser`. É o mesmo conjunto de dados que o Django admin
- * usa — aqui para quando o painel em React entrar na Fase 3.
- * @summary Cancela doações em lote
- */
-export const doacoesAdminCancelarCreate = (
-    params?: DoacoesAdminCancelarCreateParams,
- ) => {
-      return api<PaginatedDoacaoAdminList>(
-      {url: `/doacoes/admin/cancelar/`, method: 'POST',
-        params
-    },
-      );
-    }
-  /**
- * Marca as doações indicadas como CONFIRMADA e carimba a data.
- * @summary Confirma doações em lote
- */
-export const doacoesAdminConfirmarCreate = (
-    params?: DoacoesAdminConfirmarCreateParams,
- ) => {
-      return api<PaginatedDoacaoAdminList>(
-      {url: `/doacoes/admin/confirmar/`, method: 'POST',
-        params
     },
       );
     }
@@ -296,15 +153,6 @@ export const doacoesResumoRetrieve = (
       );
     }
   export type DoacoesCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesCreate>>>
-export type DoacoesAdminListResult = NonNullable<Awaited<ReturnType<typeof doacoesAdminList>>>
-export type DoacoesAdminCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesAdminCreate>>>
-export type DoacoesAdminRetrieveResult = NonNullable<Awaited<ReturnType<typeof doacoesAdminRetrieve>>>
-export type DoacoesAdminUpdateResult = NonNullable<Awaited<ReturnType<typeof doacoesAdminUpdate>>>
-export type DoacoesAdminPartialUpdateResult = NonNullable<Awaited<ReturnType<typeof doacoesAdminPartialUpdate>>>
-export type DoacoesAdminDestroyResult = NonNullable<Awaited<ReturnType<typeof doacoesAdminDestroy>>>
-export type DoacoesAdminConfirmadaCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesAdminConfirmadaCreate>>>
-export type DoacoesAdminCancelarCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesAdminCancelarCreate>>>
-export type DoacoesAdminConfirmarCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesAdminConfirmarCreate>>>
 export type DoacoesItensListResult = NonNullable<Awaited<ReturnType<typeof doacoesItensList>>>
 export type DoacoesItensCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesItensCreate>>>
 export type DoacoesItensRetrieveResult = NonNullable<Awaited<ReturnType<typeof doacoesItensRetrieve>>>
