@@ -6,10 +6,10 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type PresencasPorTurmaDataListSituacao = typeof PresencasPorTurmaDataListSituacao[keyof typeof PresencasPorTurmaDataListSituacao];
+export type PresencasChamadaListSituacao = typeof PresencasChamadaListSituacao[keyof typeof PresencasChamadaListSituacao];
 
 
-export const PresencasPorTurmaDataListSituacao = {
+export const PresencasChamadaListSituacao = {
   AUSENTE: 'AUSENTE',
   JUSTIFICADO: 'JUSTIFICADO',
   PRESENTE: 'PRESENTE',

@@ -5,7 +5,7 @@
  * API do Sistema ONG do Povo (Projeto Integrador). O schema em /api/schema/ alimenta o gerador de client do frontend.
  * OpenAPI spec version: 1.0.0
  */
-import type { PresencaLoteRequestPresencasItem } from './presencaLoteRequestPresencasItem';
+import type { PresencaLoteItemRequest } from './presencaLoteItemRequest';
 
 /**
  * Marcação em lote: lista de presenças para uma turma/data.
@@ -13,5 +13,5 @@ import type { PresencaLoteRequestPresencasItem } from './presencaLoteRequestPres
 export interface PresencaLoteRequest {
   turma: number;
   data: string;
-  presencas: PresencaLoteRequestPresencasItem[];
+  presencas: PresencaLoteItemRequest[];
 }

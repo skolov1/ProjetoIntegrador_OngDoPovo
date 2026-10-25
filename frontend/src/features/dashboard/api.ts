@@ -9,6 +9,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { turmasList, turmasCreate, turmasUpdate, turmasDestroy } from '@/api/generated/turmas/turmas'
+import { presencasChamadaList, presencasLoteCreate } from '@/api/generated/presencas/presencas'
 import { alunosList, alunosCreate, alunosUpdate, alunosPartialUpdate, alunosDestroy } from '@/api/generated/alunos/alunos'
 import {
   professoresList,
@@ -30,6 +31,8 @@ import type {
   PaginatedDoacaoItemList,
   DoacaoItemResumo,
   DoacaoItemRequest,
+  ChamadaItem,
+  PresencaLoteRequest,
 } from '@/api/generated/model'
 
 // Helper para extrair data da resposta do axios
@@ -195,5 +198,26 @@ export function useDeleteDoacaoItem() {
   return useMutation({
     mutationFn: (id: number) => doacoesItensDestroy(id).then(extractData),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['doacoes-itens'] }),
+  })
+}
+
+// ============================================================================
+// PRESENÇAS (lista de chamada)
+// ============================================================================
+
+export function usePresencaChamada(turma: number | undefined, data: string) {
+  return useQuery<ChamadaItem[]>({
+    queryKey: ['presencas', 'chamada', turma, data],
+    queryFn: () => presencasChamadaList({ turma: turma as number, data }).then(extractData),
+    enabled: turma !== undefined && Boolean(data),
+  })
+}
+
+export function useSalvarChamada() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: PresencaLoteRequest) => presencasLoteCreate(data).then(extractData),
+    // A situação salva muda a contagem de faltas seguidas dos próximos dias.
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['presencas'] }),
   })
 }

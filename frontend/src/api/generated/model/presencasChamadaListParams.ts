@@ -5,19 +5,18 @@
  * API do Sistema ONG do Povo (Projeto Integrador). O schema em /api/schema/ alimenta o gerador de client do frontend.
  * OpenAPI spec version: 1.0.0
  */
-import type { PresencasPorTurmaDataListSituacao } from './presencasPorTurmaDataListSituacao';
+import type { PresencasChamadaListSituacao } from './presencasChamadaListSituacao';
 
-export type PresencasPorTurmaDataListParams = {
+export type PresencasChamadaListParams = {
 aluno?: number;
-data?: string;
+/**
+ * AAAA-MM-DD
+ */
+data: string;
 /**
  * Which field to use when ordering the results.
  */
 ordering?: string;
-/**
- * A page number within the paginated result set.
- */
-page?: number;
 /**
  * A search term.
  */
@@ -27,6 +26,6 @@ search?: string;
  * * `AUSENTE` - Ausente
  * * `JUSTIFICADO` - Justificado
  */
-situacao?: PresencasPorTurmaDataListSituacao;
-turma?: number;
+situacao?: PresencasChamadaListSituacao;
+turma: number;
 };

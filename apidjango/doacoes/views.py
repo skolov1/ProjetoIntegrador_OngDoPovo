@@ -8,16 +8,18 @@ from datetime import date
 
 from django.db import transaction
 from django.db.models import Sum
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 
+from .faltas import eh_faltante, faltas_seguidas
 from .models import Aluno, DoacaoItem, Presenca, Professor, Turma
 from .serializers import (
     AlunoListSerializer,
     AlunoSerializer,
+    ChamadaItemSerializer,
     DoacaoItemResumoSerializer,
     DoacaoItemSerializer,
     PresencaCreateSerializer,
@@ -196,25 +198,29 @@ class PresencaViewSet(
         )
 
     @extend_schema(
-        summary="Lista presenças de uma turma em uma data",
+        summary="Lista de chamada de uma turma em uma data",
         tags=["presencas"],
-        responses={200: PresencaSerializer(many=True)},
+        parameters=[
+            OpenApiParameter("turma", int, required=True),
+            OpenApiParameter("data", str, required=True, description="AAAA-MM-DD"),
+        ],
+        responses={200: ChamadaItemSerializer(many=True)},
     )
-    @action(detail=False, methods=["get"], url_path="por-turma-data")
-    def por_turma_data(self, request):
-        """
-        Query params: ?turma=1&data=2026-10-20
-        Retorna todas as presenças da turma na data, incluindo alunos sem registro (como ausentes).
+    @action(detail=False, methods=["get"], url_path="chamada", pagination_class=None)
+    def chamada(self, request):
+        """Alunos ativos da turma, em ordem alfabética, com a situação já registrada.
+
+        Aluno sem registro na data vem com `situacao` nula (não conta como falta).
+        `faltante` é calculado na hora: 3 faltas seguidas até a data, sem contar as
+        justificadas (ver `faltas.py`).
         """
         turma_id = request.query_params.get("turma")
         data_str = request.query_params.get("data")
-
         if not turma_id or not data_str:
             return Response(
                 {"detail": "Parâmetros 'turma' e 'data' são obrigatórios."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
         try:
             turma = Turma.objects.get(pk=turma_id, ativo=True)
             data = date.fromisoformat(data_str)
@@ -224,30 +230,34 @@ class PresencaViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Presenças já registradas
-        presencas_existentes = Presenca.objects.filter(turma=turma, data=data).select_related("aluno")
-        presencas_dict = {p.aluno_id: p for p in presencas_existentes}
+        alunos = list(Aluno.objects.filter(turmas=turma, ativo=True).order_by("nome"))
+        do_dia = {
+            p.aluno_id: p for p in Presenca.objects.filter(turma=turma, data=data)
+        }
+        # Histórico até a data, do mais novo para o mais antigo, por aluno.
+        historico: dict[int, list[str]] = {a.id: [] for a in alunos}
+        for aluno_id, situacao in (
+            Presenca.objects.filter(turma=turma, data__lte=data, aluno__in=alunos)
+            .order_by("aluno_id", "-data")
+            .values_list("aluno_id", "situacao")
+        ):
+            historico[aluno_id].append(situacao)
 
-        # Alunos ativos da turma
-        alunos = Aluno.objects.filter(turmas=turma, ativo=True).order_by("nome")
-
-        resultado = []
+        itens = []
         for aluno in alunos:
-            if aluno.id in presencas_dict:
-                resultado.append(presencas_dict[aluno.id])
-            else:
-                # Cria objeto "virtual" para o serializer (ausente por padrão)
-                resultado.append(
-                    Presenca(
-                        aluno=aluno,
-                        turma=turma,
-                        data=data,
-                        situacao=Presenca.Situacao.AUSENTE,
-                        observacao="Não registrada",
-                    )
-                )
-
-        return Response(PresencaSerializer(resultado, many=True).data)
+            registro = do_dia.get(aluno.id)
+            itens.append(
+                {
+                    "aluno_id": aluno.id,
+                    "aluno_nome": aluno.nome,
+                    "idade": aluno.idade,
+                    "situacao": registro.situacao if registro else None,
+                    "observacao": registro.observacao if registro else "",
+                    "faltas_seguidas": faltas_seguidas(historico[aluno.id]),
+                    "faltante": eh_faltante(historico[aluno.id]),
+                }
+            )
+        return Response(ChamadaItemSerializer(itens, many=True).data)
 
 
 # =============================================================================

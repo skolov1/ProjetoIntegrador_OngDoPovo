@@ -6,4 +6,4 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export type PresencaLoteRequestPresencasItem = {[key: string]: string};
+export type NullEnum = null;

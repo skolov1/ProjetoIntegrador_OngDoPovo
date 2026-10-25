@@ -341,24 +341,48 @@ class PresencaCreateSerializer(serializers.ModelSerializer):
         fields = ["aluno", "turma", "data", "situacao", "observacao"]
 
 
+class PresencaLoteItemSerializer(serializers.Serializer):
+    aluno_id = serializers.IntegerField()
+    situacao = serializers.ChoiceField(choices=Presenca.Situacao.choices)
+    observacao = serializers.CharField(max_length=255, required=False, allow_blank=True)
+
+
 class PresencaLoteSerializer(serializers.Serializer):
     """Marcação em lote: lista de presenças para uma turma/data."""
 
     turma = serializers.PrimaryKeyRelatedField(queryset=Turma.objects.filter(ativo=True))
     data = serializers.DateField()
-    presencas = serializers.ListField(
-        child=serializers.DictField(
-            child=serializers.CharField(),
-        )
-    )
+    presencas = PresencaLoteItemSerializer(many=True, allow_empty=False)
 
-    def validate_presencas(self, value):
-        for item in value:
-            if "aluno_id" not in item:
-                raise serializers.ValidationError("Cada item deve conter 'aluno_id'.")
-            if "situacao" not in item:
-                raise serializers.ValidationError("Cada item deve conter 'situacao'.")
-        return value
+    def validate(self, attrs):
+        # Só alunos ativos da turma entram na chamada dela.
+        validos = set(
+            Aluno.objects.filter(turmas=attrs["turma"], ativo=True).values_list("id", flat=True)
+        )
+        ids = [p["aluno_id"] for p in attrs["presencas"]]
+        if len(ids) != len(set(ids)):
+            raise serializers.ValidationError({"presencas": "Aluno repetido na chamada."})
+        fora = sorted(set(ids) - validos)
+        if fora:
+            raise serializers.ValidationError(
+                {"presencas": f"Aluno(s) {fora} não estão ativos nesta turma."}
+            )
+        return attrs
+
+
+class ChamadaItemSerializer(serializers.Serializer):
+    """Um aluno na lista de chamada de uma turma em uma data."""
+
+    aluno_id = serializers.IntegerField()
+    aluno_nome = serializers.CharField()
+    idade = serializers.IntegerField()
+    # None = ainda não registrada nessa data (não conta como falta).
+    situacao = serializers.ChoiceField(
+        choices=Presenca.Situacao.choices, allow_null=True
+    )
+    observacao = serializers.CharField(allow_blank=True)
+    faltas_seguidas = serializers.IntegerField()
+    faltante = serializers.BooleanField()
 
 
 # =============================================================================

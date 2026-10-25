@@ -9,7 +9,8 @@ from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 
 from .documentos import cpf_valido, mascarar_cpf, telefone_valido
-from .models import Aluno, Consentimento, DoacaoItem, Turma
+from .faltas import eh_faltante, faltas_seguidas
+from .models import Aluno, Consentimento, DoacaoItem, Presenca, Turma
 
 pytestmark = pytest.mark.django_db
 
@@ -534,3 +535,247 @@ class TestDoacaoItem:
 
         assert response.data["item_descricao"] == ""
         assert response.data["item_rotulo"] == "Muletas"
+
+
+class TestFaltasSeguidas:
+    """Regra do faltante: 3 faltas seguidas; justificada é ignorada (não soma nem quebra)."""
+
+    @pytest.mark.parametrize(
+        ("historico", "esperado"),
+        [
+            ([], 0),
+            (["PRESENTE"], 0),
+            (["AUSENTE"], 1),
+            (["AUSENTE", "AUSENTE", "PRESENTE", "AUSENTE"], 2),
+            (["AUSENTE", "AUSENTE", "AUSENTE"], 3),
+            (["AUSENTE", "AUSENTE", "AUSENTE", "PRESENTE"], 3),
+            # Justificada no meio não quebra a sequência nem soma.
+            (["AUSENTE", "JUSTIFICADO", "AUSENTE", "AUSENTE"], 3),
+            (["JUSTIFICADO", "JUSTIFICADO"], 0),
+            (["PRESENTE", "AUSENTE", "AUSENTE", "AUSENTE"], 0),
+        ],
+    )
+    def test_conta_as_faltas_mais_recentes(self, historico, esperado):
+        assert faltas_seguidas(historico) == esperado
+
+    def test_faltante_com_tres_ou_mais(self):
+        assert eh_faltante(["AUSENTE", "AUSENTE", "AUSENTE"])
+        assert not eh_faltante(["AUSENTE", "AUSENTE", "PRESENTE"])
+        assert not eh_faltante(["AUSENTE", "JUSTIFICADO", "AUSENTE"])
+
+
+class TestChamada:
+    CHAMADA = "/api/v1/presencas/chamada/"
+    LOTE = "/api/v1/presencas/lote/"
+
+    @pytest.fixture
+    def staff(self, cliente, admin):
+        cliente.force_authenticate(admin)
+        return cliente
+
+    @pytest.fixture
+    def turma(self):
+        return Turma.objects.create(
+            nome="Muay Thai",
+            dia_semana="SEG",
+            horario_inicio="19:00",
+            horario_fim="20:00",
+            data_inicio="2026-01-01",
+        )
+
+    def aluno(self, nome, turma, **extra):
+        aluno = Aluno.objects.create(nome=nome, data_nascimento="1990-01-01", **extra)
+        aluno.turmas.add(turma)
+        return aluno
+
+    def registrar(self, aluno, turma, dia, situacao):
+        return Presenca.objects.create(aluno=aluno, turma=turma, data=dia, situacao=situacao)
+
+    def test_exige_login_de_admin(self, cliente, nao_admin, turma):
+        params = {"turma": turma.id, "data": "2026-10-26"}
+
+        assert cliente.get(self.CHAMADA, params).status_code in (401, 403)
+        cliente.force_authenticate(nao_admin)
+        assert cliente.get(self.CHAMADA, params).status_code == 403
+
+    def test_lista_so_alunos_ativos_da_turma_em_ordem_alfabetica(self, staff, turma):
+        self.aluno("Zeca", turma)
+        self.aluno("Ana", turma)
+        self.aluno("Inativo", turma, ativo=False)
+        Aluno.objects.create(nome="Outra turma", data_nascimento="1990-01-01")
+
+        itens = staff.get(self.CHAMADA, {"turma": turma.id, "data": "2026-10-26"}).data
+
+        assert [i["aluno_nome"] for i in itens] == ["Ana", "Zeca"]
+
+    def test_aluno_sem_registro_vem_sem_situacao_e_sem_falta(self, staff, turma):
+        self.aluno("Ana", turma)
+
+        item = staff.get(self.CHAMADA, {"turma": turma.id, "data": "2026-10-26"}).data[0]
+
+        assert item["situacao"] is None
+        assert item["faltas_seguidas"] == 0
+        assert item["faltante"] is False
+
+    def test_parametros_obrigatorios_e_validos(self, staff, turma):
+        assert staff.get(self.CHAMADA).status_code == 400
+        assert staff.get(self.CHAMADA, {"turma": turma.id, "data": "ontem"}).status_code == 400
+        assert staff.get(self.CHAMADA, {"turma": 999, "data": "2026-10-26"}).status_code == 400
+
+    def test_faltante_com_tres_faltas_seguidas(self, staff, turma):
+        ana = self.aluno("Ana", turma)
+        for dia in ("2026-10-12", "2026-10-19", "2026-10-26"):
+            self.registrar(ana, turma, dia, "AUSENTE")
+
+        item = staff.get(self.CHAMADA, {"turma": turma.id, "data": "2026-10-26"}).data[0]
+
+        assert item["faltas_seguidas"] == 3
+        assert item["faltante"] is True
+
+    def test_justificada_nao_conta_para_o_faltante(self, staff, turma):
+        ana = self.aluno("Ana", turma)
+        self.registrar(ana, turma, "2026-10-12", "AUSENTE")
+        self.registrar(ana, turma, "2026-10-19", "JUSTIFICADO")
+        self.registrar(ana, turma, "2026-10-26", "AUSENTE")
+
+        item = staff.get(self.CHAMADA, {"turma": turma.id, "data": "2026-10-26"}).data[0]
+
+        assert item["faltas_seguidas"] == 2
+        assert item["faltante"] is False
+
+    def test_presenca_zera_a_sequencia(self, staff, turma):
+        ana = self.aluno("Ana", turma)
+        for dia, sit in (
+            ("2026-10-05", "AUSENTE"),
+            ("2026-10-12", "AUSENTE"),
+            ("2026-10-19", "PRESENTE"),
+            ("2026-10-26", "AUSENTE"),
+        ):
+            self.registrar(ana, turma, dia, sit)
+
+        item = staff.get(self.CHAMADA, {"turma": turma.id, "data": "2026-10-26"}).data[0]
+
+        assert item["faltas_seguidas"] == 1
+
+    def test_historico_so_ate_a_data_consultada(self, staff, turma):
+        ana = self.aluno("Ana", turma)
+        for dia in ("2026-10-12", "2026-10-19", "2026-10-26"):
+            self.registrar(ana, turma, dia, "AUSENTE")
+
+        item = staff.get(self.CHAMADA, {"turma": turma.id, "data": "2026-10-19"}).data[0]
+
+        assert item["faltas_seguidas"] == 2
+
+    def test_faltas_de_outra_turma_nao_contam(self, staff, turma):
+        outra = Turma.objects.create(
+            nome="Judô",
+            dia_semana="TER",
+            horario_inicio="18:00",
+            horario_fim="19:00",
+            data_inicio="2026-01-01",
+        )
+        ana = self.aluno("Ana", turma)
+        for dia in ("2026-10-12", "2026-10-19", "2026-10-26"):
+            self.registrar(ana, outra, dia, "AUSENTE")
+
+        item = staff.get(self.CHAMADA, {"turma": turma.id, "data": "2026-10-26"}).data[0]
+
+        assert item["faltas_seguidas"] == 0
+
+    def test_salvar_chamada_em_lote_e_reler(self, staff, turma):
+        ana, bia = self.aluno("Ana", turma), self.aluno("Bia", turma)
+
+        response = staff.post(
+            self.LOTE,
+            {
+                "turma": turma.id,
+                "data": "2026-10-26",
+                "presencas": [
+                    {"aluno_id": ana.id, "situacao": "PRESENTE"},
+                    {"aluno_id": bia.id, "situacao": "JUSTIFICADO", "observacao": "gripe"},
+                ],
+            },
+            format="json",
+        )
+
+        assert response.status_code == 201
+        itens = {
+            i["aluno_nome"]: i
+            for i in staff.get(self.CHAMADA, {"turma": turma.id, "data": "2026-10-26"}).data
+        }
+        assert itens["Ana"]["situacao"] == "PRESENTE"
+        assert itens["Bia"]["situacao"] == "JUSTIFICADO"
+        assert itens["Bia"]["observacao"] == "gripe"
+
+    def test_salvar_de_novo_atualiza_sem_duplicar(self, staff, turma):
+        ana = self.aluno("Ana", turma)
+        corpo = {"turma": turma.id, "data": "2026-10-26"}
+
+        staff.post(
+            self.LOTE,
+            {**corpo, "presencas": [{"aluno_id": ana.id, "situacao": "AUSENTE"}]},
+            format="json",
+        )
+        staff.post(
+            self.LOTE,
+            {**corpo, "presencas": [{"aluno_id": ana.id, "situacao": "PRESENTE"}]},
+            format="json",
+        )
+
+        assert Presenca.objects.count() == 1
+        assert Presenca.objects.get().situacao == "PRESENTE"
+
+    @pytest.mark.parametrize("situacao", ["FALTOU", "", "presente"])
+    def test_lote_recusa_situacao_invalida(self, staff, turma, situacao):
+        ana = self.aluno("Ana", turma)
+
+        response = staff.post(
+            self.LOTE,
+            {
+                "turma": turma.id,
+                "data": "2026-10-26",
+                "presencas": [{"aluno_id": ana.id, "situacao": situacao}],
+            },
+            format="json",
+        )
+
+        assert response.status_code == 400
+        assert Presenca.objects.count() == 0
+
+    def test_lote_recusa_aluno_fora_da_turma_ou_inativo(self, staff, turma):
+        de_fora = Aluno.objects.create(nome="De fora", data_nascimento="1990-01-01")
+        inativo = self.aluno("Inativo", turma, ativo=False)
+
+        for aluno in (de_fora, inativo):
+            response = staff.post(
+                self.LOTE,
+                {
+                    "turma": turma.id,
+                    "data": "2026-10-26",
+                    "presencas": [{"aluno_id": aluno.id, "situacao": "PRESENTE"}],
+                },
+                format="json",
+            )
+            assert response.status_code == 400
+
+        assert Presenca.objects.count() == 0
+
+    def test_lote_recusa_lista_vazia_ou_aluno_repetido(self, staff, turma):
+        ana = self.aluno("Ana", turma)
+        corpo = {"turma": turma.id, "data": "2026-10-26"}
+
+        vazia = staff.post(self.LOTE, {**corpo, "presencas": []}, format="json")
+        repetido = staff.post(
+            self.LOTE,
+            {
+                **corpo,
+                "presencas": [
+                    {"aluno_id": ana.id, "situacao": "PRESENTE"},
+                    {"aluno_id": ana.id, "situacao": "AUSENTE"},
+                ],
+            },
+            format="json",
+        )
+
+        assert vazia.status_code == 400
+        assert repetido.status_code == 400

@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type {
+  ChamadaItem,
   PaginatedPresencaList,
   PatchedPresencaRequest,
   Presenca,
@@ -13,9 +14,9 @@ import type {
   PresencaCreateRequest,
   PresencaLoteRequest,
   PresencaRequest,
+  PresencasChamadaListParams,
   PresencasListParams,
-  PresencasLoteCreateParams,
-  PresencasPorTurmaDataListParams
+  PresencasLoteCreateParams
 } from '../model';
 
 import { api } from '../../../lib/api';
@@ -98,6 +99,23 @@ export const presencasDestroy = (
       );
     }
   /**
+ * Alunos ativos da turma, em ordem alfabética, com a situação já registrada.
+ *
+ * Aluno sem registro na data vem com `situacao` nula (não conta como falta).
+ * `faltante` é calculado na hora: 3 faltas seguidas até a data, sem contar as
+ * justificadas (ver `faltas.py`).
+ * @summary Lista de chamada de uma turma em uma data
+ */
+export const presencasChamadaList = (
+    params: PresencasChamadaListParams,
+ ) => {
+      return api<ChamadaItem[]>(
+      {url: `/presencas/chamada/`, method: 'GET',
+        params
+    },
+      );
+    }
+  /**
  * Recebe: { turma: 1, data: "2026-10-20", presencas: [{aluno_id: 1, situacao: "PRESENTE"}, ...] }
  * Cria/atualiza presenças em bulk.
  * @summary Marca presença em lote para uma turma/data
@@ -114,25 +132,11 @@ export const presencasLoteCreate = (
     },
       );
     }
-  /**
- * Query params: ?turma=1&data=2026-10-20
- * Retorna todas as presenças da turma na data, incluindo alunos sem registro (como ausentes).
- * @summary Lista presenças de uma turma em uma data
- */
-export const presencasPorTurmaDataList = (
-    params?: PresencasPorTurmaDataListParams,
- ) => {
-      return api<PaginatedPresencaList>(
-      {url: `/presencas/por-turma-data/`, method: 'GET',
-        params
-    },
-      );
-    }
   export type PresencasListResult = NonNullable<Awaited<ReturnType<typeof presencasList>>>
 export type PresencasCreateResult = NonNullable<Awaited<ReturnType<typeof presencasCreate>>>
 export type PresencasRetrieveResult = NonNullable<Awaited<ReturnType<typeof presencasRetrieve>>>
 export type PresencasUpdateResult = NonNullable<Awaited<ReturnType<typeof presencasUpdate>>>
 export type PresencasPartialUpdateResult = NonNullable<Awaited<ReturnType<typeof presencasPartialUpdate>>>
 export type PresencasDestroyResult = NonNullable<Awaited<ReturnType<typeof presencasDestroy>>>
+export type PresencasChamadaListResult = NonNullable<Awaited<ReturnType<typeof presencasChamadaList>>>
 export type PresencasLoteCreateResult = NonNullable<Awaited<ReturnType<typeof presencasLoteCreate>>>
-export type PresencasPorTurmaDataListResult = NonNullable<Awaited<ReturnType<typeof presencasPorTurmaDataList>>>

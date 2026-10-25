@@ -45,6 +45,7 @@ import {
   useDeleteDoacaoItem,
 } from "@/features/dashboard/api";
 import { encerrarSessao, restaurarSessao } from "@/lib/api";
+import { PresencasTela } from "@/features/dashboard/PresencasTela";
 import { alunosRetrieve } from "@/api/generated/alunos/alunos";
 import { professoresRetrieve } from "@/api/generated/professores/professores";
 import { turmasRetrieve } from "@/api/generated/turmas/turmas";
@@ -1091,15 +1092,7 @@ export function DashboardLayout() {
         </div>
 
         {/* PRESENÇAS */}
-        {screen === "presenca" && (
-          <div className="mt-6 space-y-4">
-            <h3 className="text-xl font-bold text-verde">Presenças</h3>
-            <p className="text-grafite/60">
-              Gerencie turmas na aba <strong>Turmas</strong>, depois registre
-              presença.
-            </p>
-          </div>
-        )}
+        {screen === "presenca" && <PresencasTela />}
 
         {/* TURMAS */}
         {screen === "turmas" && (

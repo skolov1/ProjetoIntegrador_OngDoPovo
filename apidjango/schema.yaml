@@ -720,6 +720,70 @@ paths:
       responses:
         '204':
           description: No response body
+  /presencas/chamada/:
+    get:
+      operationId: presencas_chamada_list
+      description: |-
+        Alunos ativos da turma, em ordem alfabética, com a situação já registrada.
+
+        Aluno sem registro na data vem com `situacao` nula (não conta como falta).
+        `faltante` é calculado na hora: 3 faltas seguidas até a data, sem contar as
+        justificadas (ver `faltas.py`).
+      summary: Lista de chamada de uma turma em uma data
+      parameters:
+      - in: query
+        name: aluno
+        schema:
+          type: integer
+      - in: query
+        name: data
+        schema:
+          type: string
+        description: AAAA-MM-DD
+        required: true
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: situacao
+        schema:
+          type: string
+          title: Situação
+          enum:
+          - AUSENTE
+          - JUSTIFICADO
+          - PRESENTE
+        description: |-
+          * `PRESENTE` - Presente
+          * `AUSENTE` - Ausente
+          * `JUSTIFICADO` - Justificado
+      - in: query
+        name: turma
+        schema:
+          type: integer
+        required: true
+      tags:
+      - presencas
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChamadaItem'
+          description: ''
   /presencas/lote/:
     post:
       operationId: presencas_lote_create
@@ -790,69 +854,6 @@ paths:
       - jwtAuth: []
       responses:
         '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedPresencaList'
-          description: ''
-  /presencas/por-turma-data/:
-    get:
-      operationId: presencas_por_turma_data_list
-      description: |-
-        Query params: ?turma=1&data=2026-10-20
-        Retorna todas as presenças da turma na data, incluindo alunos sem registro (como ausentes).
-      summary: Lista presenças de uma turma em uma data
-      parameters:
-      - in: query
-        name: aluno
-        schema:
-          type: integer
-      - in: query
-        name: data
-        schema:
-          type: string
-          format: date
-      - name: ordering
-        required: false
-        in: query
-        description: Which field to use when ordering the results.
-        schema:
-          type: string
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: search
-        required: false
-        in: query
-        description: A search term.
-        schema:
-          type: string
-      - in: query
-        name: situacao
-        schema:
-          type: string
-          title: Situação
-          enum:
-          - AUSENTE
-          - JUSTIFICADO
-          - PRESENTE
-        description: |-
-          * `PRESENTE` - Presente
-          * `AUSENTE` - Ausente
-          * `JUSTIFICADO` - Justificado
-      - in: query
-        name: turma
-        schema:
-          type: integer
-      tags:
-      - presencas
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
           content:
             application/json:
               schema:
@@ -1505,6 +1506,35 @@ components:
       required:
       - data_nascimento
       - nome
+    ChamadaItem:
+      type: object
+      description: Um aluno na lista de chamada de uma turma em uma data.
+      properties:
+        aluno_id:
+          type: integer
+        aluno_nome:
+          type: string
+        idade:
+          type: integer
+        situacao:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SituacaoEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        observacao:
+          type: string
+        faltas_seguidas:
+          type: integer
+        faltante:
+          type: boolean
+      required:
+      - aluno_id
+      - aluno_nome
+      - faltante
+      - faltas_seguidas
+      - idade
+      - observacao
+      - situacao
     ComprovanteResidenciaEnum:
       enum:
       - pendente
@@ -1718,6 +1748,9 @@ components:
       - name
       - role
       - username
+    NullEnum:
+      enum:
+      - null
     PaginatedAlunoListList:
       type: object
       required:
@@ -2129,6 +2162,19 @@ components:
       - aluno
       - data
       - turma
+    PresencaLoteItemRequest:
+      type: object
+      properties:
+        aluno_id:
+          type: integer
+        situacao:
+          $ref: '#/components/schemas/SituacaoEnum'
+        observacao:
+          type: string
+          maxLength: 255
+      required:
+      - aluno_id
+      - situacao
     PresencaLoteRequest:
       type: object
       description: 'Marcação em lote: lista de presenças para uma turma/data.'
@@ -2141,10 +2187,7 @@ components:
         presencas:
           type: array
           items:
-            type: object
-            additionalProperties:
-              type: string
-              minLength: 1
+            $ref: '#/components/schemas/PresencaLoteItemRequest'
       required:
       - data
       - presencas
