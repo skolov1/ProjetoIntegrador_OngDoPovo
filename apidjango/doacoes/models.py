@@ -1,12 +1,7 @@
 """
-Modelo de doação.
+Modelos do painel da ONG: alunos, turmas, professores, presenças e doações de itens.
 
-Fluxo real: quem doar preenche o formulário do site, o registro nasce como
-PENDENTE e a equipe confere no extrato antes de marcar como CONFIRMADA.
-
-Uma ONG que recebe PIX não tem como o sistema sozinho saber se o dinheiro caiu —
-alguém precisa olhar. Por isso o status existe e por isso ele é setado **no
-servidor**, nunca vindo do formulário público.
+Doação em dinheiro não é registrada no sistema: o PIX a ONG confere no extrato.
 """
 
 from datetime import date
@@ -24,95 +19,6 @@ VERSAO_TERMO = "1.0"
 
 # Cada turma em que o aluno está matriculado custa este valor por mês.
 MENSALIDADE_POR_TURMA = Decimal("20.00")
-
-
-class Doacao(models.Model):
-    class Status(models.TextChoices):
-        PENDENTE = "PENDENTE", "Pendente"
-        CONFIRMADA = "CONFIRMADA", "Confirmada"
-        CANCELADA = "CANCELADA", "Cancelada"
-
-    class FormaPagamento(models.TextChoices):
-        PIX = "PIX", "Pix"
-        DINHEIRO = "DINHEIRO", "Dinheiro"
-        CARTAO = "CARTAO", "Cartão"
-        TRANSFERENCIA = "TRANSFERENCIA", "Transferência"
-
-    class Destinacao(models.TextChoices):
-        """Causa escolhida pelo doador.
-
-        Existe para que o painel da Fase 3 consiga agrupar a captação por
-        finalidade. Começou como choices fixos em vez de um modelo Campanha
-        separado porque resolve o agrupamento com uma linha e não trava o
-        desenho — se virar campanha com meta e prazo, o modelo é aditivo.
-        """
-
-        GERAL = "GERAL", "Onde mais precisar"
-        MATERIAL = "MATERIAL", "Material esportivo"
-        INFRAESTRUTURA = "INFRAESTRUTURA", "Infraestrutura da sede"
-        ALIMENTACAO = "ALIMENTACAO", "Alimentação e eventos"
-
-    # --- Quem doou -------------------------------------------------------
-    nome = models.CharField("nome", max_length=150)
-    email = models.EmailField("e-mail")
-    telefone = models.CharField("telefone", max_length=20, blank=True)
-
-    # Decisao do time (04/10/2026): o dado e gravado mesmo quando anonimo,
-    # porque a ONG precisa poder emitir recibo depois. Em troca, nenhum endpoint
-    # publico expoe dado pessoal. Ver DoacaoPublicSerializer.
-    anonimo = models.BooleanField("doação anônima", default=False)
-
-    # --- O que foi doado -------------------------------------------------
-    valor = models.DecimalField(
-        "valor",
-        max_digits=10,
-        decimal_places=2,
-        validators=[MinValueValidator(Decimal("1.00"))],
-    )
-    forma_pagamento = models.CharField(
-        "forma de pagamento", max_length=20, choices=FormaPagamento.choices
-    )
-    destinacao = models.CharField(
-        "destinação", max_length=20, choices=Destinacao.choices, default=Destinacao.GERAL
-    )
-
-    # --- Situacao --------------------------------------------------------
-    # O status e SEMPRE PENDENTE na criacao. Ver DoacaoPublicCreateSerializer.
-    status = models.CharField(
-        "status", max_length=20, choices=Status.choices, default=Status.PENDENTE
-    )
-    mensagem = models.TextField("mensagem", blank=True)
-
-    criado_em = models.DateTimeField("criado em", auto_now_add=True)
-    confirmado_em = models.DateTimeField("confirmado em", null=True, blank=True)
-
-    class Meta:
-        verbose_name = "Doação"
-        verbose_name_plural = "Doações"
-        ordering = ["-criado_em"]
-        indexes = [
-            # É a query que o painel da Fase 3 roda: confirmadas por período.
-            models.Index(fields=["status", "-criado_em"], name="doacao_status_criado_idx"),
-            models.Index(fields=["destinacao"], name="doacao_destinacao_idx"),
-        ]
-
-    def __str__(self) -> str:
-        return f"{self.nome_exibido} — R$ {self.valor}"
-
-    @property
-    def nome_exibido(self) -> str:
-        """Nome para exibição na listagem do admin."""
-        return "Anônimo" if self.anonimo else self.nome
-
-    def confirmar(self) -> None:
-        """Marca como confirmada e carimba a data."""
-        self.status = self.Status.CONFIRMADA
-        self.confirmado_em = timezone.now()
-        self.save(update_fields=["status", "confirmado_em"])
-
-    def cancelar(self) -> None:
-        self.status = self.Status.CANCELADA
-        self.save(update_fields=["status"])
 
 
 class DoacaoItem(models.Model):

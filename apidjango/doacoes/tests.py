@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 
 from .documentos import cpf_valido, mascarar_cpf, telefone_valido
-from .models import Aluno, Consentimento, Doacao, DoacaoItem, Turma
+from .models import Aluno, Consentimento, DoacaoItem, Turma
 
 pytestmark = pytest.mark.django_db
 
@@ -17,17 +17,6 @@ URL_CRIAR = "/api/v1/doacoes/"
 URL_PUBLICO = "/api/v1/doacoes/publico/"
 URL_RESUMO = "/api/v1/doacoes/resumo/"
 URL_ADMIN = "/api/v1/doacoes/admin/"
-
-PAGAMENTO = {
-    "nome": "Maria Silva",
-    "email": "maria@exemplo.com",
-    "telefone": "13988887777",
-    "valor": "100.00",
-    "forma_pagamento": "PIX",
-    "destinacao": "MATERIAL",
-    "mensagem": "Torcendo pelo projeto!",
-}
-
 
 @pytest.fixture
 def cliente():
@@ -72,34 +61,6 @@ class TestRotasDeDinheiroRemovidas:
                 cliente.force_authenticate(admin)
             for metodo in (cliente.get, cliente.post):
                 assert metodo(caminho).status_code == 404
-
-
-class TestDoacaoDinheiroNoModel:
-    """O model segue no Django admin; só as rotas saíram."""
-
-    def test_anonimo_exibido_como_anonimo(self):
-        doacao = Doacao.objects.create(
-            nome="Fulano", email="f@e.com", anonimo=True, valor="10.00", forma_pagamento="PIX"
-        )
-
-        assert doacao.nome_exibido == "Anônimo"
-
-    def test_identificado_mostra_o_nome(self):
-        doacao = Doacao.objects.create(
-            nome="Fulano", email="f@e.com", valor="10.00", forma_pagamento="PIX"
-        )
-
-        assert doacao.nome_exibido == "Fulano"
-
-    def test_confirmar_carimba_a_data(self):
-        doacao = Doacao.objects.create(
-            nome="A", email="a@a.com", valor="10.00", forma_pagamento="PIX"
-        )
-
-        doacao.confirmar()
-
-        assert doacao.status == Doacao.Status.CONFIRMADA
-        assert doacao.confirmado_em is not None
 
 
 class TestPreCadastroPublicoRemovido:
