@@ -1591,6 +1591,16 @@ components:
           items:
             type: string
           readOnly: true
+        mensalidade_personalizada:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
+        mensalidade_calculada:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
         mensalidade:
           type: string
           format: decimal
@@ -1629,6 +1639,7 @@ components:
       - id
       - idade
       - mensalidade
+      - mensalidade_calculada
       - nome
       - turmas_nomes
     AlunoList:
@@ -1745,6 +1756,11 @@ components:
           type: array
           items:
             type: integer
+        mensalidade_personalizada:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         ativo:
           type: boolean
       required:
@@ -2312,6 +2328,11 @@ components:
           type: array
           items:
             type: integer
+        mensalidade_personalizada:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          nullable: true
         ativo:
           type: boolean
     PatchedDoacaoAdminRequest:

@@ -46,6 +46,13 @@ export interface Aluno {
   readonly consentimento_registrado: boolean;
   turmas?: number[];
   readonly turmas_nomes: readonly string[];
+  /**
+     * @nullable
+     * @pattern ^-?\d{0,8}(?:\.\d{0,2})?$
+     */
+  mensalidade_personalizada?: string | null;
+  /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */
+  readonly mensalidade_calculada: string;
   /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */
   readonly mensalidade: string;
   ativo?: boolean;

@@ -12,7 +12,7 @@ Este documento resume quais dados pessoais o painel da ONG do Povo guarda, por q
 | Nome, CPF, RG, telefone e endereço | Responsável do menor | Identificar quem responde pelo menor e permitir contato. Nome, CPF e telefone são obrigatórios. |
 | Exame de aptidão física: situação (pendente, apto, não apto) e validade | Aluno menor | Saber se o menor pode praticar a atividade e quando o exame vence. |
 | Consentimento: nome do responsável, data e hora, versão do termo | Menor | Provar que o responsável autorizou o tratamento dos dados do menor. |
-| Turmas, situação (ativo/inativo) e presenças; a mensalidade é calculada (R$ 20 por turma) | Aluno | Operação da ONG: turmas, cobrança e lista de chamada. |
+| Turmas, situação (ativo/inativo) e presenças; a mensalidade é calculada (R$ 20 por turma), podendo ser ajustada por aluno | Aluno | Operação da ONG: turmas, cobrança e lista de chamada. |
 
 ## O que não é coletado
 

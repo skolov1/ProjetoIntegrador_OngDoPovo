@@ -55,6 +55,7 @@ import {
   calcularMensalidade,
   cpfValido,
   ehMenor,
+  valorMensalidade,
   soDigitos,
   telefoneValido,
 } from "@/lib/aluno";
@@ -95,6 +96,8 @@ type FormAluno = {
   exame_validade: string;
   consentimento_responsavel: boolean;
   turmas: number[];
+  // Vazio = usa o cálculo (R$ 20 por turma).
+  mensalidade_personalizada: string;
   ativo: boolean;
 };
 
@@ -113,6 +116,7 @@ const ALUNO_VAZIO: FormAluno = {
   exame_validade: "",
   consentimento_responsavel: false,
   turmas: [],
+  mensalidade_personalizada: "",
   ativo: true,
 };
 
@@ -148,6 +152,8 @@ function erroDoAluno(f: FormAluno, menor: boolean): string {
   } else if (f.cpf && !cpfValido(f.cpf)) {
     return "CPF inválido.";
   }
+  if (f.mensalidade_personalizada && valorMensalidade(f.mensalidade_personalizada) === null)
+    return "Mensalidade inválida. Use um valor como 20,00 ou deixe vazio.";
   return "";
 }
 
@@ -294,6 +300,7 @@ export function DashboardLayout() {
       cpf_responsavel: soDigitos(formAluno.cpf_responsavel),
       telefone_responsavel: soDigitos(formAluno.telefone_responsavel),
       exame_validade: formAluno.exame_validade || null,
+      mensalidade_personalizada: valorMensalidade(formAluno.mensalidade_personalizada),
     };
     if (editingId !== null) {
       updateAluno.mutate({ id: editingId, data: payload }, aoSalvar);
@@ -345,6 +352,7 @@ export function DashboardLayout() {
           // Já autorizado antes: o checkbox volta marcado.
           consentimento_responsavel: a.consentimento_registrado,
           turmas: a.turmas ?? [],
+          mensalidade_personalizada: a.mensalidade_personalizada ?? "",
           ativo: a.ativo ?? true,
         });
       } else {
@@ -668,9 +676,25 @@ export function DashboardLayout() {
                 </label>
               ))}
             </div>
-            <p className="mt-2 text-sm text-grafite/70">
-              Mensalidade: <strong>R$ {calcularMensalidade(formAluno.turmas.length).toFixed(2)}</strong>{" "}
-              (R$ {MENSALIDADE_POR_TURMA} por turma)
+            <label className="mt-3 block text-sm text-grafite/70">
+              Mensalidade (R$)
+              <input
+                name="mensalidade_personalizada"
+                inputMode="decimal"
+                placeholder={`Automática: ${calcularMensalidade(formAluno.turmas.length).toFixed(2)}`}
+                value={formAluno.mensalidade_personalizada}
+                onChange={(e) =>
+                  setFormAluno({
+                    ...formAluno,
+                    mensalidade_personalizada: e.target.value,
+                  })
+                }
+                className={`${CLASSE_CAMPO} mt-1`}
+              />
+            </label>
+            <p className="mt-1 text-xs text-grafite/60">
+              Deixe vazio para cobrar R$ {MENSALIDADE_POR_TURMA} por turma. Preencha só para
+              mudar o valor deste aluno (0 = isento).
             </p>
           </fieldset>
           <label className="flex items-center gap-2">

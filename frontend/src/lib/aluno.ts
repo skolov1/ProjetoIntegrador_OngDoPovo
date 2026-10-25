@@ -48,3 +48,14 @@ export const MENSALIDADE_POR_TURMA = 20
 export function calcularMensalidade(qtdTurmas: number): number {
   return MENSALIDADE_POR_TURMA * qtdTurmas
 }
+
+/**
+ * Valor digitado ("20", "20,5", "20.50") no formato da API ("20.50").
+ * Vazio vira `null` (usa o cálculo); valor inválido ou negativo também, e quem
+ * chama checa a validade com `valorMensalidade(x) === null` só se `x` não era vazio.
+ */
+export function valorMensalidade(digitado: string): string | null {
+  const texto = digitado.trim().replace(',', '.')
+  if (!/^\d+(\.\d{1,2})?$/.test(texto)) return null
+  return Number(texto).toFixed(2)
+}

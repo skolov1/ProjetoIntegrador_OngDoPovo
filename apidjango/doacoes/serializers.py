@@ -189,6 +189,9 @@ class AlunoSerializer(serializers.ModelSerializer):
     )
     turmas_nomes = serializers.SerializerMethodField()
     mensalidade = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    mensalidade_calculada = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True
+    )
     exame_situacao = serializers.CharField(read_only=True, allow_null=True)
     # Entrada: o checkbox "Responsável autorizou o tratamento dos dados do menor".
     consentimento_responsavel = serializers.BooleanField(write_only=True, required=False)
@@ -216,6 +219,8 @@ class AlunoSerializer(serializers.ModelSerializer):
             "consentimento_registrado",
             "turmas",
             "turmas_nomes",
+            "mensalidade_personalizada",
+            "mensalidade_calculada",
             "mensalidade",
             "ativo",
             "idade",
@@ -231,6 +236,7 @@ class AlunoSerializer(serializers.ModelSerializer):
             "eh_maior_de_idade",
             "campos_obrigatorios_faltando",
             "turmas_nomes",
+            "mensalidade_calculada",
             "mensalidade",
         ]
 

@@ -594,7 +594,7 @@ class TestAlunoLGPD:
         assert editado["mensalidade"] == "60.00"
         assert set(editado["turmas_nomes"]) == {"Muay Thai", "Judô", "Violão"}
 
-    def test_mensalidade_enviada_pelo_cliente_e_ignorada(self, staff):
+    def test_campo_mensalidade_efetiva_nao_e_gravavel(self, staff):
         t1 = self.turma("Muay Thai")
 
         criado = staff.post(
@@ -602,6 +602,52 @@ class TestAlunoLGPD:
         ).data
 
         assert criado["mensalidade"] == "20.00"
+
+    def test_mensalidade_personalizada_vale_no_lugar_do_calculo(self, staff):
+        t1, t2 = self.turma("Muay Thai"), self.turma("Judô")
+
+        criado = staff.post(
+            self.URL,
+            self.maior(turmas=[t1.id, t2.id], mensalidade_personalizada="30.00"),
+            format="json",
+        ).data
+
+        assert criado["mensalidade"] == "30.00"
+        assert criado["mensalidade_calculada"] == "40.00"
+        assert criado["mensalidade_personalizada"] == "30.00"
+
+    def test_personalizada_pode_ser_zero_para_isencao(self, staff):
+        t1 = self.turma("Muay Thai")
+
+        criado = staff.post(
+            self.URL,
+            self.maior(turmas=[t1.id], mensalidade_personalizada="0.00"),
+            format="json",
+        ).data
+
+        assert criado["mensalidade"] == "0.00"
+
+    def test_limpar_a_personalizada_volta_ao_calculo(self, staff):
+        t1 = self.turma("Muay Thai")
+        criado = staff.post(
+            self.URL,
+            self.maior(turmas=[t1.id], mensalidade_personalizada="5.00"),
+            format="json",
+        ).data
+
+        editado = staff.patch(
+            f"{self.URL}{criado['id']}/", {"mensalidade_personalizada": None}, format="json"
+        ).data
+
+        assert editado["mensalidade"] == "20.00"
+
+    def test_personalizada_negativa_e_recusada(self, staff):
+        response = staff.post(
+            self.URL, self.maior(mensalidade_personalizada="-1.00"), format="json"
+        )
+
+        assert response.status_code == 400
+        assert "mensalidade_personalizada" in response.data
 
     def test_listagem_traz_turmas_e_mensalidade(self, staff):
         t1, t2 = self.turma("Muay Thai"), self.turma("Judô")

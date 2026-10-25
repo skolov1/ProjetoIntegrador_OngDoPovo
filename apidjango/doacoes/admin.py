@@ -179,8 +179,11 @@ class AlunoAdmin(admin.ModelAdmin):
         (
             "Vínculo e financeiro",
             {
-                "fields": ("turmas", "mensalidade", "ativo"),
-                "description": "A mensalidade é calculada: R$ 20 por turma.",
+                "fields": ("turmas", "mensalidade_personalizada", "mensalidade", "ativo"),
+                "description": (
+                    "Mensalidade: R$ 20 por turma. Preencha a personalizada só para "
+                    "mudar esse valor (desconto, isenção); vazia, vale o cálculo."
+                ),
             },
         ),
         (

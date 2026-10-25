@@ -208,6 +208,15 @@ class Aluno(models.Model):
         related_name="alunos",
         verbose_name="Turmas",
     )
+    # Valor combinado com a ONG (desconto, isenção...). Vazio = usa o cálculo por turma.
+    mensalidade_personalizada = models.DecimalField(
+        "Mensalidade personalizada",
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        validators=[MinValueValidator(Decimal("0.00"))],
+    )
     ativo = models.BooleanField("Ativo", default=True)
     criado_em = models.DateTimeField("Cadastrado em", auto_now_add=True)
     atualizado_em = models.DateTimeField("Atualizado em", auto_now=True)
@@ -243,10 +252,17 @@ class Aluno(models.Model):
         return self.idade >= 18
 
     @property
-    def mensalidade(self) -> Decimal:
-        """Calculada: valor por turma x turmas do aluno (nunca digitada)."""
+    def mensalidade_calculada(self) -> Decimal:
+        """Valor por turma x turmas do aluno."""
         # `.all()` aproveita o prefetch da listagem e evita uma consulta por aluno.
         return MENSALIDADE_POR_TURMA * len(self.turmas.all())
+
+    @property
+    def mensalidade(self) -> Decimal:
+        """O que o aluno paga: o valor personalizado, se houver, senão o calculado."""
+        if self.mensalidade_personalizada is not None:
+            return self.mensalidade_personalizada
+        return self.mensalidade_calculada
 
     @property
     def cpf_mascarado(self) -> str | None:

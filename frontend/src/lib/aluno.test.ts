@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { calcularIdade, calcularMensalidade, cpfValido, ehMenor, mascararCpf, telefoneValido } from './aluno'
+import { calcularIdade, calcularMensalidade, cpfValido, ehMenor, mascararCpf, telefoneValido, valorMensalidade } from './aluno'
 
 const hoje = new Date(2026, 9, 24) // 24/10/2026
 
@@ -62,5 +62,20 @@ describe('calcularMensalidade', () => {
     expect(calcularMensalidade(0)).toBe(0)
     expect(calcularMensalidade(1)).toBe(20)
     expect(calcularMensalidade(3)).toBe(60)
+  })
+})
+
+describe('valorMensalidade', () => {
+  it('aceita vírgula ou ponto e devolve duas casas', () => {
+    expect(valorMensalidade('20')).toBe('20.00')
+    expect(valorMensalidade(' 20,5 ')).toBe('20.50')
+    expect(valorMensalidade('0')).toBe('0.00')
+  })
+
+  it('vazio, negativo ou texto viram null', () => {
+    expect(valorMensalidade('')).toBeNull()
+    expect(valorMensalidade('-5')).toBeNull()
+    expect(valorMensalidade('abc')).toBeNull()
+    expect(valorMensalidade('1.234')).toBeNull()
   })
 })

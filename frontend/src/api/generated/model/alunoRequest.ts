@@ -45,5 +45,10 @@ export interface AlunoRequest {
   exame_validade?: string | null;
   consentimento_responsavel?: boolean;
   turmas?: number[];
+  /**
+     * @nullable
+     * @pattern ^-?\d{0,8}(?:\.\d{0,2})?$
+     */
+  mensalidade_personalizada?: string | null;
   ativo?: boolean;
 }
