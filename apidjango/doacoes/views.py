@@ -1,32 +1,25 @@
 """
-Views da doação e presença.
+Views do painel: doações de itens, turmas, alunos, presenças e professores.
 
-Três endpoints, três permissões. Não unificar: ver o comentário dos serializers
-sobre o risco de um doador se auto-declarar CONFIRMADA.
+Tudo aqui é só para a equipe (`IsAdminUser`); não há rota pública de doação.
 """
 
 from datetime import date
 
 from django.db import transaction
 from django.db.models import Sum
-from drf_spectacular.utils import OpenApiResponse, extend_schema
+from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.generics import CreateAPIView, ListAPIView
-from rest_framework.permissions import AllowAny, IsAdminUser
+from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
-from .models import Aluno, Doacao, DoacaoItem, Presenca, Professor, Turma
+from .models import Aluno, DoacaoItem, Presenca, Professor, Turma
 from .serializers import (
     AlunoListSerializer,
     AlunoSerializer,
-    DoacaoCriadaSerializer,
     DoacaoItemResumoSerializer,
     DoacaoItemSerializer,
-    DoacaoPublicCreateSerializer,
-    DoacaoPublicSerializer,
-    DoacaoResumoSerializer,
     PresencaCreateSerializer,
     PresencaLoteSerializer,
     PresencaSerializer,
@@ -35,136 +28,8 @@ from .serializers import (
     TurmaSerializer,
 )
 
-# Quantas doações confirmados aparecem no mural público.
-LIMITE_MURAL = 12
-
-
 # =============================================================================
-# Doação
-# =============================================================================
-
-
-class DoacaoPublicCreateView(CreateAPIView):
-    """POST /api/v1/doacoes/
-
-    Formulário público. Qualquer pessoa registra a intenção de doar; o registro
-    nasce PENDENTE e a equipe confere no extrato.
-    """
-
-    queryset = Doacao.objects.all()
-    serializer_class = DoacaoPublicCreateSerializer
-    permission_classes = [AllowAny]
-    authentication_classes = []
-    throttle_scope = "doacao"
-
-    @extend_schema(
-        summary="Registra uma doação",
-        description=(
-            "Público. Cria o registro sempre como PENDENTE — a equipe confirma "
-            "no extrato. O campo `status` não é aceito no corpo da requisição."
-        ),
-        tags=["doacoes"],
-        responses={
-            201: DoacaoCriadaSerializer,
-            400: OpenApiResponse(description="Dados inválidos"),
-            429: OpenApiResponse(description="Limite de envios excedido"),
-        },
-    )
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        # Sem passar status: o default do model (PENDENTE) é o que vale.
-        doacao = serializer.save()
-        return Response(
-            {
-                "id": doacao.id,
-                "status": doacao.status,
-                "mensagem": (
-                    "Recebemos o seu registro. A ONG do Povo vai conferir o "
-                    "pagamento e confirmar em breve."
-                ),
-            },
-            status=status.HTTP_201_CREATED,
-        )
-
-
-class DoacaoPublicListView(ListAPIView):
-    """GET /api/v1/doacoes/publico/
-
-    Mural de doações. Só CONFIRMADAS e sem nenhum dado pessoal.
-    """
-
-    serializer_class = DoacaoPublicSerializer
-    permission_classes = [AllowAny]
-    authentication_classes = []
-    pagination_class = None
-
-    @extend_schema(
-        summary="Lista as doações confirmadas",
-        description=(
-            "Público. Apenas doações com status CONFIRMADA, sem nome, e-mail "
-            "ou telefone. Usado pela seção de impacto da landing."
-        ),
-        tags=["doacoes"],
-        responses={200: DoacaoPublicSerializer(many=True)},
-    )
-    def get_queryset(self):
-        return Doacao.objects.filter(status=Doacao.Status.CONFIRMADA).order_by(
-            "-criado_em"
-        )[:LIMITE_MURAL]
-
-
-class DoacaoResumoView(APIView):
-    """GET /api/v1/doacoes/resumo/
-
-    Total geral e por destinação, só do que está CONFIRMADO. É o número que a
-    landing exibe — por isso também não tem dado pessoal.
-    """
-
-    permission_classes = [AllowAny]
-    authentication_classes = []
-
-    @extend_schema(
-        summary="Total arrecadado",
-        description=(
-            "Público. Soma das doações confirmadas, geral e por destinação. "
-            "Não inclui registros pendentes ou cancelados."
-        ),
-        tags=["doacoes"],
-        responses={200: DoacaoResumoSerializer},
-    )
-    def get(self, request):
-        from django.db.models import Count, Sum
-
-        confirmadas = Doacao.objects.filter(status=Doacao.Status.CONFIRMADA)
-
-        agregado = confirmadas.aggregate(
-            total=Sum("valor"), quantidade=Count("id")
-        )
-        por_destino = confirmadas.values("destinacao").annotate(
-            total=Sum("valor"), quantidade=Count("id")
-        )
-
-        return Response(
-            {
-                "total": str(agregado["total"] or "0.00"),
-                "quantidade": agregado["quantidade"],
-                "pendentes": Doacao.objects.filter(status=Doacao.Status.PENDENTE).count(),
-                "por_destino": [
-                    {
-                        "destinacao": linha["destinacao"],
-                        "rotulo": Doacao.Destinacao(linha["destinacao"]).label,
-                        "total": str(linha["total"] or "0.00"),
-                        "quantidade": linha["quantidade"],
-                    }
-                    for linha in por_destino
-                ],
-            }
-        )
-
-
-# =============================================================================
-# Turma
+# Doação de itens
 # =============================================================================
 
 
@@ -202,6 +67,11 @@ class DoacaoItemViewSet(
             for valor, rotulo in DoacaoItem.Item.choices
         ]
         return Response(DoacaoItemResumoSerializer(dados, many=True).data)
+
+
+# =============================================================================
+# Turma
+# =============================================================================
 
 
 class TurmaViewSet(

@@ -1,8 +1,6 @@
 """
-Rotas do app de doações e presença.
-
-A ordem importa: rotas específicas vêm antes do router para não serem
-capturadas pelo lookup `<pk>`.
+Rotas do painel (todas só para a equipe): doações de itens, turmas, alunos,
+presenças e professores.
 """
 
 from django.urls import include, path
@@ -20,10 +18,6 @@ router.register("professores", views.ProfessorViewSet, basename="professor")
 app_name = "doacoes"
 
 urlpatterns = [
-    # Doações públicas
-    path("doacoes/", views.DoacaoPublicCreateView.as_view(), name="doacao-criar"),
-    path("doacoes/publico/", views.DoacaoPublicListView.as_view(), name="doacao-publico"),
-    path("doacoes/resumo/", views.DoacaoResumoView.as_view(), name="doacao-resumo"),
     # Router (admin)
     path("", include(router.urls)),
 ]

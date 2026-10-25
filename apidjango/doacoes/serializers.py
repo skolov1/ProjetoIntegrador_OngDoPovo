@@ -1,10 +1,5 @@
 """
-Serializers da doação e presença.
-
-**Três serializers separados porque são três públicos com permissões diferentes.**
-Misturar em um só é como se faz o erro clássico: um ViewSet único com
-`IsAuthenticatedOrReadOnly` deixa qualquer visitante mandar
-`{"valor": 1000, "status": "CONFIRMADA"}` e fabricar a própria doação.
+Serializers do painel: doações de itens, turmas, alunos, presenças e professores.
 """
 
 from datetime import date
@@ -17,99 +12,11 @@ from .models import (
     VERSAO_TERMO,
     Aluno,
     Consentimento,
-    Doacao,
     DoacaoItem,
     Presenca,
     Professor,
     Turma,
 )
-
-# =============================================================================
-# Doação
-# =============================================================================
-
-
-class DoacaoPublicCreateSerializer(serializers.ModelSerializer):
-    """Entrada do formulário público.
-
-    Note que `status`, `confirmado_em` e `criado_em` **nao estao** em `fields`.
-    Nao e que sejam `read_only`: eles simplesmente nao existem para o cliente.
-    Assim nao existe caminho para o doador se auto-declarar confirmado.
-    """
-
-    class Meta:
-        model = Doacao
-        fields = [
-            "nome",
-            "email",
-            "telefone",
-            "anonimo",
-            "valor",
-            "forma_pagamento",
-            "destinacao",
-            "mensagem",
-        ]
-        extra_kwargs = {
-            "nome": {"label": "Nome"},
-            "email": {"label": "E-mail"},
-            "telefone": {"label": "Telefone"},
-            "anonimo": {"label": "Doação anônima"},
-            "valor": {"label": "Valor", "help_text": "Em reais. Mínimo R$ 1,00."},
-            "forma_pagamento": {"label": "Forma de pagamento"},
-            "destinacao": {"label": "Destinação"},
-            "mensagem": {"label": "Mensagem", "required": False},
-        }
-
-    def validate_nome(self, valor: str) -> str:
-        if len(valor.strip()) < 3:
-            raise serializers.ValidationError("Informe o nome completo.")
-        return valor.strip()
-
-
-class DoacaoPublicSerializer(serializers.ModelSerializer):
-    """Leitura pública — **zero dado pessoal**.
-
-    Nem doador anônimo, nem identificado: este serializer não tem acesso a
-    nome, email ou telefone, então nenhum endpoint que o use pode vazar nada.
-    Serve para a seção de impacto e, no futuro, o painel da Fase 3.
-    """
-
-    class Meta:
-        model = Doacao
-        fields = ["id", "valor", "destinacao", "criado_em"]
-        read_only_fields = fields
-
-
-class DoacaoCriadaSerializer(serializers.Serializer):
-    """Resposta do POST público.
-
-    Declarada como serializer (e não `OpenApiResponse(description=...)`) para que
-    o Orval gere o tipo no frontend. Sem isso o client sai como `api<void>` e o
-    React perde a verificação de tipo do retorno.
-    """
-
-    id = serializers.IntegerField(read_only=True)
-    status = serializers.CharField(read_only=True)
-    mensagem = serializers.CharField(read_only=True)
-
-
-class DoacaoResumoDestinoSerializer(serializers.Serializer):
-    """Uma linha do resumo: total confirmado de uma destinação."""
-
-    destinacao = serializers.CharField(read_only=True)
-    rotulo = serializers.CharField(read_only=True)
-    total = serializers.CharField(read_only=True)
-    quantidade = serializers.IntegerField(read_only=True)
-
-
-class DoacaoResumoSerializer(serializers.Serializer):
-    """Resposta do GET /doacoes/resumo/ (só descreve o contrato para o Orval)."""
-
-    total = serializers.CharField(read_only=True)
-    quantidade = serializers.IntegerField(read_only=True)
-    pendentes = serializers.IntegerField(read_only=True)
-    por_destino = DoacaoResumoDestinoSerializer(many=True, read_only=True)
-
 
 # =============================================================================
 # Turma

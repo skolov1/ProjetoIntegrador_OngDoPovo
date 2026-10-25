@@ -6,16 +6,11 @@
  * OpenAPI spec version: 1.0.0
  */
 import type {
-  DoacaoCriada,
   DoacaoItem,
   DoacaoItemRequest,
   DoacaoItemResumo,
-  DoacaoPublic,
-  DoacaoPublicCreateRequest,
-  DoacaoResumo,
   DoacoesItensListParams,
   DoacoesItensResumoListParams,
-  DoacoesPublicoListParams,
   PaginatedDoacaoItemList,
   PatchedDoacaoItemRequest
 } from '../model';
@@ -24,20 +19,6 @@ import { api } from '../../../lib/api';
 
 
 
-  /**
- * Público. Cria o registro sempre como PENDENTE — a equipe confirma no extrato. O campo `status` não é aceito no corpo da requisição.
- * @summary Registra uma doação
- */
-export const doacoesCreate = (
-    doacaoPublicCreateRequest: DoacaoPublicCreateRequest,
- ) => {
-      return api<DoacaoCriada>(
-      {url: `/doacoes/`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: doacaoPublicCreateRequest
-    },
-      );
-    }
   /**
  * Registro de doações de itens (alimentos, cadeiras, muletas), só da equipe.
  */
@@ -126,39 +107,10 @@ export const doacoesItensResumoList = (
     },
       );
     }
-  /**
- * GET /api/v1/doacoes/publico/
- *
- * Mural de doações. Só CONFIRMADAS e sem nenhum dado pessoal.
- */
-export const doacoesPublicoList = (
-    params?: DoacoesPublicoListParams,
- ) => {
-      return api<DoacaoPublic[]>(
-      {url: `/doacoes/publico/`, method: 'GET',
-        params
-    },
-      );
-    }
-  /**
- * Público. Soma das doações confirmadas, geral e por destinação. Não inclui registros pendentes ou cancelados.
- * @summary Total arrecadado
- */
-export const doacoesResumoRetrieve = (
-
- ) => {
-      return api<DoacaoResumo>(
-      {url: `/doacoes/resumo/`, method: 'GET'
-    },
-      );
-    }
-  export type DoacoesCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesCreate>>>
-export type DoacoesItensListResult = NonNullable<Awaited<ReturnType<typeof doacoesItensList>>>
+  export type DoacoesItensListResult = NonNullable<Awaited<ReturnType<typeof doacoesItensList>>>
 export type DoacoesItensCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesItensCreate>>>
 export type DoacoesItensRetrieveResult = NonNullable<Awaited<ReturnType<typeof doacoesItensRetrieve>>>
 export type DoacoesItensUpdateResult = NonNullable<Awaited<ReturnType<typeof doacoesItensUpdate>>>
 export type DoacoesItensPartialUpdateResult = NonNullable<Awaited<ReturnType<typeof doacoesItensPartialUpdate>>>
 export type DoacoesItensDestroyResult = NonNullable<Awaited<ReturnType<typeof doacoesItensDestroy>>>
 export type DoacoesItensResumoListResult = NonNullable<Awaited<ReturnType<typeof doacoesItensResumoList>>>
-export type DoacoesPublicoListResult = NonNullable<Awaited<ReturnType<typeof doacoesPublicoList>>>
-export type DoacoesResumoRetrieveResult = NonNullable<Awaited<ReturnType<typeof doacoesResumoRetrieve>>>

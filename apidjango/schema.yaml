@@ -278,39 +278,6 @@ paths:
           description: ''
         '401':
           description: Sessao expirada ou sem cookie valido
-  /doacoes/:
-    post:
-      operationId: doacoes_create
-      description: Público. Cria o registro sempre como PENDENTE — a equipe confirma
-        no extrato. O campo `status` não é aceito no corpo da requisição.
-      summary: Registra uma doação
-      tags:
-      - doacoes
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DoacaoPublicCreateRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/DoacaoPublicCreateRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/DoacaoPublicCreateRequest'
-        required: true
-      security:
-      - {}
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DoacaoCriada'
-          description: ''
-        '400':
-          description: Dados inválidos
-        '429':
-          description: Limite de envios excedido
   /doacoes/itens/:
     get:
       operationId: doacoes_itens_list
@@ -544,56 +511,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/DoacaoItemResumo'
-          description: ''
-  /doacoes/publico/:
-    get:
-      operationId: doacoes_publico_list
-      description: |-
-        GET /api/v1/doacoes/publico/
-
-        Mural de doações. Só CONFIRMADAS e sem nenhum dado pessoal.
-      parameters:
-      - name: ordering
-        required: false
-        in: query
-        description: Which field to use when ordering the results.
-        schema:
-          type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
-        schema:
-          type: string
-      tags:
-      - doacoes
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DoacaoPublic'
-          description: ''
-  /doacoes/resumo/:
-    get:
-      operationId: doacoes_resumo_retrieve
-      description: Público. Soma das doações confirmadas, geral e por destinação.
-        Não inclui registros pendentes ou cancelados.
-      summary: Total arrecadado
-      tags:
-      - doacoes
-      security:
-      - {}
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DoacaoResumo'
           description: ''
   /ping/:
     get:
@@ -1615,18 +1532,6 @@ components:
       required:
       - password
       - username
-    DestinacaoEnum:
-      enum:
-      - GERAL
-      - MATERIAL
-      - INFRAESTRUTURA
-      - ALIMENTACAO
-      type: string
-      description: |-
-        * `GERAL` - Onde mais precisar
-        * `MATERIAL` - Material esportivo
-        * `INFRAESTRUTURA` - Infraestrutura da sede
-        * `ALIMENTACAO` - Alimentação e eventos
     DiaSemanaEnum:
       enum:
       - SEG
@@ -1645,28 +1550,6 @@ components:
         * `SEX` - Sexta
         * `SAB` - Sábado
         * `DOM` - Domingo
-    DoacaoCriada:
-      type: object
-      description: |-
-        Resposta do POST público.
-
-        Declarada como serializer (e não `OpenApiResponse(description=...)`) para que
-        o Orval gere o tipo no frontend. Sem isso o client sai como `api<void>` e o
-        React perde a verificação de tipo do retorno.
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        status:
-          type: string
-          readOnly: true
-        mensagem:
-          type: string
-          readOnly: true
-      required:
-      - id
-      - mensagem
-      - status
     DoacaoItem:
       type: object
       properties:
@@ -1751,127 +1634,6 @@ components:
       - item
       - item_rotulo
       - total
-    DoacaoPublic:
-      type: object
-      description: |-
-        Leitura pública — **zero dado pessoal**.
-
-        Nem doador anônimo, nem identificado: este serializer não tem acesso a
-        nome, email ou telefone, então nenhum endpoint que o use pode vazar nada.
-        Serve para a seção de impacto e, no futuro, o painel da Fase 3.
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        valor:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-          readOnly: true
-        destinacao:
-          allOf:
-          - $ref: '#/components/schemas/DestinacaoEnum'
-          readOnly: true
-          title: Destinação
-        criado_em:
-          type: string
-          format: date-time
-          readOnly: true
-      required:
-      - criado_em
-      - destinacao
-      - id
-      - valor
-    DoacaoPublicCreateRequest:
-      type: object
-      description: |-
-        Entrada do formulário público.
-
-        Note que `status`, `confirmado_em` e `criado_em` **nao estao** em `fields`.
-        Nao e que sejam `read_only`: eles simplesmente nao existem para o cliente.
-        Assim nao existe caminho para o doador se auto-declarar confirmado.
-      properties:
-        nome:
-          type: string
-          minLength: 1
-          maxLength: 150
-        email:
-          type: string
-          format: email
-          minLength: 1
-          title: E-mail
-          maxLength: 254
-        telefone:
-          type: string
-          maxLength: 20
-        anonimo:
-          type: boolean
-          title: Doação anônima
-        valor:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-          description: Em reais. Mínimo R$ 1,00.
-        forma_pagamento:
-          allOf:
-          - $ref: '#/components/schemas/FormaPagamentoEnum'
-          title: Forma de pagamento
-        destinacao:
-          allOf:
-          - $ref: '#/components/schemas/DestinacaoEnum'
-          title: Destinação
-        mensagem:
-          type: string
-      required:
-      - email
-      - forma_pagamento
-      - nome
-      - valor
-    DoacaoResumo:
-      type: object
-      description: Resposta do GET /doacoes/resumo/ (só descreve o contrato para o
-        Orval).
-      properties:
-        total:
-          type: string
-          readOnly: true
-        quantidade:
-          type: integer
-          readOnly: true
-        pendentes:
-          type: integer
-          readOnly: true
-        por_destino:
-          type: array
-          items:
-            $ref: '#/components/schemas/DoacaoResumoDestino'
-          readOnly: true
-      required:
-      - pendentes
-      - por_destino
-      - quantidade
-      - total
-    DoacaoResumoDestino:
-      type: object
-      description: 'Uma linha do resumo: total confirmado de uma destinação.'
-      properties:
-        destinacao:
-          type: string
-          readOnly: true
-        rotulo:
-          type: string
-          readOnly: true
-        total:
-          type: string
-          readOnly: true
-        quantidade:
-          type: integer
-          readOnly: true
-      required:
-      - destinacao
-      - quantidade
-      - rotulo
-      - total
     ExameAptidaoEnum:
       enum:
       - pendente
@@ -1882,18 +1644,6 @@ components:
         * `pendente` - Pendente
         * `apto` - Apto
         * `nao_apto` - Não apto
-    FormaPagamentoEnum:
-      enum:
-      - PIX
-      - DINHEIRO
-      - CARTAO
-      - TRANSFERENCIA
-      type: string
-      description: |-
-        * `PIX` - Pix
-        * `DINHEIRO` - Dinheiro
-        * `CARTAO` - Cartão
-        * `TRANSFERENCIA` - Transferência
     ItemEnum:
       enum:
       - ALIMENTOS
