@@ -7,10 +7,13 @@ Misturar em um só é como se faz o erro clássico: um ViewSet único com
 `{"valor": 1000, "status": "CONFIRMADA"}` e fabricar a própria doação.
 """
 
+from datetime import date
+
+from django.db import transaction
 from rest_framework import serializers
 
-from .models import Aluno, Doacao, Presenca, Professor, Turma
-
+from .documentos import cpf_valido, so_digitos, telefone_valido
+from .models import VERSAO_TERMO, Aluno, Consentimento, Doacao, Presenca, Professor, Turma
 
 # =============================================================================
 # Doação
@@ -172,7 +175,12 @@ class TurmaListSerializer(TurmaSerializer):
 
 
 class AlunoSerializer(serializers.ModelSerializer):
-    """Serializer completo do aluno (admin)."""
+    """Serializer completo do aluno (admin).
+
+    Regras de LGPD: menor de 18 anos não tem CPF próprio (o CPF fica no
+    responsável) e só salva com a autorização do responsável, que vira um
+    registro de `Consentimento`.
+    """
 
     idade = serializers.IntegerField(read_only=True)
     eh_maior_de_idade = serializers.BooleanField(read_only=True)
@@ -180,6 +188,11 @@ class AlunoSerializer(serializers.ModelSerializer):
         child=serializers.CharField(), read_only=True
     )
     turma_nome = serializers.CharField(source="turma.nome", read_only=True)
+    exame_situacao = serializers.CharField(read_only=True, allow_null=True)
+    # Entrada: o checkbox "Responsável autorizou o tratamento dos dados do menor".
+    consentimento_responsavel = serializers.BooleanField(write_only=True, required=False)
+    # Saída: já existe consentimento gravado para este aluno?
+    consentimento_registrado = serializers.SerializerMethodField()
 
     class Meta:
         model = Aluno
@@ -190,11 +203,16 @@ class AlunoSerializer(serializers.ModelSerializer):
             "sexo",
             "rg",
             "cpf",
-            "comprovante_residencia",
-            "titulo_eleitor",
+            "nome_responsavel",
+            "cpf_responsavel",
             "rg_responsavel",
-            "certificado_nascimento",
-            "atestado_medico",
+            "telefone_responsavel",
+            "endereco_responsavel",
+            "exame_aptidao",
+            "exame_validade",
+            "exame_situacao",
+            "consentimento_responsavel",
+            "consentimento_registrado",
             "mensalidade",
             "turma",
             "turma_nome",
@@ -214,11 +232,101 @@ class AlunoSerializer(serializers.ModelSerializer):
             "turma_nome",
         ]
 
+    def get_consentimento_registrado(self, obj: Aluno) -> bool:
+        return obj.consentimentos.exists()
+
+    @staticmethod
+    def _limpar_cpf(valor: str | None, campo: str) -> str:
+        """Guarda só os dígitos e confere os dígitos verificadores."""
+        digitos = so_digitos(valor)
+        if digitos and not cpf_valido(digitos):
+            raise serializers.ValidationError({campo: "CPF inválido."})
+        return digitos
+
+    def validate_telefone_responsavel(self, valor: str) -> str:
+        if valor and not telefone_valido(valor):
+            raise serializers.ValidationError("Telefone inválido. Use DDD + número.")
+        return so_digitos(valor)
+
+    def validate(self, attrs):
+        atual = self.instance
+
+        # Valor enviado agora ou, se não veio (PATCH), o que já está gravado.
+        def valor(campo, padrao=""):
+            if campo in attrs:
+                return attrs[campo]
+            return getattr(atual, campo, padrao) if atual else padrao
+
+        nascimento = valor("data_nascimento", None)
+        hoje = date.today()
+        menor = bool(nascimento) and (
+            hoje.year
+            - nascimento.year
+            - ((hoje.month, hoje.day) < (nascimento.month, nascimento.day))
+        ) < 18
+        erros = {}
+
+        cpf_resp = self._limpar_cpf(valor("cpf_responsavel"), "cpf_responsavel")
+
+        if menor:
+            # O CPF do menor não é guardado: fica só o do responsável.
+            attrs["cpf"] = None
+            for campo, rotulo in (
+                ("nome_responsavel", "Informe o nome do responsável."),
+                ("telefone_responsavel", "Informe o telefone do responsável."),
+            ):
+                if not valor(campo):
+                    erros[campo] = rotulo
+            if not cpf_resp:
+                erros["cpf_responsavel"] = "Informe o CPF do responsável."
+            ja_autorizou = bool(atual and atual.consentimentos.exists())
+            if not (attrs.get("consentimento_responsavel") or ja_autorizou):
+                erros["consentimento_responsavel"] = (
+                    "É preciso marcar que o responsável autorizou o tratamento dos dados do menor."
+                )
+        else:
+            attrs["cpf"] = self._limpar_cpf(valor("cpf", None), "cpf") or None
+        if "cpf_responsavel" in attrs:
+            attrs["cpf_responsavel"] = cpf_resp
+
+        if erros:
+            raise serializers.ValidationError(erros)
+        return attrs
+
+    def _registrar_consentimento(self, aluno: Aluno, autorizou: bool) -> None:
+        if autorizou and not aluno.eh_maior_de_idade and not aluno.consentimentos.exists():
+            Consentimento.objects.create(
+                aluno=aluno,
+                responsavel_nome=aluno.nome_responsavel,
+                versao_termo=VERSAO_TERMO,
+            )
+
+    @transaction.atomic
+    def create(self, validated_data):
+        autorizou = validated_data.pop("consentimento_responsavel", False)
+        aluno = super().create(validated_data)
+        self._registrar_consentimento(aluno, autorizou)
+        return aluno
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        autorizou = validated_data.pop("consentimento_responsavel", False)
+        aluno = super().update(instance, validated_data)
+        self._registrar_consentimento(aluno, autorizou)
+        return aluno
+
 
 class AlunoListSerializer(serializers.ModelSerializer):
-    """Listagem leve para tabelas."""
+    """Listagem leve para tabelas.
+
+    Não traz o CPF completo (só mascarado, e só para maior de idade) nem dados do
+    responsável: o cadastro completo aparece ao abrir a edição.
+    """
 
     idade = serializers.IntegerField(read_only=True)
+    eh_maior_de_idade = serializers.BooleanField(read_only=True)
+    cpf_mascarado = serializers.CharField(read_only=True, allow_null=True)
+    exame_situacao = serializers.CharField(read_only=True, allow_null=True)
     turma_nome = serializers.CharField(source="turma.nome", read_only=True)
 
     class Meta:
@@ -226,8 +334,10 @@ class AlunoListSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "nome",
-            "cpf",
+            "cpf_mascarado",
             "idade",
+            "eh_maior_de_idade",
+            "exame_situacao",
             "turma",
             "turma_nome",
             "mensalidade",

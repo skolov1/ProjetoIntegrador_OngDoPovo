@@ -285,7 +285,7 @@ class AlunoViewSet(
     queryset = Aluno.objects.select_related("turma").all()
     permission_classes = [IsAdminUser]
     filterset_fields = ["ativo", "turma", "sexo"]
-    search_fields = ["nome", "cpf", "rg"]
+    search_fields = ["nome"]
     ordering_fields = ["nome", "criado_em", "mensalidade"]
     ordering = ["nome"]
 
@@ -313,7 +313,7 @@ class PresencaViewSet(
     queryset = Presenca.objects.select_related("aluno", "turma").all()
     permission_classes = [IsAdminUser]
     filterset_fields = ["turma", "data", "situacao", "aluno"]
-    search_fields = ["aluno__nome", "aluno__cpf", "turma__nome", "observacao"]
+    search_fields = ["aluno__nome", "turma__nome", "observacao"]
     ordering_fields = ["data", "registrado_em"]
     ordering = ["-data", "aluno__nome"]
 

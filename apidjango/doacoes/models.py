@@ -9,11 +9,18 @@ alguém precisa olhar. Por isso o status existe e por isso ele é setado **no
 servidor**, nunca vindo do formulário público.
 """
 
+from datetime import date
 from decimal import Decimal
 
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
+
+from .documentos import mascarar_cpf
+
+# Versão do termo de tratamento de dados que o responsável aceita no cadastro.
+# Ao mudar o texto do termo, aumente a versão: o consentimento guarda qual foi aceito.
+VERSAO_TERMO = "1.0"
 
 
 class Doacao(models.Model):
@@ -149,7 +156,12 @@ class Turma(models.Model):
 
 
 class Aluno(models.Model):
-    """Aluno com campos diferenciados por idade (maior/menor)."""
+    """Aluno. Menor de idade não tem CPF próprio: o CPF fica no responsável.
+
+    Por LGPD o sistema guarda só o necessário: nenhum arquivo ou imagem de
+    documento, nem título de eleitor. O exame de aptidão física é só uma etiqueta
+    de status (e a validade); o conteúdo do atestado fica com a ONG, no papel.
+    """
 
     class Sexo(models.TextChoices):
         MASCULINO = "M", "Masculino"
@@ -157,40 +169,34 @@ class Aluno(models.Model):
         OUTRO = "O", "Outro"
         NAO_INFORMAR = "N", "Prefiro não informar"
 
+    class ExameAptidao(models.TextChoices):
+        PENDENTE = "pendente", "Pendente"
+        APTO = "apto", "Apto"
+        NAO_APTO = "nao_apto", "Não apto"
+
     # --- Dados pessoais ---
     nome = models.CharField("Nome completo", max_length=150)
     data_nascimento = models.DateField("Data de nascimento")
     sexo = models.CharField("Sexo", max_length=1, choices=Sexo.choices, default=Sexo.NAO_INFORMAR)
-    rg = models.CharField("RG", max_length=20)
-    cpf = models.CharField("CPF", max_length=14, unique=True)
-    comprovante_residencia = models.ImageField(
-        "Comprovante de residência",
-        upload_to="alunos/comprovantes/",
-        blank=True,
-        null=True,
-    )
+    rg = models.CharField("RG ou certidão de nascimento", max_length=20, blank=True)
+    # Só para maior de idade. Vazio (NULL) para menor; NULL não conflita com unique.
+    cpf = models.CharField("CPF", max_length=14, unique=True, blank=True, null=True)
 
-    # --- Maior de idade ---
-    titulo_eleitor = models.CharField(
-        "Título de eleitor", max_length=20, blank=True, null=True
-    )
+    # --- Responsável (obrigatório para menor de 18 anos) ---
+    nome_responsavel = models.CharField("Nome do responsável", max_length=150, blank=True)
+    cpf_responsavel = models.CharField("CPF do responsável", max_length=14, blank=True)
+    rg_responsavel = models.CharField("RG do responsável", max_length=20, blank=True, default="")
+    telefone_responsavel = models.CharField("Telefone do responsável", max_length=20, blank=True)
+    endereco_responsavel = models.CharField("Endereço do responsável", max_length=255, blank=True)
 
-    # --- Menor de idade (responsável) ---
-    rg_responsavel = models.CharField(
-        "RG do responsável", max_length=20, blank=True, null=True
+    # --- Exame de aptidão física (vale para menores) ---
+    exame_aptidao = models.CharField(
+        "Exame de aptidão física",
+        max_length=10,
+        choices=ExameAptidao.choices,
+        default=ExameAptidao.PENDENTE,
     )
-    certificado_nascimento = models.ImageField(
-        "Certidão de nascimento",
-        upload_to="alunos/comprovantes/",
-        blank=True,
-        null=True,
-    )
-    atestado_medico = models.ImageField(
-        "Atestado médico de aptidão física",
-        upload_to="alunos/comprovantes/",
-        blank=True,
-        null=True,
-    )
+    exame_validade = models.DateField("Validade do exame", blank=True, null=True)
 
     # --- Comuns ---
     mensalidade = models.DecimalField(
@@ -214,7 +220,6 @@ class Aluno(models.Model):
         ordering = ["nome"]
         indexes = [
             models.Index(fields=["ativo", "turma"], name="aluno_ativo_turma_idx"),
-            models.Index(fields=["cpf"], name="aluno_cpf_idx"),
         ]
 
     def __str__(self) -> str:
@@ -240,26 +245,67 @@ class Aluno(models.Model):
         return self.idade >= 18
 
     @property
+    def cpf_mascarado(self) -> str | None:
+        """CPF para listagens (123.***.***-00). Menor não tem CPF para exibir."""
+        if not self.cpf or not self.eh_maior_de_idade:
+            return None
+        return mascarar_cpf(self.cpf)
+
+    @property
+    def exame_situacao(self) -> str | None:
+        """Situação do exame para sinalizar na tela. Só vale para menores.
+
+        `ausente` (pendente), `vencido`, `nao_apto` ou `valido`.
+        """
+        if self.eh_maior_de_idade:
+            return None
+        if self.exame_aptidao == self.ExameAptidao.PENDENTE:
+            return "ausente"
+        if self.exame_aptidao == self.ExameAptidao.NAO_APTO:
+            return "nao_apto"
+        if self.exame_validade and self.exame_validade < date.today():
+            return "vencido"
+        return "valido"
+
+    @property
     def campos_obrigatorios_faltando(self) -> list[str]:
         """Retorna lista de campos obrigatórios que estão vazios conforme a idade."""
         faltando = []
-        if not self.rg:
-            faltando.append("RG")
-        if not self.cpf:
-            faltando.append("CPF")
-        if not self.comprovante_residencia:
-            faltando.append("Comprovante de residência")
-        if self.eh_maior_de_idade:
-            if not self.titulo_eleitor:
-                faltando.append("Título de eleitor")
-        else:
-            if not self.rg_responsavel:
-                faltando.append("RG do responsável")
-            if not self.certificado_nascimento:
-                faltando.append("Certidão de nascimento")
-            if not self.atestado_medico:
-                faltando.append("Atestado médico")
+        if not self.eh_maior_de_idade:
+            if not self.nome_responsavel:
+                faltando.append("Nome do responsável")
+            if not self.cpf_responsavel:
+                faltando.append("CPF do responsável")
+            if not self.telefone_responsavel:
+                faltando.append("Telefone do responsável")
+            if self.exame_aptidao == self.ExameAptidao.PENDENTE:
+                faltando.append("Exame de aptidão física")
+            if not self.consentimentos.exists():
+                faltando.append("Consentimento do responsável")
         return faltando
+
+
+class Consentimento(models.Model):
+    """Registro de que o responsável autorizou o tratamento dos dados do menor.
+
+    Guarda o nome do responsável no momento do aceite e a versão do termo, para
+    comprovar o que foi aceito mesmo se o cadastro mudar depois.
+    """
+
+    aluno = models.ForeignKey(
+        Aluno, on_delete=models.CASCADE, related_name="consentimentos", verbose_name="Aluno"
+    )
+    responsavel_nome = models.CharField("Responsável", max_length=150)
+    versao_termo = models.CharField("Versão do termo", max_length=20, default=VERSAO_TERMO)
+    registrado_em = models.DateTimeField("Registrado em", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Consentimento"
+        verbose_name_plural = "Consentimentos"
+        ordering = ["-registrado_em"]
+
+    def __str__(self) -> str:
+        return f"{self.aluno.nome} - termo {self.versao_termo} - {self.registrado_em:%d/%m/%Y}"
 
 
 class Presenca(models.Model):

@@ -11,7 +11,7 @@ digitação rápida; o painel vira leitura e visualização.
 from django.contrib import admin
 from django.utils import timezone
 
-from .models import Aluno, Doacao, Presenca, Professor, Turma
+from .models import Aluno, Consentimento, Doacao, Presenca, Professor, Turma
 
 
 @admin.register(Doacao)
@@ -112,56 +112,62 @@ class TurmaAdmin(admin.ModelAdmin):
     total_alunos.short_description = "Alunos ativos"
 
 
+class ConsentimentoInline(admin.TabularInline):
+    """Consentimentos são prova de aceite: só leitura."""
+
+    model = Consentimento
+    extra = 0
+    can_delete = False
+    readonly_fields = ("responsavel_nome", "versao_termo", "registrado_em")
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(Aluno)
 class AlunoAdmin(admin.ModelAdmin):
     list_display = (
         "nome",
-        "cpf",
+        "cpf_mascarado",
         "idade",
         "turma",
+        "exame_aptidao",
         "mensalidade",
         "ativo",
         "criado_em",
     )
-    list_filter = ("ativo", "turma", "sexo", "criado_em")
-    search_fields = ("nome", "cpf", "rg")
+    list_filter = ("ativo", "turma", "sexo", "exame_aptidao", "criado_em")
+    search_fields = ("nome",)
     date_hierarchy = "criado_em"
     list_per_page = 25
     list_editable = ("ativo", "turma")
     list_select_related = ("turma",)
+    inlines = (ConsentimentoInline,)
     readonly_fields = ("criado_em", "atualizado_em", "idade", "eh_maior_de_idade", "campos_obrigatorios_faltando")
 
     fieldsets = (
         (
             "Dados pessoais",
             {
-                "fields": (
-                    "nome",
-                    "data_nascimento",
-                    "sexo",
-                    "rg",
-                    "cpf",
-                    "comprovante_residencia",
-                )
+                "fields": ("nome", "data_nascimento", "sexo", "rg", "cpf"),
+                "description": "O CPF é só para maior de 18 anos. Menor não tem CPF próprio.",
             },
         ),
         (
-            "Maior de idade",
-            {
-                "fields": ("titulo_eleitor",),
-                "description": "Preencher apenas se o aluno for maior de 18 anos.",
-            },
-        ),
-        (
-            "Menor de idade (responsável)",
+            "Responsável (menor de 18 anos)",
             {
                 "fields": (
+                    "nome_responsavel",
+                    "cpf_responsavel",
                     "rg_responsavel",
-                    "certificado_nascimento",
-                    "atestado_medico",
+                    "telefone_responsavel",
+                    "endereco_responsavel",
                 ),
-                "description": "Obrigatórios para menores de 18 anos.",
             },
+        ),
+        (
+            "Exame de aptidão física",
+            {"fields": ("exame_aptidao", "exame_validade")},
         ),
         (
             "Vínculo e financeiro",
@@ -184,6 +190,10 @@ class AlunoAdmin(admin.ModelAdmin):
         ),
     )
 
+    @admin.display(description="CPF")
+    def cpf_mascarado(self, obj: Aluno) -> str:
+        return obj.cpf_mascarado or "—"
+
 
 @admin.register(Presenca)
 class PresencaAdmin(admin.ModelAdmin):
@@ -196,7 +206,7 @@ class PresencaAdmin(admin.ModelAdmin):
         "registrado_por",
     )
     list_filter = ("situacao", "turma", "data", "registrado_por")
-    search_fields = ("aluno__nome", "aluno__cpf", "turma__nome", "observacao")
+    search_fields = ("aluno__nome", "turma__nome", "observacao")
     date_hierarchy = "data"
     list_per_page = 50
     list_editable = ("situacao",)

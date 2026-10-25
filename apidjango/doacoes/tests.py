@@ -13,7 +13,8 @@ import pytest
 from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 
-from .models import Aluno, Doacao
+from .documentos import cpf_valido, mascarar_cpf, telefone_valido
+from .models import Aluno, Consentimento, Doacao
 
 pytestmark = pytest.mark.django_db
 
@@ -397,3 +398,171 @@ class TestPreCadastroPublicoRemovido:
 
         assert response.status_code == 403
         assert Aluno.objects.count() == 0
+
+
+# 52998224725 e 11144477735 são CPFs com dígitos verificadores válidos.
+CPF_OK = "52998224725"
+CPF_RESP = "11144477735"
+
+
+class TestDocumentos:
+    @pytest.mark.parametrize("cpf", [CPF_OK, "529.982.247-25", CPF_RESP])
+    def test_cpf_valido(self, cpf):
+        assert cpf_valido(cpf)
+
+    @pytest.mark.parametrize("cpf", ["12345678900", "11111111111", "5299822472", "", "abc"])
+    def test_cpf_invalido(self, cpf):
+        assert not cpf_valido(cpf)
+
+    def test_mascara_do_cpf(self):
+        assert mascarar_cpf("12345678900") == "123.***.***-00"
+        assert mascarar_cpf("123.456.789-00") == "123.***.***-00"
+
+    @pytest.mark.parametrize("tel", ["13988887777", "(13) 98888-7777", "1332221111"])
+    def test_telefone_valido(self, tel):
+        assert telefone_valido(tel)
+
+    @pytest.mark.parametrize("tel", ["98888", "03988887777", "139888877778", ""])
+    def test_telefone_invalido(self, tel):
+        assert not telefone_valido(tel)
+
+
+class TestAlunoLGPD:
+    URL = "/api/v1/alunos/"
+
+    @pytest.fixture
+    def staff(self, cliente, admin):
+        # O login é limitado por throttle; aqui o foco é a regra do aluno.
+        cliente.force_authenticate(admin)
+        return cliente
+
+    def maior(self, **extra):
+        return {
+            "nome": "Carlos Adulto",
+            "data_nascimento": "1990-03-01",
+            "cpf": CPF_OK,
+            **extra,
+        }
+
+    def menor(self, **extra):
+        return {
+            "nome": "Ana Menor",
+            "data_nascimento": "2015-05-10",
+            "nome_responsavel": "Maria Mae",
+            "cpf_responsavel": CPF_RESP,
+            "telefone_responsavel": "(13) 98888-7777",
+            "consentimento_responsavel": True,
+            **extra,
+        }
+
+    def test_maior_cadastra_sem_responsavel_e_sem_consentimento(self, staff):
+        response = staff.post(self.URL, self.maior(), format="json")
+
+        assert response.status_code == 201
+        assert response.data["cpf"] == CPF_OK
+        assert Consentimento.objects.count() == 0
+
+    def test_cpf_invalido_e_recusado(self, staff):
+        response = staff.post(self.URL, self.maior(cpf="12345678900"), format="json")
+
+        assert response.status_code == 400
+        assert "cpf" in response.data
+
+    def test_menor_sem_consentimento_nao_salva(self, staff):
+        response = staff.post(
+            self.URL, self.menor(consentimento_responsavel=False), format="json"
+        )
+
+        assert response.status_code == 400
+        assert "consentimento_responsavel" in response.data
+        assert Aluno.objects.count() == 0
+
+    def test_menor_sem_responsavel_nao_salva(self, staff):
+        dados = self.menor()
+        for campo in ("nome_responsavel", "cpf_responsavel", "telefone_responsavel"):
+            dados.pop(campo)
+
+        response = staff.post(self.URL, dados, format="json")
+
+        assert response.status_code == 400
+        assert {"nome_responsavel", "cpf_responsavel", "telefone_responsavel"} <= set(
+            response.data
+        )
+
+    def test_telefone_do_responsavel_invalido(self, staff):
+        response = staff.post(
+            self.URL, self.menor(telefone_responsavel="123"), format="json"
+        )
+
+        assert response.status_code == 400
+        assert "telefone_responsavel" in response.data
+
+    def test_menor_grava_consentimento_e_nao_guarda_cpf_proprio(self, staff):
+        response = staff.post(self.URL, self.menor(cpf=CPF_OK), format="json")
+
+        assert response.status_code == 201
+        aluno = Aluno.objects.get()
+        assert aluno.cpf is None
+        assert aluno.cpf_responsavel == CPF_RESP
+        consentimento = Consentimento.objects.get()
+        assert consentimento.aluno == aluno
+        assert consentimento.responsavel_nome == "Maria Mae"
+        assert consentimento.versao_termo
+
+    def test_editar_menor_ja_autorizado_nao_pede_nem_duplica_consentimento(self, staff):
+        criado = staff.post(self.URL, self.menor(), format="json").data
+
+        response = staff.patch(
+            f"{self.URL}{criado['id']}/", {"mensalidade": "20.00"}, format="json"
+        )
+
+        assert response.status_code == 200
+        assert Consentimento.objects.count() == 1
+
+    def test_listagem_mascara_cpf_do_maior_e_omite_o_do_menor(self, staff):
+        staff.post(self.URL, self.maior(), format="json")
+        staff.post(self.URL, self.menor(), format="json")
+
+        itens = {a["nome"]: a for a in staff.get(self.URL).data["results"]}
+
+        assert itens["Carlos Adulto"]["cpf_mascarado"] == "529.***.***-25"
+        assert itens["Ana Menor"]["cpf_mascarado"] is None
+        for item in itens.values():
+            assert "cpf" not in item
+            assert "cpf_responsavel" not in item
+
+    def test_cadastro_completo_traz_o_cpf_completo(self, staff):
+        criado = staff.post(self.URL, self.maior(), format="json").data
+
+        assert staff.get(f"{self.URL}{criado['id']}/").data["cpf"] == CPF_OK
+
+    @pytest.mark.parametrize("campo", ["cpf", "rg"])
+    def test_busca_nao_aceita_documento(self, staff, campo):
+        staff.post(self.URL, self.maior(rg="998877"), format="json")
+        termo = CPF_OK if campo == "cpf" else "998877"
+
+        assert staff.get(self.URL, {"search": termo}).data["count"] == 0
+
+    @pytest.mark.parametrize(
+        ("exame", "validade", "esperado"),
+        [
+            ("pendente", None, "ausente"),
+            ("nao_apto", None, "nao_apto"),
+            ("apto", "2000-01-01", "vencido"),
+            ("apto", "2999-01-01", "valido"),
+            ("apto", None, "valido"),
+        ],
+    )
+    def test_situacao_do_exame_do_menor(self, staff, exame, validade, esperado):
+        criado = staff.post(
+            self.URL,
+            self.menor(exame_aptidao=exame, exame_validade=validade),
+            format="json",
+        ).data
+
+        assert criado["exame_situacao"] == esperado
+
+    def test_exame_nao_se_aplica_ao_maior(self, staff):
+        criado = staff.post(self.URL, self.maior(), format="json").data
+
+        assert criado["exame_situacao"] is None
