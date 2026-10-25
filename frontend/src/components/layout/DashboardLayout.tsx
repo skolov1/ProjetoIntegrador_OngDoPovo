@@ -910,7 +910,7 @@ export function DashboardLayout() {
                     <tr className="text-left text-grafite/70 text-sm">
                       <th className="p-3">Nome</th>
                       <th className="p-3">CPF</th>
-                      <th className="p-3">Turma</th>
+                      <th className="p-3">Turmas</th>
                       <th className="p-3">Mensalidade</th>
                       <th className="p-3">Exame</th>
                       <th className="p-3">Status</th>
