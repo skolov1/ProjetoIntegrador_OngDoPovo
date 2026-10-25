@@ -130,20 +130,27 @@ class AlunoAdmin(admin.ModelAdmin):
         "nome",
         "cpf_mascarado",
         "idade",
-        "turma",
+        "turmas_lista",
         "exame_aptidao",
         "mensalidade",
         "ativo",
         "criado_em",
     )
-    list_filter = ("ativo", "turma", "sexo", "exame_aptidao", "criado_em")
+    list_filter = ("ativo", "turmas", "sexo", "exame_aptidao", "criado_em")
     search_fields = ("nome",)
     date_hierarchy = "criado_em"
     list_per_page = 25
-    list_editable = ("ativo", "turma")
-    list_select_related = ("turma",)
+    list_editable = ("ativo",)
+    filter_horizontal = ("turmas",)
     inlines = (ConsentimentoInline,)
-    readonly_fields = ("criado_em", "atualizado_em", "idade", "eh_maior_de_idade", "campos_obrigatorios_faltando")
+    readonly_fields = (
+        "criado_em",
+        "atualizado_em",
+        "idade",
+        "eh_maior_de_idade",
+        "campos_obrigatorios_faltando",
+        "mensalidade",
+    )
 
     fieldsets = (
         (
@@ -172,7 +179,8 @@ class AlunoAdmin(admin.ModelAdmin):
         (
             "Vínculo e financeiro",
             {
-                "fields": ("mensalidade", "turma", "ativo"),
+                "fields": ("turmas", "mensalidade", "ativo"),
+                "description": "A mensalidade é calculada: R$ 20 por turma.",
             },
         ),
         (
@@ -189,6 +197,17 @@ class AlunoAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related("turmas")
+
+    @admin.display(description="Turmas")
+    def turmas_lista(self, obj: Aluno) -> str:
+        return ", ".join(t.nome for t in obj.turmas.all()) or "—"
+
+    @admin.display(description="Mensalidade")
+    def mensalidade(self, obj: Aluno):
+        return f"R$ {obj.mensalidade:.2f}"
 
     @admin.display(description="CPF")
     def cpf_mascarado(self, obj: Aluno) -> str:

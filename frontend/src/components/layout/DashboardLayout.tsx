@@ -51,6 +51,8 @@ import type {
   SexoEnum,
 } from "@/api/generated/model";
 import {
+  MENSALIDADE_POR_TURMA,
+  calcularMensalidade,
   cpfValido,
   ehMenor,
   soDigitos,
@@ -92,8 +94,7 @@ type FormAluno = {
   exame_aptidao: ExameAptidaoEnum;
   exame_validade: string;
   consentimento_responsavel: boolean;
-  mensalidade: string;
-  turma: number | undefined;
+  turmas: number[];
   ativo: boolean;
 };
 
@@ -111,8 +112,7 @@ const ALUNO_VAZIO: FormAluno = {
   exame_aptidao: "pendente",
   exame_validade: "",
   consentimento_responsavel: false,
-  mensalidade: "20.00",
-  turma: undefined,
+  turmas: [],
   ativo: true,
 };
 
@@ -344,8 +344,7 @@ export function DashboardLayout() {
           exame_validade: a.exame_validade ?? "",
           // Já autorizado antes: o checkbox volta marcado.
           consentimento_responsavel: a.consentimento_registrado,
-          mensalidade: String(a.mensalidade ?? "20.00"),
-          turma: a.turma ?? undefined,
+          turmas: a.turmas ?? [],
           ativo: a.ativo ?? true,
         });
       } else {
@@ -641,40 +640,39 @@ export function DashboardLayout() {
               className={CLASSE_CAMPO}
             />
           )}
-          <input
-            type="text"
-            name="mensalidade"
-            placeholder="Mensalidade (ex: 20.00)"
-            value={"R$ " + formAluno.mensalidade}
-            onChange={(e) =>
-              setFormAluno({
-                ...formAluno,
-                mensalidade: e.target.value.replace(/^R\$\s?/, ""),
-              })
-            }
-            required
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-grafite outline-none focus:border-verde focus:ring-4 focus:ring-verde/10"
-
-          />
-          <select
-            name="turma"
-            value={formAluno.turma || ""}
-            onChange={(e) =>
-              setFormAluno({
-                ...formAluno,
-                turma: e.target.value ? Number(e.target.value) : undefined,
-              })
-            }
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-grafite outline-none focus:border-verde focus:ring-4 focus:ring-verde/10"
-
-          >
-            <option value="">Sem turma</option>
-            {turmas.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.nome}
-              </option>
-            ))}
-          </select>
+          <fieldset className="lg:col-span-2">
+            <legend className="text-sm font-bold text-verde-escuro">
+              Turmas
+            </legend>
+            <div className="mt-2 grid gap-1">
+              {turmas.length === 0 && (
+                <p className="text-sm text-grafite/60">
+                  Nenhuma turma cadastrada ainda.
+                </p>
+              )}
+              {turmas.map((t) => (
+                <label key={t.id} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={formAluno.turmas.includes(t.id)}
+                    onChange={(e) =>
+                      setFormAluno({
+                        ...formAluno,
+                        turmas: e.target.checked
+                          ? [...formAluno.turmas, t.id]
+                          : formAluno.turmas.filter((id) => id !== t.id),
+                      })
+                    }
+                  />
+                  {t.nome} <span className="text-grafite/50">({t.horario_formatado})</span>
+                </label>
+              ))}
+            </div>
+            <p className="mt-2 text-sm text-grafite/70">
+              Mensalidade: <strong>R$ {calcularMensalidade(formAluno.turmas.length).toFixed(2)}</strong>{" "}
+              (R$ {MENSALIDADE_POR_TURMA} por turma)
+            </p>
+          </fieldset>
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -929,7 +927,7 @@ export function DashboardLayout() {
                           {a.cpf_mascarado ?? "—"}
                         </td>
                         <td className="p-3 text-grafite/60 text-sm">
-                          {a.turma_nome || "—"}
+                          {a.turmas_nomes.length ? a.turmas_nomes.join(", ") : "—"}
                         </td>
                         <td className="p-3 text-grafite/60">
                           R$ {Number(a.mensalidade).toFixed(2)}

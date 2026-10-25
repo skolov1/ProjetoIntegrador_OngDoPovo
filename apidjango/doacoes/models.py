@@ -22,6 +22,9 @@ from .documentos import mascarar_cpf
 # Ao mudar o texto do termo, aumente a versão: o consentimento guarda qual foi aceito.
 VERSAO_TERMO = "1.0"
 
+# Cada turma em que o aluno está matriculado custa este valor por mês.
+MENSALIDADE_POR_TURMA = Decimal("20.00")
+
 
 class Doacao(models.Model):
     class Status(models.TextChoices):
@@ -199,16 +202,11 @@ class Aluno(models.Model):
     exame_validade = models.DateField("Validade do exame", blank=True, null=True)
 
     # --- Comuns ---
-    mensalidade = models.DecimalField(
-        "Mensalidade", max_digits=10, decimal_places=2, default=0.00
-    )
-    turma = models.ForeignKey(
+    turmas = models.ManyToManyField(
         Turma,
-        on_delete=models.SET_NULL,
-        null=True,
         blank=True,
         related_name="alunos",
-        verbose_name="Turma",
+        verbose_name="Turmas",
     )
     ativo = models.BooleanField("Ativo", default=True)
     criado_em = models.DateTimeField("Cadastrado em", auto_now_add=True)
@@ -219,7 +217,7 @@ class Aluno(models.Model):
         verbose_name_plural = "Alunos"
         ordering = ["nome"]
         indexes = [
-            models.Index(fields=["ativo", "turma"], name="aluno_ativo_turma_idx"),
+            models.Index(fields=["ativo"], name="aluno_ativo_idx"),
         ]
 
     def __str__(self) -> str:
@@ -243,6 +241,12 @@ class Aluno(models.Model):
     @property
     def eh_maior_de_idade(self) -> bool:
         return self.idade >= 18
+
+    @property
+    def mensalidade(self) -> Decimal:
+        """Calculada: valor por turma x turmas do aluno (nunca digitada)."""
+        # `.all()` aproveita o prefetch da listagem e evita uma consulta por aluno.
+        return MENSALIDADE_POR_TURMA * len(self.turmas.all())
 
     @property
     def cpf_mascarado(self) -> str | None:
@@ -371,4 +375,4 @@ class Professor(models.Model):
     @property
     def total_alunos(self) -> int:
         """Total de alunos ativos nas turmas deste professor."""
-        return Aluno.objects.filter(turma__in=self.turmas.all(), ativo=True).distinct().count()
+        return Aluno.objects.filter(turmas__in=self.turmas.all(), ativo=True).distinct().count()

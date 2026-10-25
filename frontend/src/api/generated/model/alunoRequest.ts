@@ -44,9 +44,6 @@ export interface AlunoRequest {
   /** @nullable */
   exame_validade?: string | null;
   consentimento_responsavel?: boolean;
-  /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */
-  mensalidade?: string;
-  /** @nullable */
-  turma?: number | null;
+  turmas?: number[];
   ativo?: boolean;
 }

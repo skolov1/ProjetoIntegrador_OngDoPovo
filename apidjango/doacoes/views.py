@@ -282,11 +282,11 @@ class AlunoViewSet(
 ):
     """CRUD de alunos (admin)."""
 
-    queryset = Aluno.objects.select_related("turma").all()
+    queryset = Aluno.objects.prefetch_related("turmas").all()
     permission_classes = [IsAdminUser]
-    filterset_fields = ["ativo", "turma", "sexo"]
+    filterset_fields = ["ativo", "turmas", "sexo"]
     search_fields = ["nome"]
-    ordering_fields = ["nome", "criado_em", "mensalidade"]
+    ordering_fields = ["nome", "criado_em"]
     ordering = ["nome"]
 
     def get_serializer_class(self):
@@ -399,7 +399,7 @@ class PresencaViewSet(
         presencas_dict = {p.aluno_id: p for p in presencas_existentes}
 
         # Alunos ativos da turma
-        alunos = Aluno.objects.filter(turma=turma, ativo=True).order_by("nome")
+        alunos = Aluno.objects.filter(turmas=turma, ativo=True).order_by("nome")
 
         resultado = []
         for aluno in alunos:

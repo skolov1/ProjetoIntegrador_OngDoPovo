@@ -14,7 +14,7 @@ from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 
 from .documentos import cpf_valido, mascarar_cpf, telefone_valido
-from .models import Aluno, Consentimento, Doacao
+from .models import Aluno, Consentimento, Doacao, Turma
 
 pytestmark = pytest.mark.django_db
 
@@ -381,7 +381,6 @@ class TestPreCadastroPublicoRemovido:
         "sexo": "F",
         "rg": "123456789",
         "cpf": "12345678900",
-        "mensalidade": "0.00",
     }
 
     @pytest.mark.parametrize("url", ["/api/v1/alunos/pre-cadastro/", "/api/v1/alunos/"])
@@ -513,7 +512,7 @@ class TestAlunoLGPD:
         criado = staff.post(self.URL, self.menor(), format="json").data
 
         response = staff.patch(
-            f"{self.URL}{criado['id']}/", {"mensalidade": "20.00"}, format="json"
+            f"{self.URL}{criado['id']}/", {"sexo": "F"}, format="json"
         )
 
         assert response.status_code == 200
@@ -566,3 +565,60 @@ class TestAlunoLGPD:
         criado = staff.post(self.URL, self.maior(), format="json").data
 
         assert criado["exame_situacao"] is None
+
+    def turma(self, nome):
+        return Turma.objects.create(
+            nome=nome,
+            dia_semana="SEG",
+            horario_inicio="08:00",
+            horario_fim="09:00",
+            data_inicio="2026-01-01",
+        )
+
+    def test_mensalidade_e_20_por_turma(self, staff):
+        t1, t2, t3 = self.turma("Muay Thai"), self.turma("Judô"), self.turma("Violão")
+
+        sem_turma = staff.post(self.URL, self.maior(), format="json").data
+        duas = staff.post(
+            self.URL,
+            self.maior(nome="Duas", cpf=CPF_RESP, turmas=[t1.id, t2.id]),
+            format="json",
+        ).data
+
+        assert sem_turma["mensalidade"] == "0.00"
+        assert duas["mensalidade"] == "40.00"
+
+        editado = staff.patch(
+            f"{self.URL}{duas['id']}/", {"turmas": [t1.id, t2.id, t3.id]}, format="json"
+        ).data
+        assert editado["mensalidade"] == "60.00"
+        assert set(editado["turmas_nomes"]) == {"Muay Thai", "Judô", "Violão"}
+
+    def test_mensalidade_enviada_pelo_cliente_e_ignorada(self, staff):
+        t1 = self.turma("Muay Thai")
+
+        criado = staff.post(
+            self.URL, self.maior(turmas=[t1.id], mensalidade="1.00"), format="json"
+        ).data
+
+        assert criado["mensalidade"] == "20.00"
+
+    def test_listagem_traz_turmas_e_mensalidade(self, staff):
+        t1, t2 = self.turma("Muay Thai"), self.turma("Judô")
+        staff.post(self.URL, self.maior(turmas=[t1.id, t2.id]), format="json")
+
+        item = staff.get(self.URL).data["results"][0]
+
+        assert item["mensalidade"] == "40.00"
+        assert set(item["turmas_nomes"]) == {"Muay Thai", "Judô"}
+
+    def test_filtra_alunos_por_turma(self, staff):
+        t1, t2 = self.turma("Muay Thai"), self.turma("Judô")
+        staff.post(self.URL, self.maior(turmas=[t1.id]), format="json")
+        staff.post(
+            self.URL, self.maior(nome="Outro", cpf=CPF_RESP, turmas=[t2.id]), format="json"
+        )
+
+        resposta = staff.get(self.URL, {"turmas": t2.id}).data
+
+        assert [a["nome"] for a in resposta["results"]] == ["Outro"]

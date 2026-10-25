@@ -187,7 +187,8 @@ class AlunoSerializer(serializers.ModelSerializer):
     campos_obrigatorios_faltando = serializers.ListField(
         child=serializers.CharField(), read_only=True
     )
-    turma_nome = serializers.CharField(source="turma.nome", read_only=True)
+    turmas_nomes = serializers.SerializerMethodField()
+    mensalidade = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     exame_situacao = serializers.CharField(read_only=True, allow_null=True)
     # Entrada: o checkbox "Responsável autorizou o tratamento dos dados do menor".
     consentimento_responsavel = serializers.BooleanField(write_only=True, required=False)
@@ -213,9 +214,9 @@ class AlunoSerializer(serializers.ModelSerializer):
             "exame_situacao",
             "consentimento_responsavel",
             "consentimento_registrado",
+            "turmas",
+            "turmas_nomes",
             "mensalidade",
-            "turma",
-            "turma_nome",
             "ativo",
             "idade",
             "eh_maior_de_idade",
@@ -229,8 +230,12 @@ class AlunoSerializer(serializers.ModelSerializer):
             "idade",
             "eh_maior_de_idade",
             "campos_obrigatorios_faltando",
-            "turma_nome",
+            "turmas_nomes",
+            "mensalidade",
         ]
+
+    def get_turmas_nomes(self, obj: Aluno) -> list[str]:
+        return [t.nome for t in obj.turmas.all()]
 
     def get_consentimento_registrado(self, obj: Aluno) -> bool:
         return obj.consentimentos.exists()
@@ -327,7 +332,8 @@ class AlunoListSerializer(serializers.ModelSerializer):
     eh_maior_de_idade = serializers.BooleanField(read_only=True)
     cpf_mascarado = serializers.CharField(read_only=True, allow_null=True)
     exame_situacao = serializers.CharField(read_only=True, allow_null=True)
-    turma_nome = serializers.CharField(source="turma.nome", read_only=True)
+    turmas_nomes = serializers.SerializerMethodField()
+    mensalidade = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
         model = Aluno
@@ -338,11 +344,13 @@ class AlunoListSerializer(serializers.ModelSerializer):
             "idade",
             "eh_maior_de_idade",
             "exame_situacao",
-            "turma",
-            "turma_nome",
+            "turmas_nomes",
             "mensalidade",
             "ativo",
         ]
+
+    def get_turmas_nomes(self, obj: Aluno) -> list[str]:
+        return [t.nome for t in obj.turmas.all()]
 
 
 # =============================================================================

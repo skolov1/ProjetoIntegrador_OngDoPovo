@@ -44,11 +44,10 @@ export interface Aluno {
   /** @nullable */
   readonly exame_situacao: string | null;
   readonly consentimento_registrado: boolean;
+  turmas?: number[];
+  readonly turmas_nomes: readonly string[];
   /** @pattern ^-?\d{0,8}(?:\.\d{0,2})?$ */
-  mensalidade?: string;
-  /** @nullable */
-  turma?: number | null;
-  readonly turma_nome: string;
+  readonly mensalidade: string;
   ativo?: boolean;
   readonly idade: number;
   readonly eh_maior_de_idade: boolean;

@@ -47,9 +47,13 @@ paths:
           * `O` - Outro
           * `N` - Prefiro não informar
       - in: query
-        name: turma
+        name: turmas
         schema:
-          type: integer
+          type: array
+          items:
+            type: integer
+        explode: true
+        style: form
       tags:
       - alunos
       security:
@@ -1578,15 +1582,19 @@ components:
         consentimento_registrado:
           type: boolean
           readOnly: true
+        turmas:
+          type: array
+          items:
+            type: integer
+        turmas_nomes:
+          type: array
+          items:
+            type: string
+          readOnly: true
         mensalidade:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-        turma:
-          type: integer
-          nullable: true
-        turma_nome:
-          type: string
           readOnly: true
         ativo:
           type: boolean
@@ -1620,8 +1628,9 @@ components:
       - exame_situacao
       - id
       - idade
+      - mensalidade
       - nome
-      - turma_nome
+      - turmas_nomes
     AlunoList:
       type: object
       description: |-
@@ -1651,16 +1660,16 @@ components:
           type: string
           readOnly: true
           nullable: true
-        turma:
-          type: integer
-          nullable: true
-        turma_nome:
-          type: string
+        turmas_nomes:
+          type: array
+          items:
+            type: string
           readOnly: true
         mensalidade:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
         ativo:
           type: boolean
       required:
@@ -1669,8 +1678,9 @@ components:
       - exame_situacao
       - id
       - idade
+      - mensalidade
       - nome
-      - turma_nome
+      - turmas_nomes
     AlunoRequest:
       type: object
       description: |-
@@ -1731,13 +1741,10 @@ components:
         consentimento_responsavel:
           type: boolean
           writeOnly: true
-        mensalidade:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-        turma:
-          type: integer
-          nullable: true
+        turmas:
+          type: array
+          items:
+            type: integer
         ativo:
           type: boolean
       required:
@@ -2301,13 +2308,10 @@ components:
         consentimento_responsavel:
           type: boolean
           writeOnly: true
-        mensalidade:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-        turma:
-          type: integer
-          nullable: true
+        turmas:
+          type: array
+          items:
+            type: integer
         ativo:
           type: boolean
     PatchedDoacaoAdminRequest:

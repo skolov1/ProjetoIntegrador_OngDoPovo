@@ -41,3 +41,10 @@ export function mascararCpf(valor: string): string {
   const cpf = soDigitos(valor)
   return cpf.length === 11 ? `${cpf.slice(0, 3)}.***.***-${cpf.slice(9)}` : '***'
 }
+
+/** Valor por turma. O servidor é quem calcula de verdade; aqui é só a prévia no formulário. */
+export const MENSALIDADE_POR_TURMA = 20
+
+export function calcularMensalidade(qtdTurmas: number): number {
+  return MENSALIDADE_POR_TURMA * qtdTurmas
+}

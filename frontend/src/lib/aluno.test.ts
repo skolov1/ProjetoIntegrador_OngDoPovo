@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { calcularIdade, cpfValido, ehMenor, mascararCpf, telefoneValido } from './aluno'
+import { calcularIdade, calcularMensalidade, cpfValido, ehMenor, mascararCpf, telefoneValido } from './aluno'
 
 const hoje = new Date(2026, 9, 24) // 24/10/2026
 
@@ -54,5 +54,13 @@ describe('telefoneValido', () => {
 describe('mascararCpf', () => {
   it('mostra só o começo e o fim', () => {
     expect(mascararCpf('12345678900')).toBe('123.***.***-00')
+  })
+})
+
+describe('calcularMensalidade', () => {
+  it('cobra R$ 20 por turma', () => {
+    expect(calcularMensalidade(0)).toBe(0)
+    expect(calcularMensalidade(1)).toBe(20)
+    expect(calcularMensalidade(3)).toBe(60)
   })
 })
