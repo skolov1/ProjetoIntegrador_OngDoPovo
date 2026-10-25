@@ -416,6 +416,7 @@ export function DashboardLayout() {
       return (
         <FormModal
           title={editingId !== null ? "Editar Turma" : "Nova Turma"}
+          largura="max-w-3xl"
           onClose={closeForm}
           onSubmit={handleSubmitTurma}
           submitting={createTurma.isPending || updateTurma.isPending}
@@ -428,59 +429,83 @@ export function DashboardLayout() {
               setFormTurma({ ...formTurma, nome: e.target.value })
             }
             required
+            className={`${CLASSE_CAMPO} lg:col-span-2`}
           />
-          <select
-            name="dia_semana"
-            value={formTurma.dia_semana}
-            onChange={(e) =>
-              setFormTurma({ ...formTurma, dia_semana: e.target.value as DiaSemanaEnum })
-            }
-            required
-          >
-            <option value="SEG">Segunda</option>
-            <option value="TER">Terça</option>
-            <option value="QUA">Quarta</option>
-            <option value="QUI">Quinta</option>
-            <option value="SEX">Sexta</option>
-            <option value="SAB">Sábado</option>
-            <option value="DOM">Domingo</option>
-          </select>
-          <input
-            type="time"
-            name="horario_inicio"
-            value={formTurma.horario_inicio}
-            onChange={(e) =>
-              setFormTurma({ ...formTurma, horario_inicio: e.target.value })
-            }
-            required
-          />
-          <input
-            type="time"
-            name="horario_fim"
-            value={formTurma.horario_fim}
-            onChange={(e) =>
-              setFormTurma({ ...formTurma, horario_fim: e.target.value })
-            }
-            required
-          />
-          <input
-            type="date"
-            name="data_inicio"
-            value={formTurma.data_inicio}
-            onChange={(e) =>
-              setFormTurma({ ...formTurma, data_inicio: e.target.value })
-            }
-            required
-          />
-          <input
-            type="date"
-            name="data_fim"
-            value={formTurma.data_fim || ""}
-            onChange={(e) =>
-              setFormTurma({ ...formTurma, data_fim: e.target.value })
-            }
-          />
-          <label className="flex items-center gap-2">
+          <label className="text-sm text-grafite/70 lg:col-span-2">
+            Dia da semana
+            <select
+              name="dia_semana"
+              value={formTurma.dia_semana}
+              onChange={(e) =>
+                setFormTurma({
+                  ...formTurma,
+                  dia_semana: e.target.value as DiaSemanaEnum,
+                })
+              }
+              required
+              className={`${CLASSE_CAMPO} mt-1`}
+            >
+              <option value="SEG">Segunda</option>
+              <option value="TER">Terça</option>
+              <option value="QUA">Quarta</option>
+              <option value="QUI">Quinta</option>
+              <option value="SEX">Sexta</option>
+              <option value="SAB">Sábado</option>
+              <option value="DOM">Domingo</option>
+            </select>
+          </label>
+          <label className="text-sm text-grafite/70">
+            Horário de início
+            <input
+              type="time"
+              name="horario_inicio"
+              value={formTurma.horario_inicio}
+              onChange={(e) =>
+                setFormTurma({ ...formTurma, horario_inicio: e.target.value })
+              }
+              required
+              className={`${CLASSE_CAMPO} mt-1`}
+            />
+          </label>
+          <label className="text-sm text-grafite/70">
+            Horário de fim
+            <input
+              type="time"
+              name="horario_fim"
+              value={formTurma.horario_fim}
+              onChange={(e) =>
+                setFormTurma({ ...formTurma, horario_fim: e.target.value })
+              }
+              required
+              className={`${CLASSE_CAMPO} mt-1`}
+            />
+          </label>
+          <label className="text-sm text-grafite/70">
+            Data de início
+            <input
+              type="date"
+              name="data_inicio"
+              value={formTurma.data_inicio}
+              onChange={(e) =>
+                setFormTurma({ ...formTurma, data_inicio: e.target.value })
+              }
+              required
+              className={`${CLASSE_CAMPO} mt-1`}
+            />
+          </label>
+          <label className="text-sm text-grafite/70">
+            Data de fim (opcional)
+            <input
+              type="date"
+              name="data_fim"
+              value={formTurma.data_fim || ""}
+              onChange={(e) =>
+                setFormTurma({ ...formTurma, data_fim: e.target.value })
+              }
+              className={`${CLASSE_CAMPO} mt-1`}
+            />
+          </label>
+          <label className="flex items-center gap-2 lg:col-span-2">
             <input
               type="checkbox"
               checked={formTurma.ativo}
@@ -768,6 +793,7 @@ export function DashboardLayout() {
       return (
         <FormModal
           title={editingId !== null ? "Editar Professor" : "Novo Professor"}
+          largura="max-w-3xl"
           onClose={closeForm}
           onSubmit={handleSubmitProfessor}
           submitting={createProfessor.isPending || updateProfessor.isPending}
@@ -780,15 +806,18 @@ export function DashboardLayout() {
               setFormProfessor({ ...formProfessor, nome: e.target.value })
             }
             required
+            className={CLASSE_CAMPO}
           />
           <input
             name="cpf"
             placeholder="CPF"
+            inputMode="numeric"
             value={formProfessor.cpf}
             onChange={(e) =>
               setFormProfessor({ ...formProfessor, cpf: e.target.value })
             }
             required
+            className={CLASSE_CAMPO}
           />
           <input
             type="email"
@@ -798,34 +827,49 @@ export function DashboardLayout() {
             onChange={(e) =>
               setFormProfessor({ ...formProfessor, email: e.target.value })
             }
+            className={CLASSE_CAMPO}
           />
           <input
+            type="tel"
             name="telefone"
             placeholder="Telefone"
             value={formProfessor.telefone}
             onChange={(e) =>
               setFormProfessor({ ...formProfessor, telefone: e.target.value })
             }
+            className={CLASSE_CAMPO}
           />
-          <select
-            name="turmas"
-            multiple
-            value={formProfessor.turmas.map(String)}
-            onChange={(e) => {
-              const selected = Array.from(e.target.selectedOptions).map((o) =>
-                Number(o.value),
-              );
-              setFormProfessor({ ...formProfessor, turmas: selected });
-            }}
-          >
-            <option value="">Selecione turmas</option>
-            {turmas.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.nome}
-              </option>
-            ))}
-          </select>
-          <label className="flex items-center gap-2">
+          <fieldset className="lg:col-span-2">
+            <legend className="text-sm font-bold text-verde-escuro">
+              Turmas
+            </legend>
+            <div className="mt-2 grid gap-1">
+              {turmas.length === 0 && (
+                <p className="text-sm text-grafite/60">
+                  Nenhuma turma cadastrada ainda.
+                </p>
+              )}
+              {turmas.map((t) => (
+                <label key={t.id} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={formProfessor.turmas.includes(t.id)}
+                    onChange={(e) =>
+                      setFormProfessor({
+                        ...formProfessor,
+                        turmas: e.target.checked
+                          ? [...formProfessor.turmas, t.id]
+                          : formProfessor.turmas.filter((id) => id !== t.id),
+                      })
+                    }
+                  />
+                  {t.nome}{" "}
+                  <span className="text-grafite/50">({t.horario_formatado})</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <label className="flex items-center gap-2 lg:col-span-2">
             <input
               type="checkbox"
               checked={formProfessor.ativo}
