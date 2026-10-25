@@ -207,12 +207,14 @@ SPECTACULAR_SETTINGS = {
 
 # --- Database --------------------------------------------------------------
 
+# Os padrões abaixo são os do banco que o docker-compose.yml cria (só para
+# desenvolvimento local). Em produção, defina DB_* no ambiente/.env.
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME", "ong_do_povo_db_teste"),
+        "NAME": os.getenv("DB_NAME", "ongdb"),
         "USER": os.getenv("DB_USER", "postgres"),
-        "PASSWORD": os.getenv("DB_PASSWORD", "admin"),
+        "PASSWORD": os.getenv("DB_PASSWORD", "123"),
         "HOST": os.getenv("DB_HOST", "localhost"),
         "PORT": os.getenv("DB_PORT", "5432"),
     }
