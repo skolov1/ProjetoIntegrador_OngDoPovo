@@ -4,6 +4,8 @@ Serializers do painel: doações de itens, empréstimos, turmas, alunos, presen�
 
 from datetime import date
 
+from auditlog.models import LogEntry
+from django.core.exceptions import FieldDoesNotExist
 from django.db import transaction
 from django.db.models import Sum
 from django.utils import timezone
@@ -224,6 +226,98 @@ class EmprestimoSerializer(serializers.ModelSerializer):
                     }
                 )
         return attrs
+
+
+# =============================================================================
+# Auditoria (consulta ao histórico de quem criou, alterou ou excluiu)
+# =============================================================================
+
+# Ação do auditlog -> (código para filtro, rótulo mostrado na tela).
+ACOES_AUDITORIA = {
+    LogEntry.Action.CREATE: ("CRIOU", "Criou"),
+    LogEntry.Action.UPDATE: ("ALTEROU", "Alterou"),
+    LogEntry.Action.DELETE: ("EXCLUIU", "Excluiu"),
+}
+
+
+def _primeira_maiuscula(texto: str) -> str:
+    return texto[:1].upper() + texto[1:]
+
+
+class AuditoriaSerializer(serializers.ModelSerializer):
+    quando = serializers.DateTimeField(source="timestamp", read_only=True)
+    usuario_id = serializers.IntegerField(source="actor_id", read_only=True, allow_null=True)
+    usuario_nome = serializers.SerializerMethodField()
+    acao = serializers.SerializerMethodField()
+    acao_rotulo = serializers.SerializerMethodField()
+    tipo = serializers.SerializerMethodField()
+    tipo_chave = serializers.CharField(source="content_type.model", read_only=True)
+    objeto = serializers.CharField(source="object_repr", read_only=True)
+    objeto_id = serializers.CharField(source="object_pk", read_only=True)
+    mudancas = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LogEntry
+        fields = [
+            "id",
+            "quando",
+            "usuario_id",
+            "usuario_nome",
+            "acao",
+            "acao_rotulo",
+            "tipo",
+            "tipo_chave",
+            "objeto",
+            "objeto_id",
+            "mudancas",
+        ]
+
+    def get_usuario_nome(self, obj: LogEntry) -> str:
+        if obj.actor is None:
+            return "Sistema"
+        return obj.actor.get_full_name() or obj.actor.get_username()
+
+    def get_acao(self, obj: LogEntry) -> str:
+        return ACOES_AUDITORIA[obj.action][0]
+
+    def get_acao_rotulo(self, obj: LogEntry) -> str:
+        return ACOES_AUDITORIA[obj.action][1]
+
+    def get_tipo(self, obj: LogEntry) -> str:
+        modelo = obj.content_type.model_class()
+        nome = modelo._meta.verbose_name if modelo else obj.content_type.model
+        return _primeira_maiuscula(str(nome))
+
+    def _rotulo_do_campo(self, obj: LogEntry, campo: str) -> str:
+        modelo = obj.content_type.model_class()
+        try:
+            return _primeira_maiuscula(str(modelo._meta.get_field(campo).verbose_name))
+        except (AttributeError, FieldDoesNotExist):
+            return campo
+
+    @staticmethod
+    def _texto(valor) -> str:
+        return "" if valor in (None, "None") else str(valor)
+
+    def get_mudancas(self, obj: LogEntry) -> dict:
+        """Campo a campo: rótulo, valor antigo e valor novo. Na exclusão não há detalhe."""
+        if obj.action == LogEntry.Action.DELETE:
+            return {}
+        saida = {}
+        for campo, valor in obj.changes_dict.items():
+            rotulo = self._rotulo_do_campo(obj, campo)
+            if isinstance(valor, dict):  # relação M2M (ex.: turmas do aluno)
+                verbo = "adicionou" if valor.get("operation") == "add" else "removeu"
+                itens = ", ".join(str(o) for o in valor.get("objects", []))
+                saida[campo] = {"rotulo": rotulo, "de": "", "para": f"{verbo}: {itens}"}
+            else:
+                antigo, novo = valor
+                saida[campo] = {
+                    "rotulo": rotulo,
+                    "de": self._texto(antigo),
+                    "para": self._texto(novo),
+                }
+        return saida
 
 
 # =============================================================================

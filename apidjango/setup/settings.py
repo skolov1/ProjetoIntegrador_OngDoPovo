@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "drf_spectacular",
     "django_filters",
+    "auditlog",
     # Domino
     "setup",
     "doacoes",

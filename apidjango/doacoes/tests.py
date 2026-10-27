@@ -5,7 +5,7 @@ Rodar: pytest
 """
 
 import calendar
-from datetime import date, timedelta
+from datetime import date, time, timedelta
 
 import pytest
 from django.contrib.auth.models import User
@@ -266,8 +266,8 @@ class TestAlunoLGPD:
         return Turma.objects.create(
             nome=nome,
             dia_semana="SEG",
-            horario_inicio="08:00",
-            horario_fim="09:00",
+            horario_inicio=time(8, 0),
+            horario_fim=time(9, 0),
             data_inicio="2026-01-01",
         )
 
@@ -582,18 +582,20 @@ class TestChamada:
         return Turma.objects.create(
             nome="Muay Thai",
             dia_semana="SEG",
-            horario_inicio="19:00",
-            horario_fim="20:00",
+            horario_inicio=time(19, 0),
+            horario_fim=time(20, 0),
             data_inicio="2026-01-01",
         )
 
     def aluno(self, nome, turma, **extra):
-        aluno = Aluno.objects.create(nome=nome, data_nascimento="1990-01-01", **extra)
+        aluno = Aluno.objects.create(nome=nome, data_nascimento=date(1990, 1, 1), **extra)
         aluno.turmas.add(turma)
         return aluno
 
     def registrar(self, aluno, turma, dia, situacao):
-        return Presenca.objects.create(aluno=aluno, turma=turma, data=dia, situacao=situacao)
+        # Data de verdade: a auditoria chama o __str__ da presença ao gravar.
+        data = date.fromisoformat(dia)
+        return Presenca.objects.create(aluno=aluno, turma=turma, data=data, situacao=situacao)
 
     def test_exige_login_de_admin(self, cliente, nao_admin, turma):
         params = {"turma": turma.id, "data": "2026-10-26"}
@@ -606,7 +608,7 @@ class TestChamada:
         self.aluno("Zeca", turma)
         self.aluno("Ana", turma)
         self.aluno("Inativo", turma, ativo=False)
-        Aluno.objects.create(nome="Outra turma", data_nascimento="1990-01-01")
+        Aluno.objects.create(nome="Outra turma", data_nascimento=date(1990, 1, 1))
 
         itens = staff.get(self.CHAMADA, {"turma": turma.id, "data": "2026-10-26"}).data
 
@@ -674,8 +676,8 @@ class TestChamada:
         outra = Turma.objects.create(
             nome="Judô",
             dia_semana="TER",
-            horario_inicio="18:00",
-            horario_fim="19:00",
+            horario_inicio=time(18, 0),
+            horario_fim=time(19, 0),
             data_inicio="2026-01-01",
         )
         ana = self.aluno("Ana", turma)
@@ -747,7 +749,7 @@ class TestChamada:
         assert Presenca.objects.count() == 0
 
     def test_lote_recusa_aluno_fora_da_turma_ou_inativo(self, staff, turma):
-        de_fora = Aluno.objects.create(nome="De fora", data_nascimento="1990-01-01")
+        de_fora = Aluno.objects.create(nome="De fora", data_nascimento=date(1990, 1, 1))
         inativo = self.aluno("Inativo", turma, ativo=False)
 
         for aluno in (de_fora, inativo):

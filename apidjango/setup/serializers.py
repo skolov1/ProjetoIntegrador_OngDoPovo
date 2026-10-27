@@ -16,6 +16,11 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 User = get_user_model()
 
 
+def tipo_de_conta(user) -> str:
+    """Rótulo da conta mostrado no painel. Hoje todo acesso ao painel é de administrador."""
+    return 'Administrador' if user.is_staff else 'Usuário'
+
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """Inclui nome e papel do usuario na resposta do login.
 
@@ -43,5 +48,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             'name': self.user.get_full_name() or self.user.username,
             'role': getattr(self.user, 'role', 'VOLUNTARIO'),
             'is_staff': self.user.is_staff,
+            'tipo_conta': tipo_de_conta(self.user),
         }
         return data

@@ -7,6 +7,8 @@ Tudo aqui é só para a equipe (`IsAdminUser`); não há rota pública de doaç�
 from datetime import date
 
 import django_filters
+from auditlog.context import set_actor
+from auditlog.models import LogEntry
 from django.db import transaction
 from django.db.models import F, ProtectedError, Q, Sum
 from django.db.models.functions import Coalesce
@@ -16,11 +18,22 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 
+from .auditoria import AuditoriaMixin, anonimizar_registros
 from .faltas import eh_faltante, faltas_seguidas
-from .models import Aluno, DoacaoItem, Emprestimo, Presenca, Professor, Turma
+from .models import (
+    Aluno,
+    Consentimento,
+    DoacaoItem,
+    Emprestimo,
+    Presenca,
+    Professor,
+    Turma,
+)
 from .serializers import (
+    ACOES_AUDITORIA,
     AlunoListSerializer,
     AlunoSerializer,
+    AuditoriaSerializer,
     ChamadaItemSerializer,
     DoacaoItemEmprestavelSerializer,
     DoacaoItemResumoSerializer,
@@ -40,6 +53,7 @@ from .serializers import (
 
 
 class DoacaoItemViewSet(
+    AuditoriaMixin,
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
@@ -134,6 +148,7 @@ class EmprestimoFilter(django_filters.FilterSet):
 
 
 class EmprestimoViewSet(
+    AuditoriaMixin,
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
@@ -158,6 +173,7 @@ class EmprestimoViewSet(
 
 
 class TurmaViewSet(
+    AuditoriaMixin,
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
@@ -186,6 +202,7 @@ class TurmaViewSet(
 
 
 class AlunoViewSet(
+    AuditoriaMixin,
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
@@ -207,6 +224,17 @@ class AlunoViewSet(
             return AlunoListSerializer
         return AlunoSerializer
 
+    def perform_destroy(self, instance):
+        # Exclusão a pedido do titular: o nome some também do log de auditoria.
+        pk = instance.pk
+        presencas = list(instance.presencas.values_list("pk", flat=True))
+        consentimentos = list(instance.consentimentos.values_list("pk", flat=True))
+        with transaction.atomic():
+            super().perform_destroy(instance)
+            anonimizar_registros(Aluno, [pk])
+            anonimizar_registros(Presenca, presencas)
+            anonimizar_registros(Consentimento, consentimentos)
+
 
 # =============================================================================
 # Presença
@@ -214,6 +242,7 @@ class AlunoViewSet(
 
 
 class PresencaViewSet(
+    AuditoriaMixin,
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
@@ -255,7 +284,7 @@ class PresencaViewSet(
         presencas_data = serializer.validated_data["presencas"]
 
         criadas = []
-        with transaction.atomic():
+        with transaction.atomic(), set_actor(request.user):
             for p_data in presencas_data:
                 aluno_id = p_data["aluno_id"]
                 situacao = p_data["situacao"]
@@ -347,6 +376,7 @@ class PresencaViewSet(
 
 
 class ProfessorViewSet(
+    AuditoriaMixin,
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
@@ -363,3 +393,48 @@ class ProfessorViewSet(
     search_fields = ["nome", "cpf", "email"]
     ordering_fields = ["nome", "criado_em"]
     ordering = ["nome"]
+
+
+# =============================================================================
+# Auditoria
+# =============================================================================
+
+
+class AuditoriaFilter(django_filters.FilterSet):
+    usuario = django_filters.NumberFilter(field_name="actor_id")
+    acao = django_filters.ChoiceFilter(
+        choices=[(codigo, rotulo) for codigo, rotulo in ACOES_AUDITORIA.values()],
+        method="filtrar_acao",
+    )
+    # Nome do modelo em minúsculas (ex.: "aluno", "doacaoitem").
+    tipo = django_filters.CharFilter(field_name="content_type__model")
+    de = django_filters.DateFilter(field_name="timestamp", lookup_expr="date__gte")
+    ate = django_filters.DateFilter(field_name="timestamp", lookup_expr="date__lte")
+
+    class Meta:
+        model = LogEntry
+        fields = []
+
+    def filtrar_acao(self, queryset, name, valor):
+        codigo = next(a for a, (c, _) in ACOES_AUDITORIA.items() if c == valor)
+        return queryset.filter(action=codigo)
+
+
+class AuditoriaViewSet(
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet,
+):
+    """Histórico de quem criou, alterou ou excluiu registros do painel (só leitura)."""
+
+    queryset = (
+        LogEntry.objects.filter(
+            content_type__app_label="doacoes", action__in=list(ACOES_AUDITORIA)
+        )
+        .select_related("actor", "content_type")
+        .order_by("-timestamp", "-id")
+    )
+    serializer_class = AuditoriaSerializer
+    permission_classes = [IsAdminUser]
+    filterset_class = AuditoriaFilter
+    search_fields = ["object_repr"]
