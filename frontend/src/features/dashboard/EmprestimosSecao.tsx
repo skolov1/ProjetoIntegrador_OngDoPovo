@@ -25,6 +25,7 @@ import {
   type Confirmacao,
 } from "@/features/dashboard/modais";
 import { dataLocalISO, formatarDataBr, textoAvisoAtrasados } from "@/lib/emprestimo";
+import { mensagemDeErroDaApi } from "@/lib/erros";
 
 type FormEmprestimo = {
   doacao: string;
@@ -57,17 +58,6 @@ const CLASSE_STATUS: Record<string, string> = {
   ATRASADO: "bg-vermelho/10 text-vermelho",
   DEVOLVIDO: "bg-verde/10 text-verde",
 };
-
-// Junta o que a API recusou ({campo: ["msg"]} ou {detail: "msg"}) em uma frase.
-function mensagemDeErro(erro: unknown): string {
-  const data = (erro as { response?: { data?: unknown } })?.response?.data;
-  if (data && typeof data === "object") {
-    return Object.values(data as Record<string, unknown>)
-      .map((msg) => (Array.isArray(msg) ? msg.join(" ") : String(msg)))
-      .join(" ");
-  }
-  return "Não foi possível salvar. Tente novamente.";
-}
 
 export function EmprestimosSecao() {
   const [filtro, setFiltro] = useState<FiltroStatus>("");
@@ -113,7 +103,7 @@ export function EmprestimosSecao() {
     setFormAberto(true);
   };
 
-  const opcoes = { onSuccess: fechar, onError: (e: unknown) => setErro(mensagemDeErro(e)) };
+  const opcoes = { onSuccess: fechar, onError: (e: unknown) => setErro(mensagemDeErroDaApi(e)) };
 
   const salvar = (ev: React.FormEvent) => {
     ev.preventDefault();

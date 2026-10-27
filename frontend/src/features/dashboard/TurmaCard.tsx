@@ -4,7 +4,7 @@
  * apaga também as presenças da turma.
  */
 
-import { Clock, Edit, Power, Trash2, Users } from "lucide-react";
+import { Clock, Edit, Globe, Power, Trash2, Users } from "lucide-react";
 
 import type { TurmaList } from "@/api/generated/model";
 import { BotaoIcone, SeloAtivo } from "@/features/dashboard/pecas";
@@ -40,6 +40,10 @@ export function TurmaCard({
       <p className="mt-1.5 flex items-center gap-2 text-sm text-grafite/80">
         <Users className="size-4 shrink-0 text-verde" aria-hidden="true" />
         {rotuloAlunos(turma.total_alunos)}
+      </p>
+      <p className="mt-1.5 flex items-center gap-2 text-sm text-grafite/80">
+        <Globe className="size-4 shrink-0 text-verde" aria-hidden="true" />
+        {turma.visivel_na_grade ? "Aparece na grade do site" : "Só interna (fora do site)"}
       </p>
 
       <div className="mt-4 flex items-center gap-2 border-t border-mist-200 pt-3">

@@ -26,6 +26,8 @@ const ACOES = [
 const TIPOS = [
   ["aluno", "Aluno"],
   ["turma", "Turma"],
+  ["horarioturma", "Horário da turma"],
+  ["atividadeavulsa", "Atividade avulsa"],
   ["professor", "Professor"],
   ["presenca", "Presença"],
   ["consentimento", "Consentimento"],

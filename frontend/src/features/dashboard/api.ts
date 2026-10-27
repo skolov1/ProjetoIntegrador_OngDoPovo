@@ -18,6 +18,13 @@ import {
 import { presencasChamadaList, presencasLoteCreate } from '@/api/generated/presencas/presencas'
 import { auditoriaList, auditoriaUsuariosList } from '@/api/generated/auditoria/auditoria'
 import { authMeRetrieve } from '@/api/generated/auth/auth'
+import { gradeList } from '@/api/generated/grade/grade'
+import {
+  atividadesAvulsasList,
+  atividadesAvulsasCreate,
+  atividadesAvulsasPartialUpdate,
+  atividadesAvulsasDestroy,
+} from '@/api/generated/atividades-avulsas/atividades-avulsas'
 import { alunosList, alunosCreate, alunosUpdate, alunosPartialUpdate, alunosDestroy } from '@/api/generated/alunos/alunos'
 import {
   professoresList,
@@ -56,6 +63,11 @@ import type {
   AuditoriaUsuario,
   Me,
   PaginatedAuditoriaList,
+  AtividadeAvulsaRequest,
+  AtividadesAvulsasListParams,
+  GradeItem,
+  PaginatedAtividadeAvulsaList,
+  PatchedAtividadeAvulsaRequest,
 } from '@/api/generated/model'
 
 // Página que não existe mais (ex.: excluiu o último item da última página) volta 404.
@@ -359,5 +371,61 @@ export function useAuditoriaUsuarios() {
     queryKey: ['auditoria', 'usuarios'],
     queryFn: () => auditoriaUsuariosList().then(extractData),
     staleTime: 60_000,
+  })
+}
+
+// ============================================================================
+// GRADE DA SEMANA (atividades avulsas e prévia do que está no site)
+// ============================================================================
+
+export function useAtividadesAvulsas(params?: AtividadesAvulsasListParams) {
+  return useQuery<PaginatedAtividadeAvulsaList>({
+    queryKey: ['atividades-avulsas', params],
+    queryFn: () => atividadesAvulsasList(params).then(extractData),
+    staleTime: 30_000,
+  })
+}
+
+// A prévia mostra o que a landing mostra: mexer em turma ou atividade a atualiza.
+export function useGradePublica() {
+  return useQuery<GradeItem[]>({
+    queryKey: ['grade'],
+    queryFn: () => gradeList().then(extractData),
+    staleTime: 10_000,
+  })
+}
+
+function useInvalidarGrade() {
+  const qc = useQueryClient()
+  return () =>
+    Promise.all([
+      qc.invalidateQueries({ queryKey: ['atividades-avulsas'] }),
+      qc.invalidateQueries({ queryKey: ['grade'] }),
+    ])
+}
+
+export function useCreateAtividadeAvulsa() {
+  const invalidar = useInvalidarGrade()
+  return useMutation({
+    mutationFn: (data: AtividadeAvulsaRequest) => atividadesAvulsasCreate(data).then(extractData),
+    onSuccess: invalidar,
+  })
+}
+
+// Edição e "mostrar/ocultar no site" usam PATCH.
+export function useUpdateAtividadeAvulsa() {
+  const invalidar = useInvalidarGrade()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: PatchedAtividadeAvulsaRequest }) =>
+      atividadesAvulsasPartialUpdate(id, data).then(extractData),
+    onSuccess: invalidar,
+  })
+}
+
+export function useDeleteAtividadeAvulsa() {
+  const invalidar = useInvalidarGrade()
+  return useMutation({
+    mutationFn: (id: number) => atividadesAvulsasDestroy(id).then(extractData),
+    onSuccess: invalidar,
   })
 }

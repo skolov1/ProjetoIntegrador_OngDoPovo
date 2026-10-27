@@ -14,9 +14,12 @@ import { Reveal } from "@/components/ui/Reveal";
 import { ONG } from "@/features/home/data";
 import { useGrade } from "@/features/home/useGrade";
 import { estiloDoStatus } from "@/lib/grade";
+import { rotuloPublicoDoStatus } from "@/lib/horarios";
+import { MENSALIDADE_POR_ATIVIDADE } from "@/lib/inscricao";
 
 export function SpaceSection() {
   const { data: grade, isLoading, isError } = useGrade();
+  const precisaProfessor = grade?.some((i) => i.status === "FALTA_PROFESSOR");
 
   return (
     <Section id="espaco" tom="claro">
@@ -80,7 +83,7 @@ export function SpaceSection() {
                 </p>
               </div>
               <span className="hidden rounded-full bg-verde px-3 py-1 text-xs font-bold uppercase tracking-wider text-white sm:inline">
-                R$ 20 por modalidade
+                R$ {MENSALIDADE_POR_ATIVIDADE} por modalidade
               </span>
             </div>
 
@@ -103,7 +106,7 @@ export function SpaceSection() {
               )}
               {grade?.map((item) => (
                 <li
-                  key={item.id}
+                  key={item.chave}
                   className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 px-5 py-4 transition-colors hover:bg-mist-50 sm:px-6 lg:grid-cols-[6rem_1fr_auto]"
                 >
                   <span className="text-xs font-bold uppercase tracking-wider text-verde max-lg:col-start-1 max-lg:row-start-1">
@@ -120,11 +123,22 @@ export function SpaceSection() {
                       item.status,
                     )}`}
                   >
-                    {item.status_rotulo}
+                    {rotuloPublicoDoStatus(item.status)}
                   </span>
                 </li>
               ))}
             </ul>
+            {precisaProfessor && (
+              <p className="border-t border-slate-100 bg-amarelo/10 px-5 py-3 text-sm text-grafite/80 sm:px-6">
+                Tem aula procurando professor. Quer ensinar?{" "}
+                <a
+                  href="#voluntariado"
+                  className="font-bold text-verde underline underline-offset-4"
+                >
+                  Seja voluntário →
+                </a>
+              </p>
+            )}
           </div>
         </Reveal>
       </div>

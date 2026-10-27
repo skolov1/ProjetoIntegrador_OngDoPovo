@@ -12,6 +12,7 @@ import {
   Users,
   Clipboard,
   MessageCircle,
+  CalendarDays,
   History,
   Plus,
   Edit,
@@ -42,8 +43,12 @@ import {
 } from "@/features/dashboard/api";
 import { PresencasTela } from "@/features/dashboard/PresencasTela";
 import { AuditoriaTela } from "@/features/dashboard/AuditoriaTela";
+import { GradeTela } from "@/features/dashboard/GradeTela";
 import { UsuarioLogado } from "@/features/dashboard/UsuarioLogado";
 import { TurmasTela } from "@/features/dashboard/TurmasTela";
+import { HorariosTurmaCampos } from "@/features/dashboard/HorariosTurmaCampos";
+import { dataLocalISO } from "@/lib/emprestimo";
+import { horarioVazio, validarHorarios, type HorarioForm } from "@/lib/horarios";
 import { ProfessoresTela } from "@/features/dashboard/ProfessoresTela";
 import { Paginacao } from "@/features/dashboard/pecas";
 import { Sunburst } from "@/components/ui/Sunburst";
@@ -59,7 +64,6 @@ import { professoresRetrieve } from "@/api/generated/professores/professores";
 import { turmasRetrieve } from "@/api/generated/turmas/turmas";
 import type {
   ComprovanteResidenciaEnum,
-  DiaSemanaEnum,
   ExameAptidaoEnum,
   ItemEnum,
   SexoEnum,
@@ -82,6 +86,7 @@ type Screen =
   | "doacoes"
   | "turmas"
   | "professores"
+  | "grade"
   | "auditoria";
 type TipoCadastro = "turma" | "aluno" | "professor";
 
@@ -91,18 +96,29 @@ const ITENS_MENU: { id: Screen; label: string; Icon: LucideIcon }[] = [
   { id: "turmas", label: "Turmas", Icon: Clipboard },
   { id: "professores", label: "Professores", Icon: MessageCircle },
   { id: "doacoes", label: "Doações", Icon: Clipboard },
+  { id: "grade", label: "Grade", Icon: CalendarDays },
   { id: "auditoria", label: "Auditoria", Icon: History },
 ];
 
 type FormTurma = {
   nome: string;
-  dia_semana: DiaSemanaEnum;
-  horario_inicio: string;
-  horario_fim: string;
+  horarios: HorarioForm[];
   data_inicio: string;
   data_fim: string;
   ativo: boolean;
+  visivel_na_grade: boolean;
+  nome_publico: string;
 };
+
+const TURMA_VAZIA = (): FormTurma => ({
+  nome: "",
+  horarios: [horarioVazio()],
+  data_inicio: dataLocalISO(),
+  data_fim: "",
+  ativo: true,
+  visivel_na_grade: false,
+  nome_publico: "",
+});
 type FormAluno = {
   nome: string;
   cpf: string;
@@ -208,15 +224,7 @@ export function DashboardLayout() {
     "turma" | "aluno" | "professor" | "doacao" | null
   >(null);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [formTurma, setFormTurma] = useState<FormTurma>({
-    nome: "",
-    dia_semana: "SEG",
-    horario_inicio: "08:00",
-    horario_fim: "09:00",
-    data_inicio: new Date().toISOString().split("T")[0],
-    data_fim: "",
-    ativo: true,
-  });
+  const [formTurma, setFormTurma] = useState<FormTurma>(TURMA_VAZIA());
   const [formAluno, setFormAluno] = useState<FormAluno>(ALUNO_VAZIO);
   const [formDoacao, setFormDoacao] = useState<FormDoacao>(DOACAO_VAZIA());
   const [erroForm, setErroForm] = useState("");
@@ -265,15 +273,7 @@ export function DashboardLayout() {
   const closeForm = () => {
     setShowForm(null);
     setEditingId(null);
-    setFormTurma({
-      nome: "",
-      dia_semana: "SEG",
-      horario_inicio: "08:00",
-      horario_fim: "09:00",
-      data_inicio: new Date().toISOString().split("T")[0],
-      data_fim: "",
-      ativo: true,
-    });
+    setFormTurma(TURMA_VAZIA());
     setFormAluno(ALUNO_VAZIO);
     setFormDoacao(DOACAO_VAZIA());
     setErroForm("");
@@ -305,7 +305,17 @@ export function DashboardLayout() {
 
   const handleSubmitTurma = (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = { ...formTurma, data_fim: formTurma.data_fim || null };
+    const problema = validarHorarios(formTurma.horarios);
+    if (problema) {
+      setErroForm(problema);
+      return;
+    }
+    setErroForm("");
+    const payload = {
+      ...formTurma,
+      nome_publico: formTurma.nome_publico.trim(),
+      data_fim: formTurma.data_fim || null,
+    };
     if (editingId !== null) {
       updateTurma.mutate({ id: editingId, data: payload }, aoSalvar);
     } else {
@@ -377,12 +387,16 @@ export function DashboardLayout() {
         const t = (await turmasRetrieve(id)).data;
         setFormTurma({
           nome: t.nome,
-          dia_semana: t.dia_semana,
-          horario_inicio: t.horario_inicio.slice(0, 5),
-          horario_fim: t.horario_fim.slice(0, 5),
+          horarios: t.horarios.map((h) => ({
+            dia_semana: h.dia_semana,
+            horario_inicio: h.horario_inicio.slice(0, 5),
+            horario_fim: h.horario_fim.slice(0, 5),
+          })),
           data_inicio: t.data_inicio,
           data_fim: t.data_fim ?? "",
           ativo: t.ativo ?? true,
+          visivel_na_grade: t.visivel_na_grade ?? false,
+          nome_publico: t.nome_publico ?? "",
         });
       } else if (tipo === "aluno") {
         const a = (await alunosRetrieve(id)).data;
@@ -474,15 +488,7 @@ export function DashboardLayout() {
   const abrirNovaTurma = () => {
     closeForm();
     setEditingId(null);
-    setFormTurma({
-      nome: "",
-      dia_semana: "SEG",
-      horario_inicio: "08:00",
-      horario_fim: "09:00",
-      data_inicio: new Date().toISOString().split("T")[0],
-      data_fim: "",
-      ativo: true,
-    });
+    setFormTurma(TURMA_VAZIA());
     setShowForm("turma");
   };
 
@@ -620,55 +626,10 @@ export function DashboardLayout() {
             required
             className={`${CLASSE_CAMPO} lg:col-span-2`}
           />
-          <label className="text-sm text-grafite/70 lg:col-span-2">
-            Dia da semana
-            <select
-              name="dia_semana"
-              value={formTurma.dia_semana}
-              onChange={(e) =>
-                setFormTurma({
-                  ...formTurma,
-                  dia_semana: e.target.value as DiaSemanaEnum,
-                })
-              }
-              required
-              className={`${CLASSE_CAMPO} mt-1`}
-            >
-              <option value="SEG">Segunda</option>
-              <option value="TER">Terça</option>
-              <option value="QUA">Quarta</option>
-              <option value="QUI">Quinta</option>
-              <option value="SEX">Sexta</option>
-              <option value="SAB">Sábado</option>
-              <option value="DOM">Domingo</option>
-            </select>
-          </label>
-          <label className="text-sm text-grafite/70">
-            Horário de início
-            <input
-              type="time"
-              name="horario_inicio"
-              value={formTurma.horario_inicio}
-              onChange={(e) =>
-                setFormTurma({ ...formTurma, horario_inicio: e.target.value })
-              }
-              required
-              className={`${CLASSE_CAMPO} mt-1`}
-            />
-          </label>
-          <label className="text-sm text-grafite/70">
-            Horário de fim
-            <input
-              type="time"
-              name="horario_fim"
-              value={formTurma.horario_fim}
-              onChange={(e) =>
-                setFormTurma({ ...formTurma, horario_fim: e.target.value })
-              }
-              required
-              className={`${CLASSE_CAMPO} mt-1`}
-            />
-          </label>
+          <HorariosTurmaCampos
+            horarios={formTurma.horarios}
+            onChange={(horarios) => setFormTurma({ ...formTurma, horarios })}
+          />
           <label className="text-sm text-grafite/70">
             Data de início
             <input
@@ -704,6 +665,42 @@ export function DashboardLayout() {
             />{" "}
             Ativa
           </label>
+          <fieldset className="lg:col-span-2 rounded-2xl border border-slate-200 p-4">
+            <legend className="px-2 text-sm font-bold text-verde-escuro">
+              Grade pública (site)
+            </legend>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={formTurma.visivel_na_grade}
+                onChange={(e) =>
+                  setFormTurma({ ...formTurma, visivel_na_grade: e.target.checked })
+                }
+              />{" "}
+              Mostrar esta turma na grade da semana do site
+            </label>
+            <p className="mt-1 text-xs text-grafite/60">
+              Desligado, a turma é só interna: não aparece para os visitantes.
+            </p>
+            <label className="mt-3 block text-sm text-grafite/70">
+              Nome na grade (opcional)
+              <input
+                name="nome_publico"
+                placeholder="Como o visitante vê. Vazio = usa o nome da turma"
+                maxLength={100}
+                value={formTurma.nome_publico}
+                onChange={(e) =>
+                  setFormTurma({ ...formTurma, nome_publico: e.target.value })
+                }
+                className={`${CLASSE_CAMPO} mt-1`}
+              />
+            </label>
+          </fieldset>
+          {erroForm && (
+            <p role="alert" className="lg:col-span-2 text-sm text-vermelho">
+              {erroForm}
+            </p>
+          )}
         </FormModal>
       );
     if (showForm === "aluno")
@@ -1136,6 +1133,9 @@ export function DashboardLayout() {
 
         {/* PRESENÇAS */}
         {screen === "presenca" && <PresencasTela />}
+
+        {/* GRADE DA SEMANA (atividades avulsas e prévia do site) */}
+        {screen === "grade" && <GradeTela />}
 
         {/* AUDITORIA */}
         {screen === "auditoria" && <AuditoriaTela />}
