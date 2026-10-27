@@ -8,7 +8,7 @@
  */
 
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import type { SituacaoEnum } from "@/api/generated/model";
@@ -161,14 +161,23 @@ export function PresencasTela() {
 
       {itens.length > 0 && (
         <>
-          <div className="flex flex-wrap items-center gap-3">
-            <input
-              name="busca"
-              placeholder="Buscar aluno pelo nome"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className={`${CLASSE_CAMPO} max-w-xs`}
-            />
+          {/* Filtros da lista, separados do que escolhe turma e data */}
+          <div className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm">
+            <div className="relative w-full max-w-xs">
+              <Search
+                aria-hidden="true"
+                className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-grafite/40"
+              />
+              <input
+                type="search"
+                name="busca"
+                aria-label="Buscar aluno pelo nome"
+                placeholder="Buscar aluno pelo nome"
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                className={`${CLASSE_CAMPO} pl-11`}
+              />
+            </div>
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
