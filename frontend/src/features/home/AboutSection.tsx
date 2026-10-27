@@ -58,9 +58,9 @@ const FOTOS_HISTORIA = [
 export function AboutSection() {
   return (
     <Section id="quem-somos" tom="claro">
-      <div className="pt-12 grid grid-cols-12 min-w-0 gap-12">
+      <div className="grid min-w-0 grid-cols-1 gap-10 pt-4 lg:grid-cols-12 lg:gap-12 lg:pt-12">
         {/* Coluna de texto — história estendida */}
-        <div className="mx-auto w-full col-span-6 space-y-6">
+        <div className="mx-auto w-full min-w-0 space-y-6 lg:col-span-6">
           <Reveal>
             <Eyebrow>Quem somos</Eyebrow>
             <SectionTitle>História</SectionTitle>
@@ -94,7 +94,7 @@ export function AboutSection() {
         </div>
 
         {/* Coluna de fotos da história */}
-        <div className="mx-auto col-span-6 overflow-hidden">
+        <div className="mx-auto w-full min-w-0 overflow-hidden lg:col-span-6">
           <Reveal>
             <Carousel
               opts={{ loop: true }}
@@ -112,7 +112,7 @@ export function AboutSection() {
               <CarouselContent>
               {FOTOS_HISTORIA.map((foto, i) => (
                 <CarouselItem key={i}>
-                  <div className="flex h-[22rem] items-center justify-center overflow-hidden rounded-2xl bg-mist-100 p-3 shadow-lg ring-1 ring-slate-900/5 sm:h-[28rem]">
+                  <div className="flex h-72 items-center justify-center overflow-hidden rounded-2xl bg-mist-100 p-3 shadow-lg ring-1 ring-slate-900/5 sm:h-[28rem]">
                     <img
                       src={foto.src}
                       alt={foto.alt}

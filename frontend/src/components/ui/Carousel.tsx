@@ -131,7 +131,7 @@ export const CarouselContent = forwardRef<
       <div
         ref={ref}
         className={`flex w-full min-w-0 ${
-          orientation === 'horizontal' ? '-ml-4' : '-mt-4 flex-col'
+          orientation === 'horizontal' ? '' : '-mt-4 flex-col'
         } ${className}`}
         {...props}
       />
@@ -150,7 +150,7 @@ export const CarouselItem = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivEle
         role="group"
         aria-roledescription="slide"
         className={`w-full min-w-0 shrink-0 grow-0 basis-full ${
-          orientation === 'horizontal' ? 'pl-4' : 'pt-4'
+          orientation === 'horizontal' ? '' : 'pt-4'
         } ${className}`}
         {...props}
       />

@@ -92,10 +92,10 @@ export function SpaceSection() {
                   key={item.dia + item.atividade}
                   className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 px-5 py-4 transition-colors hover:bg-mist-50 sm:px-6 lg:grid-cols-[5.5rem_1fr_4rem_auto]"
                 >
-                  <span className="text-xs font-bold uppercase tracking-wider text-verde">
+                  <span className="text-xs font-bold uppercase tracking-wider text-verde max-lg:col-start-1 max-lg:row-start-1">
                     {item.dia}
                   </span>
-                  <div>
+                  <div className="max-lg:col-span-2">
                     <p className="font-bold text-verde-escuro">
                       {item.atividade}
                     </p>
@@ -107,7 +107,7 @@ export function SpaceSection() {
                     {item.local}
                   </span>
                   <span
-                    className={`w-fit rounded-full px-3 py-1 text-xs font-bold ${
+                    className={`w-fit rounded-full px-3 py-1 text-xs font-bold max-lg:col-start-2 max-lg:row-start-1 max-lg:justify-self-end ${
                       ESTILOS_STATUS[item.status] ?? ESTILOS_STATUS.Ativo
                     }`}
                   >
