@@ -18,7 +18,6 @@ import {
   Trash2,
   UserCheck,
   UserX,
-  X,
   type LucideIcon,
 } from "lucide-react";
 
@@ -46,6 +45,13 @@ import {
 } from "@/features/dashboard/api";
 import { encerrarSessao } from "@/lib/api";
 import { PresencasTela } from "@/features/dashboard/PresencasTela";
+import { EmprestimosSecao } from "@/features/dashboard/EmprestimosSecao";
+import {
+  CLASSE_CAMPO,
+  ConfirmModal,
+  FormModal,
+  type Confirmacao,
+} from "@/features/dashboard/modais";
 import { alunosRetrieve } from "@/api/generated/alunos/alunos";
 import { professoresRetrieve } from "@/api/generated/professores/professores";
 import { turmasRetrieve } from "@/api/generated/turmas/turmas";
@@ -150,16 +156,6 @@ const DOACAO_VAZIA = (): FormDoacao => ({
   observacao: "",
 });
 
-const CLASSE_CAMPO =
-  "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-grafite outline-none focus:border-verde focus:ring-4 focus:ring-verde/10";
-
-// Ação que espera confirmação num popup antes de rodar.
-type Confirmacao = {
-  titulo: string;
-  texto: string;
-  rotulo: string;
-  onConfirm: () => void;
-};
 type FormDoacao = {
   item: ItemEnum;
   item_descricao: string;
@@ -1399,6 +1395,8 @@ export function DashboardLayout() {
                 </tbody>
               </table>
             </div>
+
+            <EmprestimosSecao />
           </div>
         )}
 
@@ -1414,52 +1412,6 @@ export function DashboardLayout() {
           />
         )}
       </main>
-    </div>
-  );
-}
-
-// Modal reutilizável
-function FormModal({
-  title,
-  onClose,
-  onSubmit,
-  submitting,
-  largura = "max-w-md",
-  children,
-}: {
-  title: string;
-  largura?: string;
-  onClose: () => void;
-  onSubmit: (e: React.FormEvent) => void;
-  submitting: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <form
-        onSubmit={onSubmit}
-        className={`bg-white rounded-2xl p-6 w-full ${largura} max-h-[90vh] overflow-y-auto`}
-      >
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-verde-escuro">{title}</h3>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1 hover:bg-mist-100 rounded"
-          >
-            <X className="size-5" />
-          </button>
-        </div>
-        <main className="grid grid-cols-1 lg:grid-cols-2 gap-4">{children}</main>
-        <div className="mt-6 flex justify-end gap-3">
-          <Button variante="contorno-claro" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button disabled={submitting}>
-            {submitting ? "Salvando..." : "Salvar"}
-          </Button>
-        </div>
-      </form>
     </div>
   );
 }
@@ -1493,35 +1445,4 @@ function ExameBadge({ situacao }: { situacao?: string | null }) {
   };
   const [rotulo, classe] = visual[situacao] ?? ["—", ""];
   return <span className={`px-2 py-1 rounded text-xs ${classe}`}>{rotulo}</span>;
-}
-
-// Popup de confirmação (no lugar do confirm() do navegador).
-function ConfirmModal({
-  titulo,
-  texto,
-  rotulo,
-  onConfirm,
-  onClose,
-}: Confirmacao & { onClose: () => void }) {
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="confirm-titulo"
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4"
-    >
-      <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
-        <h3 id="confirm-titulo" className="text-lg font-bold text-verde-escuro">
-          {titulo}
-        </h3>
-        <p className="mt-2 text-sm text-grafite/70">{texto}</p>
-        <div className="mt-6 flex justify-end gap-3">
-          <Button variante="contorno-claro" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button onClick={onConfirm}>{rotulo}</Button>
-        </div>
-      </div>
-    </div>
-  );
 }

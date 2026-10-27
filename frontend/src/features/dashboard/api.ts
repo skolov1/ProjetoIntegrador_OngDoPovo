@@ -23,6 +23,11 @@ import {
   doacoesItensUpdate,
   doacoesItensDestroy,
   doacoesItensResumoList,
+  doacoesItensEmprestaveisList,
+  doacoesEmprestimosList,
+  doacoesEmprestimosCreate,
+  doacoesEmprestimosPartialUpdate,
+  doacoesEmprestimosDestroy,
 } from '@/api/generated/doacoes/doacoes'
 import type {
   PaginatedTurmaListList,
@@ -31,6 +36,11 @@ import type {
   PaginatedDoacaoItemList,
   DoacaoItemResumo,
   DoacaoItemRequest,
+  DoacaoItemEmprestavel,
+  DoacoesEmprestimosListParams,
+  EmprestimoRequest,
+  PaginatedEmprestimoList,
+  PatchedEmprestimoRequest,
   ChamadaItem,
   PresencaLoteRequest,
 } from '@/api/generated/model'
@@ -198,6 +208,63 @@ export function useDeleteDoacaoItem() {
   return useMutation({
     mutationFn: (id: number) => doacoesItensDestroy(id).then(extractData),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['doacoes-itens'] }),
+  })
+}
+
+// ============================================================================
+// EMPRÉSTIMOS DE ITENS
+// ============================================================================
+
+export function useEmprestimos(params?: DoacoesEmprestimosListParams) {
+  return useQuery<PaginatedEmprestimoList>({
+    queryKey: ['emprestimos', params],
+    queryFn: () => doacoesEmprestimosList(params).then(extractData),
+    staleTime: 30_000,
+  })
+}
+
+// Doações com unidades livres para emprestar (alimentos ficam de fora).
+export function useItensEmprestaveis() {
+  return useQuery<DoacaoItemEmprestavel[]>({
+    queryKey: ['doacoes-itens', 'emprestaveis'],
+    queryFn: () => doacoesItensEmprestaveisList().then(extractData),
+    staleTime: 30_000,
+  })
+}
+
+// Empréstimo mexe no que está disponível, então atualiza também as doações.
+function useInvalidarEmprestimos() {
+  const qc = useQueryClient()
+  return () =>
+    Promise.all([
+      qc.invalidateQueries({ queryKey: ['emprestimos'] }),
+      qc.invalidateQueries({ queryKey: ['doacoes-itens'] }),
+    ])
+}
+
+export function useCreateEmprestimo() {
+  const invalidar = useInvalidarEmprestimos()
+  return useMutation({
+    mutationFn: (data: EmprestimoRequest) => doacoesEmprestimosCreate(data).then(extractData),
+    onSuccess: invalidar,
+  })
+}
+
+// Edição e devolução usam PATCH: a devolução é só mandar `devolvido_em`.
+export function useUpdateEmprestimo() {
+  const invalidar = useInvalidarEmprestimos()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: PatchedEmprestimoRequest }) =>
+      doacoesEmprestimosPartialUpdate(id, data).then(extractData),
+    onSuccess: invalidar,
+  })
+}
+
+export function useDeleteEmprestimo() {
+  const invalidar = useInvalidarEmprestimos()
+  return useMutation({
+    mutationFn: (id: number) => doacoesEmprestimosDestroy(id).then(extractData),
+    onSuccess: invalidar,
   })
 }
 
