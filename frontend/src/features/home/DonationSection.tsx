@@ -1,18 +1,14 @@
 /**
- * Doação — somente QR Code + chave PIX e a lista de itens que aceitamos.
+ * Doação — somente a lista de itens/equipamentos que aceitamos.
  *
- * Decisão do time: sem formulário e sem cartão/transferência. Quem doa paga
- * pelo PIX (QR Code ou chave do CNPJ) e a ONG confere no extrato.
+ * Decisão da reunião: sem QR Code, CNPJ ou chave PIX na página.
  */
 
-import { useState } from 'react'
-import { Check, Copy, Wheat, Accessibility, Bath } from 'lucide-react'
+import { Wheat, Accessibility, Bath } from 'lucide-react'
 
 import { Eyebrow, Section, SectionLead, SectionTitle } from '@/components/ui/Section'
 import { Reveal } from '@/components/ui/Reveal'
 import { Sunburst } from '@/components/ui/Sunburst'
-import { ONG } from '@/features/home/data'
-import qrCodeImg from '../../../../refs/qrcode_donate.jpg'
 
 const ITENS_ACEITOS = [
   { rotulo: 'Alimentos não perecíveis', Icon: Wheat },
@@ -22,18 +18,6 @@ const ITENS_ACEITOS = [
 ] as const
 
 export function DonationSection() {
-  const [copiado, setCopiado] = useState(false)
-
-  async function copiarChave() {
-    try {
-      await navigator.clipboard.writeText(ONG.chavePix)
-      setCopiado(true)
-      setTimeout(() => setCopiado(false), 2200)
-    } catch {
-      // clipboard bloqueado (http/permissão) — a chave está visível ao lado.
-    }
-  }
-
   return (
     <Section id="doe" tom="escuro" className="relative overflow-hidden">
       <Sunburst
