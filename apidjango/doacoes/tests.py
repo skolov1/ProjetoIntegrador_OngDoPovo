@@ -13,8 +13,9 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from .documentos import cpf_valido, mascarar_cpf, telefone_valido
+from .fabricas import criar_turma
 from .faltas import eh_faltante, faltas_seguidas
-from .models import Aluno, Consentimento, DoacaoItem, Emprestimo, Presenca, Turma
+from .models import Aluno, Consentimento, DoacaoItem, Emprestimo, Presenca
 
 pytestmark = pytest.mark.django_db
 
@@ -263,13 +264,7 @@ class TestAlunoLGPD:
         assert criado["exame_situacao"] is None
 
     def turma(self, nome):
-        return Turma.objects.create(
-            nome=nome,
-            dia_semana="SEG",
-            horario_inicio=time(8, 0),
-            horario_fim=time(9, 0),
-            data_inicio="2026-01-01",
-        )
+        return criar_turma(nome, "SEG", time(8, 0), time(9, 0))
 
     def test_mensalidade_e_20_por_turma(self, staff):
         t1, t2, t3 = self.turma("Muay Thai"), self.turma("Judô"), self.turma("Violão")
@@ -579,13 +574,7 @@ class TestChamada:
 
     @pytest.fixture
     def turma(self):
-        return Turma.objects.create(
-            nome="Muay Thai",
-            dia_semana="SEG",
-            horario_inicio=time(19, 0),
-            horario_fim=time(20, 0),
-            data_inicio="2026-01-01",
-        )
+        return criar_turma("Muay Thai", "SEG", time(19, 0), time(20, 0))
 
     def aluno(self, nome, turma, **extra):
         aluno = Aluno.objects.create(nome=nome, data_nascimento=date(1990, 1, 1), **extra)
@@ -673,13 +662,7 @@ class TestChamada:
         assert item["faltas_seguidas"] == 2
 
     def test_faltas_de_outra_turma_nao_contam(self, staff, turma):
-        outra = Turma.objects.create(
-            nome="Judô",
-            dia_semana="TER",
-            horario_inicio=time(18, 0),
-            horario_fim=time(19, 0),
-            data_inicio="2026-01-01",
-        )
+        outra = criar_turma("Judô", "TER", time(18, 0), time(19, 0))
         ana = self.aluno("Ana", turma)
         for dia in ("2026-10-12", "2026-10-19", "2026-10-26"):
             self.registrar(ana, outra, dia, "AUSENTE")

@@ -6,19 +6,26 @@ Funções puras, sem banco, para testar sem montar dados:
 * ainda não começou (`data_inicio` no futuro): Agendado;
 * começou, mas nenhum professor ativo vinculado: Falta professor;
 * começou e tem professor ativo: Ativo.
+
+Além disso, só entra na grade a turma com `visivel_na_grade` ligado (ver a view).
 """
 
 from datetime import date
 
-STATUS_ATIVO = "ATIVO"
-STATUS_AGENDADO = "AGENDADO"
-STATUS_FALTA_PROFESSOR = "FALTA_PROFESSOR"
+from django.db import models
 
-ROTULOS_STATUS = {
-    STATUS_ATIVO: "Ativo",
-    STATUS_AGENDADO: "Agendado",
-    STATUS_FALTA_PROFESSOR: "Falta professor",
-}
+
+class StatusGrade(models.TextChoices):
+    ATIVO = "ATIVO", "Ativo"
+    AGENDADO = "AGENDADO", "Agendado"
+    FALTA_PROFESSOR = "FALTA_PROFESSOR", "Falta professor"
+
+
+STATUS_ATIVO = StatusGrade.ATIVO
+STATUS_AGENDADO = StatusGrade.AGENDADO
+STATUS_FALTA_PROFESSOR = StatusGrade.FALTA_PROFESSOR
+
+ROTULOS_STATUS = {status.value: status.label for status in StatusGrade}
 
 
 def status_da_turma(
@@ -28,14 +35,14 @@ def status_da_turma(
     data_fim: date | None,
     professores_ativos: int,
     hoje: date,
-) -> str | None:
+) -> StatusGrade | None:
     """Situação da turma na grade, ou `None` quando ela não deve aparecer."""
     if not ativo:
         return None
     if data_fim is not None and data_fim < hoje:
         return None
     if data_inicio > hoje:
-        return STATUS_AGENDADO
+        return StatusGrade.AGENDADO
     if professores_ativos == 0:
-        return STATUS_FALTA_PROFESSOR
-    return STATUS_ATIVO
+        return StatusGrade.FALTA_PROFESSOR
+    return StatusGrade.ATIVO

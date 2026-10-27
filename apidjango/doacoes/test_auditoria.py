@@ -8,13 +8,14 @@ garantem que isso não vire "usuário vazio" e que dado pessoal não vaze para o
 Rodar: pytest
 """
 
-from datetime import date, time
+from datetime import date
 
 import pytest
 from auditlog.models import LogEntry
 from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 
+from .fabricas import criar_turma
 from .models import Aluno, DoacaoItem, Emprestimo, Presenca, Turma
 
 pytestmark = pytest.mark.django_db
@@ -80,13 +81,7 @@ class TestAutorDaAcao:
         assert "quantidade" in entrada.changes_dict
 
     def test_excluir_registra_quem_excluiu(self, maria):
-        turma = Turma.objects.create(
-            nome="Futsal",
-            dia_semana="SEG",
-            horario_inicio=time(18, 0),
-            horario_fim=time(19, 0),
-            data_inicio="2026-01-01",
-        )
+        turma = criar_turma("Futsal")
 
         cliente_de(maria).delete(f"/api/v1/turmas/{turma.id}/")
 
@@ -104,13 +99,7 @@ class TestAutorDaAcao:
         assert autores == {"maria", "joao"}
 
     def test_chamada_em_lote_registra_quem_salvou(self, maria):
-        turma = Turma.objects.create(
-            nome="Futsal",
-            dia_semana="SEG",
-            horario_inicio=time(18, 0),
-            horario_fim=time(19, 0),
-            data_inicio="2026-01-01",
-        )
+        turma = criar_turma("Futsal")
         aluno = Aluno.objects.create(nome="Carlos", data_nascimento=date(1990, 3, 1))
         aluno.turmas.add(turma)
 
@@ -178,13 +167,7 @@ class TestDadoPessoalNoLog:
             format="json",
         )
         aluno_id = resposta.data["id"]
-        turma = Turma.objects.create(
-            nome="Futsal",
-            dia_semana="SEG",
-            horario_inicio=time(18, 0),
-            horario_fim=time(19, 0),
-            data_inicio="2026-01-01",
-        )
+        turma = criar_turma("Futsal")
         Presenca.objects.create(aluno_id=aluno_id, turma=turma, data=date(2026, 10, 20))
 
         cliente_de(maria).delete(f"/api/v1/alunos/{aluno_id}/")
@@ -267,9 +250,9 @@ class TestEndpointAuditoria:
             "/api/v1/turmas/",
             {
                 "nome": "Futsal",
-                "dia_semana": "SEG",
-                "horario_inicio": "18:00",
-                "horario_fim": "19:00",
+                "horarios": [
+                    {"dia_semana": "SEG", "horario_inicio": "18:00", "horario_fim": "19:00"}
+                ],
                 "data_inicio": "2026-01-01",
             },
             format="json",
@@ -279,10 +262,10 @@ class TestEndpointAuditoria:
         def total(**filtros):
             return c.get(URL_AUDITORIA, filtros).data["count"]
 
-        assert total(usuario=joao.id) == 2
+        assert total(usuario=joao.id) == 3  # alterou a doação e criou turma + horário
         assert total(usuario=maria.id) == 1
         assert total(acao="ALTEROU") == 1
-        assert total(acao="CRIOU") == 2
+        assert total(acao="CRIOU") == 3  # doação, turma e horário da turma
         assert total(tipo="turma") == 1
         assert total(usuario=joao.id, tipo="doacaoitem") == 1
 

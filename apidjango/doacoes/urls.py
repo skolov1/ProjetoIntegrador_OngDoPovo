@@ -14,6 +14,9 @@ router.register(
     "doacoes/emprestimos", views.EmprestimoViewSet, basename="emprestimo"
 )
 router.register("auditoria", views.AuditoriaViewSet, basename="auditoria")
+router.register(
+    "atividades-avulsas", views.AtividadeAvulsaViewSet, basename="atividade-avulsa"
+)
 router.register("turmas", views.TurmaViewSet, basename="turma")
 router.register("alunos", views.AlunoViewSet, basename="aluno")
 router.register("presencas", views.PresencaViewSet, basename="presenca")

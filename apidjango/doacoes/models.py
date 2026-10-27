@@ -14,6 +14,7 @@ from django.db import models
 from django.utils import timezone
 
 from .documentos import mascarar_cpf
+from .horarios import ORDEM_DIAS, faixa_horaria, formatar_horarios
 
 # Versão do termo de tratamento de dados que o responsável aceita no cadastro.
 # Ao mudar o texto do termo, aumente a versão: o consentimento guarda qual foi aceito.
@@ -154,42 +155,157 @@ class Emprestimo(models.Model):
 # =============================================================================
 
 
-class Turma(models.Model):
-    """Turma com horário fixo (ex.: 'Futsal Sub-12 - Terça 18h')."""
+class DiaSemana(models.TextChoices):
+    SEGUNDA = "SEG", "Segunda"
+    TERCA = "TER", "Terça"
+    QUARTA = "QUA", "Quarta"
+    QUINTA = "QUI", "Quinta"
+    SEXTA = "SEX", "Sexta"
+    SABADO = "SAB", "Sábado"
+    DOMINGO = "DOM", "Domingo"
 
-    class DiaSemana(models.TextChoices):
-        SEGUNDA = "SEG", "Segunda"
-        TERCA = "TER", "Terça"
-        QUARTA = "QUA", "Quarta"
-        QUINTA = "QUI", "Quinta"
-        SEXTA = "SEX", "Sexta"
-        SABADO = "SAB", "Sábado"
-        DOMINGO = "DOM", "Domingo"
+
+class Turma(models.Model):
+    """Turma: grupo de alunos com lista de chamada.
+
+    Acontece em um ou mais dias da semana (`HorarioTurma`). Só aparece na grade
+    pública da landing se `visivel_na_grade` estiver ligado: criar uma turma interna
+    no painel nunca a publica sozinha.
+    """
+
+    DiaSemana = DiaSemana
 
     nome = models.CharField("Nome da turma", max_length=100)
     descricao = models.CharField("Descrição", max_length=255, blank=True)
-    dia_semana = models.CharField("Dia da semana", max_length=3, choices=DiaSemana.choices)
-    horario_inicio = models.TimeField("Horário de início")
-    horario_fim = models.TimeField("Horário de fim")
     data_inicio = models.DateField("Data de início")
     data_fim = models.DateField("Data de fim", blank=True, null=True)
     ativo = models.BooleanField("Ativo", default=True)
     criado_em = models.DateTimeField("Criado em", auto_now_add=True)
+    # --- Grade pública da landing ---
+    visivel_na_grade = models.BooleanField(
+        "Mostrar na grade da landing",
+        default=False,
+        help_text="Desligado por padrão: turma interna não aparece no site.",
+    )
+    nome_publico = models.CharField(
+        "Nome na grade",
+        max_length=100,
+        blank=True,
+        help_text="Como o visitante vê a turma no site. Vazio = usa o nome da turma.",
+    )
 
     class Meta:
         verbose_name = "Turma"
         verbose_name_plural = "Turmas"
-        ordering = ["dia_semana", "horario_inicio", "nome"]
+        ordering = ["nome"]
         indexes = [
-            models.Index(fields=["ativo", "dia_semana"], name="turma_ativo_dia_idx"),
+            models.Index(fields=["ativo", "visivel_na_grade"], name="turma_ativo_grade_idx"),
         ]
 
     def __str__(self) -> str:
-        return f"{self.nome} ({self.get_dia_semana_display()} {self.horario_inicio.strftime('%H:%M')})"
+        return self.nome
+
+    @property
+    def horarios_ordenados(self) -> list["HorarioTurma"]:
+        """Horários de segunda a domingo (usa o prefetch, se a consulta o fez)."""
+        return sorted(
+            self.horarios.all(),
+            key=lambda h: (ORDEM_DIAS.index(h.dia_semana), h.horario_inicio),
+        )
 
     @property
     def horario_formatado(self) -> str:
-        return f"{self.get_dia_semana_display()} {self.horario_inicio.strftime('%H:%M')}–{self.horario_fim.strftime('%H:%M')}"
+        return formatar_horarios(
+            (h.dia_semana, h.horario_inicio, h.horario_fim) for h in self.horarios.all()
+        )
+
+    @property
+    def nome_na_grade(self) -> str:
+        return self.nome_publico or self.nome
+
+
+class HorarioTurma(models.Model):
+    """Um dia da semana e uma faixa de horário em que a turma acontece."""
+
+    turma = models.ForeignKey(
+        Turma, on_delete=models.CASCADE, related_name="horarios", verbose_name="Turma"
+    )
+    dia_semana = models.CharField("Dia da semana", max_length=3, choices=DiaSemana.choices)
+    horario_inicio = models.TimeField("Horário de início")
+    horario_fim = models.TimeField("Horário de fim")
+
+    class Meta:
+        verbose_name = "Horário da turma"
+        verbose_name_plural = "Horários da turma"
+        ordering = ["turma", "id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["turma", "dia_semana", "horario_inicio"], name="horario_turma_unico"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(horario_fim__gt=models.F("horario_inicio")),
+                name="horario_turma_fim_depois_do_inicio",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        faixa = faixa_horaria(self.horario_inicio, self.horario_fim)
+        return f"{self.turma.nome}: {self.get_dia_semana_display()} {faixa}"
+
+
+class AtividadeAvulsa(models.Model):
+    """Atividade, evento ou serviço da sede que aparece na grade e não é uma turma.
+
+    Ex.: atendimento oftalmológico (quinta, "sob agendamento") ou reforço escolar.
+    Não tem alunos nem chamada: existe só para a grade da landing.
+    """
+
+    class Status(models.TextChoices):
+        ATIVO = "ATIVO", "Ativo"
+        AGENDADO = "AGENDADO", "Agendado"
+
+    nome = models.CharField("Nome", max_length=120)
+    # Vazio = "a combinar": vai para o fim da grade.
+    dia_semana = models.CharField(
+        "Dia da semana", max_length=3, choices=DiaSemana.choices, blank=True
+    )
+    horario_inicio = models.TimeField("Horário de início", null=True, blank=True)
+    horario_fim = models.TimeField("Horário de fim", null=True, blank=True)
+    horario_texto = models.CharField(
+        "Texto do horário",
+        max_length=60,
+        blank=True,
+        help_text='Usado quando não há faixa de horário. Ex.: "Sob agendamento".',
+    )
+    status = models.CharField(
+        "Situação", max_length=10, choices=Status.choices, default=Status.ATIVO
+    )
+    visivel_na_grade = models.BooleanField("Mostrar na grade da landing", default=True)
+    criado_em = models.DateTimeField("Criado em", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Atividade avulsa"
+        verbose_name_plural = "Atividades avulsas"
+        ordering = ["nome"]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(horario_inicio__isnull=True)
+                    | models.Q(horario_fim__isnull=True)
+                    | models.Q(horario_fim__gt=models.F("horario_inicio"))
+                ),
+                name="atividade_avulsa_fim_depois_do_inicio",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return self.nome
+
+    @property
+    def horario_exibido(self) -> str:
+        if self.horario_inicio and self.horario_fim:
+            return faixa_horaria(self.horario_inicio, self.horario_fim)
+        return self.horario_texto or "A combinar"
 
 
 class Aluno(models.Model):

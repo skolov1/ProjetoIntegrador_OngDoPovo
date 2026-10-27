@@ -7,14 +7,16 @@ inativa ou já encerrada não aparece.
 Rodar: pytest
 """
 
+import itertools
 from datetime import date, time, timedelta
 
 import pytest
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from .fabricas import criar_turma
 from .grade import STATUS_AGENDADO, STATUS_ATIVO, STATUS_FALTA_PROFESSOR, status_da_turma
-from .models import Aluno, Professor, Turma
+from .models import Aluno, AtividadeAvulsa, Professor
 
 pytestmark = pytest.mark.django_db
 
@@ -27,19 +29,19 @@ def hoje() -> date:
 
 
 def turma(nome="Futsal", dia="SEG", inicio=time(18, 0), fim=time(19, 0), **extra):
-    dados = {
-        "nome": nome,
-        "dia_semana": dia,
-        "horario_inicio": inicio,
-        "horario_fim": fim,
-        "data_inicio": hoje() - timedelta(days=30),
-    }
-    dados.update(extra)
-    return Turma.objects.create(**dados)
+    # Por padrão a turma de teste já está visível na grade e começou há 30 dias.
+    extra.setdefault("data_inicio", hoje() - timedelta(days=30))
+    extra.setdefault("visivel_na_grade", True)
+    return criar_turma(nome, dia, inicio, fim, **extra)
 
 
-def com_professor(t: Turma, ativo=True) -> Professor:
-    professor = Professor.objects.create(nome="Mestre", cpf=CPF_PROFESSOR, ativo=ativo)
+_cpfs = itertools.count(1)
+
+
+def com_professor(t, ativo=True) -> Professor:
+    # CPF é único: o primeiro é o de sempre (os testes procuram por ele no texto).
+    cpf = CPF_PROFESSOR if next(_cpfs) == 1 else f"{next(_cpfs):011d}"
+    professor = Professor.objects.create(nome="Mestre", cpf=cpf, ativo=ativo)
     professor.turmas.add(t)
     return professor
 
@@ -150,7 +152,7 @@ class TestEndpointGrade:
         texto = str(resposta.data)
 
         assert set(resposta.data[0]) == {
-            "id",
+            "chave",
             "nome",
             "dia",
             "dia_rotulo",
@@ -171,3 +173,112 @@ class TestEndpointGrade:
         turma("Desativada", ativo=False)
 
         assert APIClient().get(URL).data == []
+
+
+class TestVisibilidade:
+    """Turma interna não vai para o site sozinha."""
+
+    def test_turma_nova_fica_fora_da_grade(self):
+        interna = criar_turma("Interna", data_inicio=hoje() - timedelta(days=5))
+        com_professor(interna)
+
+        assert interna.visivel_na_grade is False
+        assert APIClient().get(URL).data == []
+
+    def test_so_a_turma_marcada_como_visivel_aparece(self):
+        escondida = criar_turma("Escondida", data_inicio=hoje() - timedelta(days=5))
+        com_professor(escondida)
+        publica = turma("Publica")
+        com_professor(publica)
+
+        nomes = [r["nome"] for r in APIClient().get(URL).data]
+
+        assert nomes == ["Publica"]
+
+    def test_usa_o_nome_publico_quando_existe(self):
+        t = turma("Futsal sub-14 (interna)", nome_publico="Futsal infantil")
+        com_professor(t)
+
+        assert APIClient().get(URL).data[0]["nome"] == "Futsal infantil"
+
+
+class TestVariosDias:
+    def test_turma_em_dois_dias_vira_duas_linhas_com_chaves_diferentes(self):
+        t = turma(
+            "Muay Thai",
+            horarios=[("QUA", time(19, 30), time(20, 30)), ("SEG", time(19, 30), time(20, 30))],
+        )
+        com_professor(t)
+
+        linhas = APIClient().get(URL).data
+
+        pares = [(r["dia"], r["nome"]) for r in linhas]
+        assert pares == [("SEG", "Muay Thai"), ("QUA", "Muay Thai")]
+        assert len({r["chave"] for r in linhas}) == 2
+        assert {r["status"] for r in linhas} == {"ATIVO"}
+
+
+class TestAtividadesAvulsas:
+    def avulsa(self, **dados):
+        base = {
+            "nome": "Atendimento oftalmológico",
+            "dia_semana": "QUI",
+            "horario_texto": "Sob agendamento",
+        }
+        base.update(dados)
+        return AtividadeAvulsa.objects.create(**base)
+
+    def test_aparece_com_o_texto_do_horario(self):
+        self.avulsa()
+
+        linha = APIClient().get(URL).data[0]
+
+        assert linha["nome"] == "Atendimento oftalmológico"
+        assert linha["dia"] == "QUI"
+        assert linha["horario"] == "Sob agendamento"
+        assert linha["horario_inicio"] == ""
+        assert linha["status"] == "ATIVO"
+        assert linha["chave"].startswith("avulsa-")
+
+    def test_com_faixa_de_horario_mostra_a_faixa(self):
+        self.avulsa(horario_inicio=time(9, 0), horario_fim=time(11, 0), horario_texto="")
+
+        assert APIClient().get(URL).data[0]["horario"] == f"09:00{chr(0x2013)}11:00"
+
+    def test_sem_dia_vai_para_o_fim_como_a_combinar(self):
+        t = turma("Futsal", dia="DOM")
+        com_professor(t)
+        self.avulsa(nome="Evento", dia_semana="")
+
+        linhas = APIClient().get(URL).data
+
+        assert [r["nome"] for r in linhas] == ["Futsal", "Evento"]
+        assert linhas[-1]["dia_rotulo"] == "A combinar"
+
+    def test_agendada_mostra_a_situacao_agendado(self):
+        self.avulsa(status="AGENDADO")
+
+        assert APIClient().get(URL).data[0]["status_rotulo"] == "Agendado"
+
+    def test_oculta_nao_aparece(self):
+        self.avulsa(visivel_na_grade=False)
+
+        assert APIClient().get(URL).data == []
+
+    def test_mistura_com_as_turmas_na_ordem_do_dia(self):
+        t = turma("Futsal", dia="SEX")
+        com_professor(t)
+        self.avulsa(nome="Reforço", dia_semana="SEG", horario_texto="")
+
+        nomes = [r["nome"] for r in APIClient().get(URL).data]
+
+        assert nomes == ["Reforço", "Futsal"]
+
+
+class TestCache:
+    def test_resposta_pode_ficar_um_minuto_em_cache(self):
+        resposta = APIClient().get(URL)
+
+        controle = resposta["Cache-Control"]
+        assert "max-age=60" in controle
+        assert "public" in controle

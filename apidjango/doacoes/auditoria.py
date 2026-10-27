@@ -44,9 +44,11 @@ def registrar_modelos() -> None:
     """Liga a auditoria nos modelos do painel (chamado em `DoacoesConfig.ready`)."""
     from .models import (
         Aluno,
+        AtividadeAvulsa,
         Consentimento,
         DoacaoItem,
         Emprestimo,
+        HorarioTurma,
         Presenca,
         Professor,
         Turma,
@@ -67,7 +69,16 @@ def registrar_modelos() -> None:
         mask_callable=MASCARA,
         **comum,
     )
-    for modelo in (Turma, Presenca, Consentimento, DoacaoItem, Emprestimo):
+    modelos = (
+        Turma,
+        HorarioTurma,
+        AtividadeAvulsa,
+        Presenca,
+        Consentimento,
+        DoacaoItem,
+        Emprestimo,
+    )
+    for modelo in modelos:
         auditlog.register(modelo, **comum)
 
 

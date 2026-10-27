@@ -1,5 +1,6 @@
 """
-Serializers do painel: doações de itens, empréstimos, turmas, alunos, presenças e professores.
+Serializers do painel: doações de itens, empréstimos, turmas (com horários), atividades
+avulsas, alunos, presenças e professores.
 """
 
 from datetime import date
@@ -12,12 +13,16 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from .documentos import cpf_valido, mascarar_cpf, so_digitos, telefone_valido
+from .grade import StatusGrade
+from .horarios import ORDEM_DIAS
 from .models import (
     VERSAO_TERMO,
     Aluno,
+    AtividadeAvulsa,
     Consentimento,
     DoacaoItem,
     Emprestimo,
+    HorarioTurma,
     Presenca,
     Professor,
     Turma,
@@ -28,9 +33,26 @@ from .models import (
 # =============================================================================
 
 
-class TurmaSerializer(serializers.ModelSerializer):
-    """Serializer base da turma."""
+class HorarioTurmaSerializer(serializers.ModelSerializer):
+    """Um dia da semana e a faixa de horário em que a turma acontece."""
 
+    class Meta:
+        model = HorarioTurma
+        fields = ["id", "dia_semana", "horario_inicio", "horario_fim"]
+        read_only_fields = ["id"]
+
+    def validate(self, attrs):
+        if attrs["horario_fim"] <= attrs["horario_inicio"]:
+            raise serializers.ValidationError(
+                {"horario_fim": "O horário de fim precisa ser depois do início."}
+            )
+        return attrs
+
+
+class TurmaSerializer(serializers.ModelSerializer):
+    """Turma com seus dias e horários (um ou mais) e a visibilidade na grade pública."""
+
+    horarios = HorarioTurmaSerializer(many=True)
     horario_formatado = serializers.CharField(read_only=True)
     total_alunos = serializers.IntegerField(read_only=True)
 
@@ -40,17 +62,76 @@ class TurmaSerializer(serializers.ModelSerializer):
             "id",
             "nome",
             "descricao",
-            "dia_semana",
-            "horario_inicio",
-            "horario_fim",
+            "horarios",
             "horario_formatado",
             "data_inicio",
             "data_fim",
             "ativo",
+            "visivel_na_grade",
+            "nome_publico",
             "total_alunos",
             "criado_em",
         ]
         read_only_fields = ["criado_em", "horario_formatado", "total_alunos"]
+
+    def validate_horarios(self, horarios):
+        if not horarios:
+            raise serializers.ValidationError("Informe ao menos um dia e horário.")
+        chaves = [(h["dia_semana"], h["horario_inicio"]) for h in horarios]
+        if len(set(chaves)) != len(chaves):
+            raise serializers.ValidationError(
+                "Há dois horários no mesmo dia começando na mesma hora."
+            )
+        return horarios
+
+    def to_representation(self, instance):
+        dados = super().to_representation(instance)
+        # De segunda a domingo (ordenar pelo código "SEG", "TER"... sairia fora de ordem).
+        dados["horarios"] = sorted(
+            dados["horarios"],
+            key=lambda h: (ORDEM_DIAS.index(h["dia_semana"]), h["horario_inicio"]),
+        )
+        return dados
+
+    @transaction.atomic
+    def create(self, validated_data):
+        horarios = validated_data.pop("horarios")
+        turma = super().create(validated_data)
+        self._sincronizar_horarios(turma, horarios)
+        return turma
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        horarios = validated_data.pop("horarios", None)
+        turma = super().update(instance, validated_data)
+        if horarios is not None:
+            self._sincronizar_horarios(turma, horarios)
+        return turma
+
+    @staticmethod
+    def _sincronizar_horarios(turma: Turma, desejados: list[dict]) -> None:
+        """Deixa os horários da turma iguais à lista, mexendo só no que mudou.
+
+        Quem continua igual não é apagado e recriado: o histórico de auditoria mostra
+        só a diferença de verdade. A chave de um horário é (dia, hora de início).
+        """
+        existentes = {(h.dia_semana, h.horario_inicio): h for h in turma.horarios.all()}
+        por_chave = {(d["dia_semana"], d["horario_inicio"]): d for d in desejados}
+        for chave, horario in existentes.items():
+            if chave not in por_chave:
+                horario.delete()
+        for chave, dados in por_chave.items():
+            atual = existentes.get(chave)
+            if atual is None:
+                HorarioTurma.objects.create(
+                    turma=turma,
+                    dia_semana=dados["dia_semana"],
+                    horario_inicio=dados["horario_inicio"],
+                    horario_fim=dados["horario_fim"],
+                )
+            elif atual.horario_fim != dados["horario_fim"]:
+                atual.horario_fim = dados["horario_fim"]
+                atual.save(update_fields=["horario_fim"])
 
 
 class TurmaListSerializer(TurmaSerializer):
@@ -68,9 +149,53 @@ class TurmaListSerializer(TurmaSerializer):
             "nome",
             "horario_formatado",
             "ativo",
+            "visivel_na_grade",
             "total_alunos",
             "total_presencas",
         ]
+
+    def to_representation(self, instance):
+        # A lista não traz os horários um a um, só o texto pronto.
+        return serializers.ModelSerializer.to_representation(self, instance)
+
+
+# =============================================================================
+# Atividade avulsa (item da grade que não é turma: evento, serviço)
+# =============================================================================
+
+
+class AtividadeAvulsaSerializer(serializers.ModelSerializer):
+    horario_exibido = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = AtividadeAvulsa
+        fields = [
+            "id",
+            "nome",
+            "dia_semana",
+            "horario_inicio",
+            "horario_fim",
+            "horario_texto",
+            "horario_exibido",
+            "status",
+            "visivel_na_grade",
+            "criado_em",
+        ]
+        read_only_fields = ["criado_em", "horario_exibido"]
+
+    def validate(self, attrs):
+        atual = self.instance
+        inicio = attrs.get("horario_inicio", getattr(atual, "horario_inicio", None))
+        fim = attrs.get("horario_fim", getattr(atual, "horario_fim", None))
+        if (inicio is None) != (fim is None):
+            raise serializers.ValidationError(
+                {"horario_fim": "Informe o início e o fim, ou deixe os dois vazios."}
+            )
+        if inicio is not None and fim <= inicio:
+            raise serializers.ValidationError(
+                {"horario_fim": "O horário de fim precisa ser depois do início."}
+            )
+        return attrs
 
 
 # =============================================================================
@@ -356,16 +481,20 @@ class AuditoriaSerializer(serializers.ModelSerializer):
 
 
 class GradeItemSerializer(serializers.Serializer):
-    """Uma turma na grade da landing: dia, nome, horário e situação."""
+    """Uma linha da grade da landing: dia, nome, horário e situação.
 
-    id = serializers.IntegerField()
+    `chave` é única por linha (uma turma em dois dias vira duas linhas). `dia` e as horas
+    vêm vazios quando a atividade é "a combinar". Sem dado pessoal e sem ids internos.
+    """
+
+    chave = serializers.CharField()
     nome = serializers.CharField()
-    dia = serializers.CharField()
+    dia = serializers.CharField(allow_blank=True)
     dia_rotulo = serializers.CharField()
-    horario_inicio = serializers.CharField()
-    horario_fim = serializers.CharField()
+    horario_inicio = serializers.CharField(allow_blank=True)
+    horario_fim = serializers.CharField(allow_blank=True)
     horario = serializers.CharField()
-    status = serializers.CharField()
+    status = serializers.ChoiceField(choices=StatusGrade.choices)
     status_rotulo = serializers.CharField()
 
 

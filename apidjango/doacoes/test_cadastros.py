@@ -5,13 +5,14 @@ nome, contadores no card da turma e tamanho de página.
 Rodar: pytest
 """
 
-from datetime import date, time
+from datetime import date
 
 import pytest
 from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 
-from .models import Aluno, Presenca, Professor, Turma
+from .fabricas import criar_turma
+from .models import Aluno, Presenca, Professor
 
 pytestmark = pytest.mark.django_db
 
@@ -27,15 +28,7 @@ def staff():
 
 
 def nova_turma(nome="Futsal", **extra):
-    dados = {
-        "nome": nome,
-        "dia_semana": "SEG",
-        "horario_inicio": time(18, 0),
-        "horario_fim": time(19, 0),
-        "data_inicio": date(2026, 1, 1),
-    }
-    dados.update(extra)
-    return Turma.objects.create(**dados)
+    return criar_turma(nome, **extra)
 
 
 class TestProfessores:

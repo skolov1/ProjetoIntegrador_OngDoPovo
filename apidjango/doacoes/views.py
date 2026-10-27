@@ -4,7 +4,7 @@ Views do painel: doações de itens, empréstimos, turmas, alunos, presenças e 
 Tudo aqui é só para a equipe (`IsAdminUser`); não há rota pública de doação.
 """
 
-from datetime import date
+from datetime import date, time
 
 import django_filters
 from auditlog.context import set_actor
@@ -14,6 +14,8 @@ from django.db import transaction
 from django.db.models import Count, F, ProtectedError, Q, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_control
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
@@ -23,10 +25,13 @@ from rest_framework.views import APIView
 
 from .auditoria import AuditoriaMixin, anonimizar_registros
 from .faltas import eh_faltante, faltas_seguidas
-from .grade import ROTULOS_STATUS, status_da_turma
+from .grade import StatusGrade, status_da_turma
+from .horarios import ORDEM_DIAS, faixa_horaria
 from .models import (
     Aluno,
+    AtividadeAvulsa,
     Consentimento,
+    DiaSemana,
     DoacaoItem,
     Emprestimo,
     Presenca,
@@ -37,6 +42,7 @@ from .serializers import (
     ACOES_AUDITORIA,
     AlunoListSerializer,
     AlunoSerializer,
+    AtividadeAvulsaSerializer,
     AuditoriaSerializer,
     AuditoriaUsuarioSerializer,
     ChamadaItemSerializer,
@@ -179,6 +185,18 @@ class EmprestimoViewSet(
 # =============================================================================
 
 
+class TurmaFilter(django_filters.FilterSet):
+    # Turmas que acontecem naquele dia. `distinct`: uma turma com dois horários no mesmo
+    # dia não deve aparecer duas vezes.
+    dia_semana = django_filters.ChoiceFilter(
+        field_name="horarios__dia_semana", choices=DiaSemana.choices, distinct=True
+    )
+
+    class Meta:
+        model = Turma
+        fields = ["ativo", "visivel_na_grade"]
+
+
 class TurmaViewSet(
     AuditoriaMixin,
     mixins.CreateModelMixin,
@@ -190,20 +208,40 @@ class TurmaViewSet(
 ):
     """CRUD de turmas (admin)."""
 
-    queryset = Turma.objects.annotate(
+    queryset = Turma.objects.prefetch_related("horarios").annotate(
         total_alunos=Count("alunos", filter=Q(alunos__ativo=True), distinct=True),
         total_presencas=Count("presencas", distinct=True),
     )
     permission_classes = [IsAdminUser]
-    filterset_fields = ["ativo", "dia_semana"]
+    filterset_class = TurmaFilter
     search_fields = ["nome", "descricao"]
-    ordering_fields = ["dia_semana", "horario_inicio", "nome"]
-    ordering = ["dia_semana", "horario_inicio", "nome"]
+    ordering_fields = ["nome", "criado_em"]
+    ordering = ["nome"]
 
     def get_serializer_class(self):
         if self.action == "list":
             return TurmaListSerializer
         return TurmaSerializer
+
+
+class AtividadeAvulsaViewSet(
+    AuditoriaMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet,
+):
+    """Atividades, eventos e serviços da grade que não são turma (só da equipe)."""
+
+    queryset = AtividadeAvulsa.objects.all()
+    serializer_class = AtividadeAvulsaSerializer
+    permission_classes = [IsAdminUser]
+    filterset_fields = ["status", "visivel_na_grade", "dia_semana"]
+    search_fields = ["nome"]
+    ordering_fields = ["nome", "criado_em"]
+    ordering = ["nome"]
 
 
 # =============================================================================
@@ -477,15 +515,18 @@ class AuditoriaViewSet(
 # Grade da semana (pública)
 # =============================================================================
 
-# Segunda a domingo, na ordem em que a grade é mostrada.
-ORDEM_DIAS = [codigo for codigo, _ in Turma.DiaSemana.choices]
-
-
+@method_decorator(cache_control(max_age=60, public=True), name="dispatch")
 class GradeView(APIView):
-    """GET /api/v1/grade/ — turmas da semana para a landing.
+    """GET /api/v1/grade/ - grade da semana para a landing.
 
-    Público e só leitura. Não traz professor, aluno nem nada pessoal: só dia, nome da
-    turma, horário e situação. Turma inativa ou encerrada não aparece (ver `grade.py`).
+    Público e só leitura. Não traz professor, aluno nem nada pessoal: só dia, nome,
+    horário e situação. Entram:
+
+    * turmas ativas, com `visivel_na_grade` ligado e ainda não encerradas, uma linha por
+      dia da semana em que acontecem (ver `grade.py` para a situação de cada uma);
+    * atividades avulsas (evento, serviço) com `visivel_na_grade` ligado.
+
+    A resposta pode ficar 60 s em cache no navegador e em proxies.
     """
 
     authentication_classes = []
@@ -499,9 +540,13 @@ class GradeView(APIView):
     )
     def get(self, request):
         hoje = timezone.localdate()
-        turmas = Turma.objects.filter(ativo=True).annotate(
-            professores_ativos=Count(
-                "professores", filter=Q(professores__ativo=True), distinct=True
+        turmas = (
+            Turma.objects.filter(ativo=True, visivel_na_grade=True)
+            .prefetch_related("horarios")
+            .annotate(
+                professores_ativos=Count(
+                    "professores", filter=Q(professores__ativo=True), distinct=True
+                )
             )
         )
         linhas = []
@@ -515,22 +560,43 @@ class GradeView(APIView):
             )
             if situacao is None:
                 continue
+            for h in t.horarios.all():
+                linhas.append(
+                    {
+                        "chave": f"turma-{t.id}-{h.id}",
+                        "nome": t.nome_na_grade,
+                        "dia": h.dia_semana,
+                        "dia_rotulo": h.get_dia_semana_display(),
+                        "horario_inicio": f"{h.horario_inicio:%H:%M}",
+                        "horario_fim": f"{h.horario_fim:%H:%M}",
+                        "horario": faixa_horaria(h.horario_inicio, h.horario_fim),
+                        "status": situacao,
+                        "status_rotulo": situacao.label,
+                        "_ordem": (
+                            ORDEM_DIAS.index(h.dia_semana),
+                            h.horario_inicio,
+                            t.nome_na_grade,
+                        ),
+                    }
+                )
+        for a in AtividadeAvulsa.objects.filter(visivel_na_grade=True):
+            situacao = StatusGrade(a.status)
             linhas.append(
                 {
-                    "id": t.id,
-                    "nome": t.nome,
-                    "dia": t.dia_semana,
-                    "dia_rotulo": t.get_dia_semana_display(),
-                    "horario_inicio": t.horario_inicio.strftime("%H:%M"),
-                    "horario_fim": t.horario_fim.strftime("%H:%M"),
-                    # Travessão (U+2013), o mesmo de `Turma.horario_formatado`.
-                    "horario": (
-                        f"{t.horario_inicio.strftime('%H:%M')}\u2013"
-                        f"{t.horario_fim.strftime('%H:%M')}"
-                    ),
+                    "chave": f"avulsa-{a.id}",
+                    "nome": a.nome,
+                    "dia": a.dia_semana,
+                    "dia_rotulo": a.get_dia_semana_display() or "A combinar",
+                    "horario_inicio": f"{a.horario_inicio:%H:%M}" if a.horario_inicio else "",
+                    "horario_fim": f"{a.horario_fim:%H:%M}" if a.horario_fim else "",
+                    "horario": a.horario_exibido,
                     "status": situacao,
-                    "status_rotulo": ROTULOS_STATUS[situacao],
-                    "_ordem": (ORDEM_DIAS.index(t.dia_semana), t.horario_inicio, t.nome),
+                    "status_rotulo": situacao.label,
+                    "_ordem": (
+                        ORDEM_DIAS.index(a.dia_semana) if a.dia_semana else len(ORDEM_DIAS),
+                        a.horario_inicio or time.max,
+                        a.nome,
+                    ),
                 }
             )
         linhas.sort(key=lambda linha: linha.pop("_ordem"))
