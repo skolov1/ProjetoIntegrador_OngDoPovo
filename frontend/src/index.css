@@ -25,9 +25,12 @@
   --color-mist-300: #aadcc0;
   --color-verde-900: #05281d;
 
-  /* --- Tipografia: Montserrat, conforme o manual --- */
+  /* --- Tipografia: Atkinson Hyperlegible (feita para legibilidade) ---
+     Só existe em 400 e 700: os pesos 500/600/800 usados nas classes
+     font-medium/semibold/extrabold caem no mais próximo. O <link> que
+     carrega a fonte está em cada HTML (index, login, dashboard, privacidade). */
   --font-sans:
-    'Montserrat', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    'Atkinson Hyperlegible', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   /* --- Animações declarativas (viram utilitários animate-*) --- */
   --animate-sunburst: sunburst 60s linear infinite;
