@@ -101,7 +101,7 @@ export function SectionLead({
     tom === 'escuro' ? 'text-mist-200' : 'text-grafite/70'
 
   return (
-    <p className={`mt-5 text-base leading-relaxed sm:text-lg ${cor} ${className}`}>
+    <p className={`mt-2 text-base leading-relaxed sm:text-lg ${cor} ${className}`}>
       {children}
     </p>
   )

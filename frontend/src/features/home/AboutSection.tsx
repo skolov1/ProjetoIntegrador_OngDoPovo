@@ -5,6 +5,15 @@
  */
 import { Eyebrow, Section, SectionLead, SectionTitle } from '@/components/ui/Section'
 import { Reveal } from '@/components/ui/Reveal'
+import Autoplay from 'embla-carousel-autoplay'
+import {
+  Carousel,
+  CarouselContent,
+  CarouselDots,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/Carousel'
 import { PRINCIPIOS } from '@/features/home/data'
 import { cor, icone } from '@/features/home/icons'
 
@@ -49,9 +58,9 @@ const FOTOS_HISTORIA = [
 export function AboutSection() {
   return (
     <Section id="quem-somos" tom="claro">
-      <div className="grid gap-12 lg:grid-cols-12 lg:gap-8">
+      <div className="pt-12 grid grid-cols-12 min-w-0 gap-12">
         {/* Coluna de texto — história estendida */}
-        <div className="lg:col-span-6 space-y-6">
+        <div className="mx-auto w-full col-span-6 space-y-6">
           <Reveal>
             <Eyebrow>Quem somos</Eyebrow>
             <SectionTitle>História</SectionTitle>
@@ -85,23 +94,40 @@ export function AboutSection() {
         </div>
 
         {/* Coluna de fotos da história */}
-        <div className="lg:col-span-6">
+        <div className="mx-auto col-span-6 overflow-hidden">
           <Reveal>
-            <div className="grid grid-cols-3 gap-4 sm:gap-5">
+            <Carousel
+              opts={{ loop: true }}
+              plugins={[
+                Autoplay({
+                  delay: 5000,
+                  stopOnMouseEnter: true,
+                  stopOnFocusIn: true,
+                  stopOnInteraction: false,
+                }),
+              ]}
+              aria-label="Fotos da história da ONG do Povo"
+              className="mx-auto max-w-2xl overflow-hidden"
+            >
+              <CarouselContent>
               {FOTOS_HISTORIA.map((foto, i) => (
-                <div
-                  key={i}
-                  className="aspect-[4/5] overflow-hidden rounded-2xl shadow-lg ring-1 ring-slate-900/5"
-                >
-                  <img
-                    src={foto.src}
-                    alt={foto.alt}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                  />
-                </div>
+                <CarouselItem key={i}>
+                  <div className="flex h-[22rem] items-center justify-center overflow-hidden rounded-2xl bg-mist-100 p-3 shadow-lg ring-1 ring-slate-900/5 sm:h-[28rem]">
+                    <img
+                      src={foto.src}
+                      alt={foto.alt}
+                      loading={i === 0 ? 'eager' : 'lazy'}
+                      decoding="async"
+                      className="max-h-full max-w-full object-contain transition-transform duration-500 hover:scale-[1.02]"
+                    />
+                  </div>
+                </CarouselItem>
               ))}
-            </div>
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+              <CarouselDots count={FOTOS_HISTORIA.length} />
+            </Carousel>
           </Reveal>
         </div>
       </div>
