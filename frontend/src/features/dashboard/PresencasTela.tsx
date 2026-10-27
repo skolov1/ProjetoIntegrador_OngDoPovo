@@ -41,6 +41,8 @@ export function PresencasTela() {
   const [busca, setBusca] = useState("");
   const [soFaltantes, setSoFaltantes] = useState(false);
   const [aviso, setAviso] = useState("");
+  // Como a última gravação desta tela terminou: primeira vez ou troca de uma chamada já salva.
+  const [ultimaGravacao, setUltimaGravacao] = useState<"salva" | "atualizada">("salva");
 
   const { data: turmasData } = useTurmas();
   const turmas = (turmasData?.results ?? []).filter((t) => t.ativo !== false);
@@ -70,6 +72,7 @@ export function PresencasTela() {
     setData(dia);
     setEdicoes({});
     setAviso("");
+    setUltimaGravacao("salva");
   };
 
   const marcar = (id: number, situacao: SituacaoEnum) => {
@@ -89,10 +92,13 @@ export function PresencasTela() {
       aluno_id: i.aluno_id,
       situacao: situacaoDe(i.aluno_id, i.situacao),
     }));
+    // Se o servidor já tinha chamada neste dia, esta gravação é uma atualização.
+    const eraAtualizacao = itens.some((i) => i.situacao);
     salvar.mutate(
       { turma: Number(turmaId), data, presencas },
       {
         onSuccess: () => {
+          setUltimaGravacao(eraAtualizacao ? "atualizada" : "salva");
           setEdicoes({});
           setAviso("");
         },
@@ -260,7 +266,7 @@ export function PresencasTela() {
           {chamadaSalva && (
             <p role="status" className="flex items-center gap-1 text-sm text-verde">
               <Check className="size-4" aria-hidden="true" />
-              Chamada salva no dia {dataBr}
+              Chamada {ultimaGravacao} no dia {dataBr}
             </p>
           )}
         </>
