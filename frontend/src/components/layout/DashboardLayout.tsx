@@ -1132,9 +1132,9 @@ export function DashboardLayout() {
             ) : errorTurmas ? (
               <p className="text-vermelho">Erro ao carregar turmas</p>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {turmas.map((t) => (
-                  <div key={t.id} className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
+                  <div key={t.id} className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
                     <h4 className="font-bold text-verde mb-2">{t.nome}</h4>
                     <p className="text-sm text-grafite/60">
                       {t.horario_formatado}
@@ -1144,12 +1144,14 @@ export function DashboardLayout() {
                     </p>
                     <div className="mt-3 flex gap-2">
                       <Button
+                        tamanho="md"
                         variante="contorno-claro"
                         onClick={() => void handleEdit("turma", t.id)}
                       >
                         <Edit className="size-4" />
                       </Button>
                       <Button
+                        tamanho="md"
                         variante="contorno-claro"
                         onClick={() => handleDelete(t.id, "turma")}
                       >
@@ -1297,9 +1299,9 @@ export function DashboardLayout() {
             {loadingProfessores || !professoresData ? (
               <p>Carregando...</p>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {professores.map((p) => (
-                  <div key={p.id} className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
+                  <div key={p.id} className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
                     <h4 className="font-bold text-verde mb-2">{p.nome}</h4>
                     <p className="text-sm text-grafite/60">CPF: {p.cpf}</p>
                     <p className="text-sm text-grafite/60">
@@ -1310,12 +1312,14 @@ export function DashboardLayout() {
                     </p>
                     <div className="mt-3 flex gap-2">
                       <Button
+                        tamanho="md"
                         variante="contorno-claro"
                         onClick={() => void handleEdit("professor", p.id)}
                       >
                         <Edit className="size-4" />
                       </Button>
                       <Button
+                        tamanho="md"
                         variante="contorno-claro"
                         onClick={() => handleDelete(p.id, "professor")}
                       >
