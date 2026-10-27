@@ -137,6 +137,8 @@ REST_FRAMEWORK = {
         # Protege o login contra forca bruta. Ajustavel por env sem mexer no codigo
         # (a ONG pode ter varios usuarios atras do mesmo IP de uma escola/cooperativa).
         "auth": os.getenv("DJANGO_AUTH_THROTTLE", "10/minute"),
+        # Endpoints públicos de leitura (grade da semana).
+        "publico": os.getenv("DJANGO_PUBLIC_THROTTLE", "120/minute"),
     },
 }
 

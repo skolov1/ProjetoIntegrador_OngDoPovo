@@ -351,6 +351,25 @@ class AuditoriaSerializer(serializers.ModelSerializer):
 
 
 # =============================================================================
+# Grade da semana (pública, sem dado pessoal)
+# =============================================================================
+
+
+class GradeItemSerializer(serializers.Serializer):
+    """Uma turma na grade da landing: dia, nome, horário e situação."""
+
+    id = serializers.IntegerField()
+    nome = serializers.CharField()
+    dia = serializers.CharField()
+    dia_rotulo = serializers.CharField()
+    horario_inicio = serializers.CharField()
+    horario_fim = serializers.CharField()
+    horario = serializers.CharField()
+    status = serializers.CharField()
+    status_rotulo = serializers.CharField()
+
+
+# =============================================================================
 # Aluno
 # =============================================================================
 

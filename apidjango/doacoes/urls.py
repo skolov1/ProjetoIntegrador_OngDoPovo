@@ -22,6 +22,8 @@ router.register("professores", views.ProfessorViewSet, basename="professor")
 app_name = "doacoes"
 
 urlpatterns = [
+    # Grade da semana (pública, só leitura)
+    path("grade/", views.GradeView.as_view(), name="grade"),
     # Router (admin)
     path("", include(router.urls)),
 ]

@@ -13,14 +13,17 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Count, F, ProtectedError, Q, Sum
 from django.db.models.functions import Coalesce
+from django.utils import timezone
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .auditoria import AuditoriaMixin, anonimizar_registros
 from .faltas import eh_faltante, faltas_seguidas
+from .grade import ROTULOS_STATUS, status_da_turma
 from .models import (
     Aluno,
     Consentimento,
@@ -41,6 +44,7 @@ from .serializers import (
     DoacaoItemResumoSerializer,
     DoacaoItemSerializer,
     EmprestimoSerializer,
+    GradeItemSerializer,
     PresencaCreateSerializer,
     PresencaLoteSerializer,
     PresencaSerializer,
@@ -467,3 +471,65 @@ class AuditoriaViewSet(
         ]
         pessoas.sort(key=lambda p: p["nome"].casefold())
         return Response(AuditoriaUsuarioSerializer(pessoas, many=True).data)
+
+
+# =============================================================================
+# Grade da semana (pública)
+# =============================================================================
+
+# Segunda a domingo, na ordem em que a grade é mostrada.
+ORDEM_DIAS = [codigo for codigo, _ in Turma.DiaSemana.choices]
+
+
+class GradeView(APIView):
+    """GET /api/v1/grade/ — turmas da semana para a landing.
+
+    Público e só leitura. Não traz professor, aluno nem nada pessoal: só dia, nome da
+    turma, horário e situação. Turma inativa ou encerrada não aparece (ver `grade.py`).
+    """
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    throttle_scope = "publico"
+
+    @extend_schema(
+        summary="Grade da semana (pública)",
+        tags=["grade"],
+        responses={200: GradeItemSerializer(many=True)},
+    )
+    def get(self, request):
+        hoje = timezone.localdate()
+        turmas = Turma.objects.filter(ativo=True).annotate(
+            professores_ativos=Count(
+                "professores", filter=Q(professores__ativo=True), distinct=True
+            )
+        )
+        linhas = []
+        for t in turmas:
+            situacao = status_da_turma(
+                ativo=t.ativo,
+                data_inicio=t.data_inicio,
+                data_fim=t.data_fim,
+                professores_ativos=t.professores_ativos,
+                hoje=hoje,
+            )
+            if situacao is None:
+                continue
+            linhas.append(
+                {
+                    "id": t.id,
+                    "nome": t.nome,
+                    "dia": t.dia_semana,
+                    "dia_rotulo": t.get_dia_semana_display(),
+                    "horario_inicio": t.horario_inicio.strftime("%H:%M"),
+                    "horario_fim": t.horario_fim.strftime("%H:%M"),
+                    "horario": (
+                        f"{t.horario_inicio.strftime('%H:%M')}–{t.horario_fim.strftime('%H:%M')}"
+                    ),
+                    "status": situacao,
+                    "status_rotulo": ROTULOS_STATUS[situacao],
+                    "_ordem": (ORDEM_DIAS.index(t.dia_semana), t.horario_inicio, t.nome),
+                }
+            )
+        linhas.sort(key=lambda linha: linha.pop("_ordem"))
+        return Response(GradeItemSerializer(linhas, many=True).data)
