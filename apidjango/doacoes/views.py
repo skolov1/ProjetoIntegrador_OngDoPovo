@@ -525,7 +525,7 @@ class GradeView(APIView):
                     "horario_fim": t.horario_fim.strftime("%H:%M"),
                     # Travessão (U+2013), o mesmo de `Turma.horario_formatado`.
                     "horario": (
-                        f"{t.horario_inicio.strftime('%H:%M')}–"
+                        f"{t.horario_inicio.strftime('%H:%M')}\u2013"
                         f"{t.horario_fim.strftime('%H:%M')}"
                     ),
                     "status": situacao,

@@ -98,7 +98,7 @@ class TestEndpointGrade:
         assert linha["dia_rotulo"] == "Segunda"
         assert linha["horario_inicio"] == "19:30"
         assert linha["horario_fim"] == "20:30"
-        assert linha["horario"] == "19:30–20:30"
+        assert linha["horario"] == "19:30\u201320:30"
         assert linha["status"] == "ATIVO"
         assert linha["status_rotulo"] == "Ativo"
 
