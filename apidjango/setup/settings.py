@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "drf_spectacular",
     "django_filters",
+    "auditlog",
     # Domino
     "setup",
     "doacoes",
@@ -121,9 +122,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticatedOrReadOnly",
     ),
-    "DEFAULT_PAGINATION_CLASS": (
-        "rest_framework.pagination.PageNumberPagination"
-    ),
+    "DEFAULT_PAGINATION_CLASS": "setup.pagination.PaginacaoPadrao",
     "PAGE_SIZE": 20,
     "DEFAULT_FILTER_BACKENDS": (
         "django_filters.rest_framework.DjangoFilterBackend",
@@ -138,6 +137,8 @@ REST_FRAMEWORK = {
         # Protege o login contra forca bruta. Ajustavel por env sem mexer no codigo
         # (a ONG pode ter varios usuarios atras do mesmo IP de uma escola/cooperativa).
         "auth": os.getenv("DJANGO_AUTH_THROTTLE", "10/minute"),
+        # Endpoints públicos de leitura (grade da semana).
+        "publico": os.getenv("DJANGO_PUBLIC_THROTTLE", "120/minute"),
     },
 }
 

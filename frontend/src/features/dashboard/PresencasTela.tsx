@@ -8,7 +8,7 @@
  */
 
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import type { SituacaoEnum } from "@/api/generated/model";
@@ -41,6 +41,8 @@ export function PresencasTela() {
   const [busca, setBusca] = useState("");
   const [soFaltantes, setSoFaltantes] = useState(false);
   const [aviso, setAviso] = useState("");
+  // Como a última gravação desta tela terminou: primeira vez ou troca de uma chamada já salva.
+  const [ultimaGravacao, setUltimaGravacao] = useState<"salva" | "atualizada">("salva");
 
   const { data: turmasData } = useTurmas();
   const turmas = (turmasData?.results ?? []).filter((t) => t.ativo !== false);
@@ -70,6 +72,7 @@ export function PresencasTela() {
     setData(dia);
     setEdicoes({});
     setAviso("");
+    setUltimaGravacao("salva");
   };
 
   const marcar = (id: number, situacao: SituacaoEnum) => {
@@ -89,10 +92,13 @@ export function PresencasTela() {
       aluno_id: i.aluno_id,
       situacao: situacaoDe(i.aluno_id, i.situacao),
     }));
+    // Se o servidor já tinha chamada neste dia, esta gravação é uma atualização.
+    const eraAtualizacao = itens.some((i) => i.situacao);
     salvar.mutate(
       { turma: Number(turmaId), data, presencas },
       {
         onSuccess: () => {
+          setUltimaGravacao(eraAtualizacao ? "atualizada" : "salva");
           setEdicoes({});
           setAviso("");
         },
@@ -104,7 +110,7 @@ export function PresencasTela() {
 
   return (
     <div className="mt-6 space-y-4">
-      <h3 className="text-xl font-bold text-verde">Presenças</h3>
+      <h3 className="text-xl font-extrabold text-verde-escuro">Presenças</h3>
 
       <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
         <label className="text-sm text-grafite/70">
@@ -155,14 +161,23 @@ export function PresencasTela() {
 
       {itens.length > 0 && (
         <>
-          <div className="flex flex-wrap items-center gap-3">
-            <input
-              name="busca"
-              placeholder="Buscar aluno pelo nome"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className={`${CLASSE_CAMPO} max-w-xs`}
-            />
+          {/* Filtros da lista, separados do que escolhe turma e data */}
+          <div className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm">
+            <div className="relative w-full max-w-xs">
+              <Search
+                aria-hidden="true"
+                className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-grafite/40"
+              />
+              <input
+                type="search"
+                name="busca"
+                aria-label="Buscar aluno pelo nome"
+                placeholder="Buscar aluno pelo nome"
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                className={`${CLASSE_CAMPO} pl-11`}
+              />
+            </div>
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
@@ -176,10 +191,10 @@ export function PresencasTela() {
             </Button>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full bg-white rounded-xl shadow">
-              <thead className="bg-mist-100">
-                <tr className="text-left text-grafite/70 text-sm">
+          <div className="overflow-x-auto rounded-2xl border border-slate-200/70 bg-white shadow-sm">
+            <table className="w-full">
+              <thead className="bg-mist-100/70">
+                <tr className="text-left text-xs font-bold uppercase tracking-wider text-verde-escuro/70">
                   <th className="p-3">Aluno</th>
                   <th className="p-3">Idade</th>
                   <th className="p-3">Situação</th>
@@ -189,13 +204,13 @@ export function PresencasTela() {
                 {visiveis.map((i) => {
                   const atual = situacaoDe(i.aluno_id, i.situacao);
                   return (
-                    <tr key={i.aluno_id} className="border-t border-mist-200">
+                    <tr key={i.aluno_id} className="border-t border-mist-200 transition-colors hover:bg-mist-50">
                       <td className="p-3 font-medium text-grafite">
                         {i.aluno_nome}
                         {i.faltante ? (
                           <span
                             title="3 faltas seguidas (justificadas não contam)"
-                            className="ml-2 px-2 py-1 rounded text-xs bg-vermelho/10 text-vermelho"
+                            className="ml-2 px-3 py-1 rounded-full text-xs font-bold bg-vermelho/10 text-vermelho"
                           >
                             Faltante · {i.faltas_seguidas} seguidas
                           </span>
@@ -260,7 +275,7 @@ export function PresencasTela() {
           {chamadaSalva && (
             <p role="status" className="flex items-center gap-1 text-sm text-verde">
               <Check className="size-4" aria-hidden="true" />
-              Chamada salva no dia {dataBr}
+              Chamada {ultimaGravacao} no dia {dataBr}
             </p>
           )}
         </>

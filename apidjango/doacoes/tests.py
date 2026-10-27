@@ -4,13 +4,18 @@ Testes do painel: doações de itens, alunos (LGPD), turmas e as rotas removidas
 Rodar: pytest
 """
 
+import calendar
+from datetime import date, time, timedelta
+
 import pytest
 from django.contrib.auth.models import User
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from .documentos import cpf_valido, mascarar_cpf, telefone_valido
+from .fabricas import criar_turma
 from .faltas import eh_faltante, faltas_seguidas
-from .models import Aluno, Consentimento, DoacaoItem, Presenca, Turma
+from .models import Aluno, Consentimento, DoacaoItem, Emprestimo, Presenca
 
 pytestmark = pytest.mark.django_db
 
@@ -259,13 +264,7 @@ class TestAlunoLGPD:
         assert criado["exame_situacao"] is None
 
     def turma(self, nome):
-        return Turma.objects.create(
-            nome=nome,
-            dia_semana="SEG",
-            horario_inicio="08:00",
-            horario_fim="09:00",
-            data_inicio="2026-01-01",
-        )
+        return criar_turma(nome, "SEG", time(8, 0), time(9, 0))
 
     def test_mensalidade_e_20_por_turma(self, staff):
         t1, t2, t3 = self.turma("Muay Thai"), self.turma("Judô"), self.turma("Violão")
@@ -575,21 +574,17 @@ class TestChamada:
 
     @pytest.fixture
     def turma(self):
-        return Turma.objects.create(
-            nome="Muay Thai",
-            dia_semana="SEG",
-            horario_inicio="19:00",
-            horario_fim="20:00",
-            data_inicio="2026-01-01",
-        )
+        return criar_turma("Muay Thai", "SEG", time(19, 0), time(20, 0))
 
     def aluno(self, nome, turma, **extra):
-        aluno = Aluno.objects.create(nome=nome, data_nascimento="1990-01-01", **extra)
+        aluno = Aluno.objects.create(nome=nome, data_nascimento=date(1990, 1, 1), **extra)
         aluno.turmas.add(turma)
         return aluno
 
     def registrar(self, aluno, turma, dia, situacao):
-        return Presenca.objects.create(aluno=aluno, turma=turma, data=dia, situacao=situacao)
+        # Data de verdade: a auditoria chama o __str__ da presença ao gravar.
+        data = date.fromisoformat(dia)
+        return Presenca.objects.create(aluno=aluno, turma=turma, data=data, situacao=situacao)
 
     def test_exige_login_de_admin(self, cliente, nao_admin, turma):
         params = {"turma": turma.id, "data": "2026-10-26"}
@@ -602,7 +597,7 @@ class TestChamada:
         self.aluno("Zeca", turma)
         self.aluno("Ana", turma)
         self.aluno("Inativo", turma, ativo=False)
-        Aluno.objects.create(nome="Outra turma", data_nascimento="1990-01-01")
+        Aluno.objects.create(nome="Outra turma", data_nascimento=date(1990, 1, 1))
 
         itens = staff.get(self.CHAMADA, {"turma": turma.id, "data": "2026-10-26"}).data
 
@@ -667,13 +662,7 @@ class TestChamada:
         assert item["faltas_seguidas"] == 2
 
     def test_faltas_de_outra_turma_nao_contam(self, staff, turma):
-        outra = Turma.objects.create(
-            nome="Judô",
-            dia_semana="TER",
-            horario_inicio="18:00",
-            horario_fim="19:00",
-            data_inicio="2026-01-01",
-        )
+        outra = criar_turma("Judô", "TER", time(18, 0), time(19, 0))
         ana = self.aluno("Ana", turma)
         for dia in ("2026-10-12", "2026-10-19", "2026-10-26"):
             self.registrar(ana, outra, dia, "AUSENTE")
@@ -743,7 +732,7 @@ class TestChamada:
         assert Presenca.objects.count() == 0
 
     def test_lote_recusa_aluno_fora_da_turma_ou_inativo(self, staff, turma):
-        de_fora = Aluno.objects.create(nome="De fora", data_nascimento="1990-01-01")
+        de_fora = Aluno.objects.create(nome="De fora", data_nascimento=date(1990, 1, 1))
         inativo = self.aluno("Inativo", turma, ativo=False)
 
         for aluno in (de_fora, inativo):
@@ -779,3 +768,253 @@ class TestChamada:
 
         assert vazia.status_code == 400
         assert repetido.status_code == 400
+
+
+class TestEmprestimo:
+    URL = "/api/v1/doacoes/emprestimos/"
+
+    @pytest.fixture
+    def staff(self, cliente, admin):
+        cliente.force_authenticate(admin)
+        return cliente
+
+    @pytest.fixture
+    def muletas(self):
+        return DoacaoItem.objects.create(item="MULETAS", quantidade=3)
+
+    @staticmethod
+    def meses_atras(meses: int, dias: int = 0) -> date:
+        hoje = timezone.localdate()
+        mes = hoje.month - meses
+        ano = hoje.year + (mes - 1) // 12
+        mes = (mes - 1) % 12 + 1
+        ultimo = calendar.monthrange(ano, mes)[1]
+        return hoje.replace(year=ano, month=mes, day=min(hoje.day, ultimo)) - timedelta(days=dias)
+
+    def test_anonimo_e_sem_staff_nao_acessam(self, cliente, nao_admin):
+        assert cliente.get(self.URL).status_code in (401, 403)
+        cliente.force_authenticate(nao_admin)
+        assert cliente.get(self.URL).status_code == 403
+
+    def test_registra_emprestimo_de_item_ja_doado(self, staff, muletas):
+        response = staff.post(
+            self.URL,
+            {"doacao": muletas.id, "pessoa_nome": "Seu João", "quantidade": 1},
+            format="json",
+        )
+
+        assert response.status_code == 201
+        assert response.data["item_rotulo"] == "Muletas"
+        assert response.data["pessoa_nome"] == "Seu João"
+        assert response.data["emprestado_em"] == str(timezone.localdate())
+        assert response.data["status"] == "EMPRESTADO"
+        assert Emprestimo.objects.count() == 1
+
+    def test_nome_da_pessoa_e_obrigatorio(self, staff, muletas):
+        response = staff.post(
+            self.URL, {"doacao": muletas.id, "pessoa_nome": "  "}, format="json"
+        )
+
+        assert response.status_code == 400
+        assert "pessoa_nome" in response.data
+
+    def test_doacao_inexistente_e_recusada(self, staff):
+        response = staff.post(
+            self.URL, {"doacao": 9999, "pessoa_nome": "Seu João"}, format="json"
+        )
+
+        assert response.status_code == 400
+        assert "doacao" in response.data
+
+    def test_alimento_nao_e_emprestado(self, staff):
+        alimentos = DoacaoItem.objects.create(item="ALIMENTOS", quantidade=10)
+
+        response = staff.post(
+            self.URL, {"doacao": alimentos.id, "pessoa_nome": "Seu João"}, format="json"
+        )
+
+        assert response.status_code == 400
+        assert "doacao" in response.data
+
+    def test_nao_empresta_mais_do_que_foi_doado(self, staff, muletas):
+        response = staff.post(
+            self.URL,
+            {"doacao": muletas.id, "pessoa_nome": "Seu João", "quantidade": 4},
+            format="json",
+        )
+
+        assert response.status_code == 400
+        assert "quantidade" in response.data
+
+    def test_desconta_o_que_ja_esta_emprestado(self, staff, muletas):
+        Emprestimo.objects.create(doacao=muletas, pessoa_nome="Ana", quantidade=2)
+
+        sobra = staff.post(
+            self.URL,
+            {"doacao": muletas.id, "pessoa_nome": "Seu João", "quantidade": 1},
+            format="json",
+        )
+        passou = staff.post(
+            self.URL,
+            {"doacao": muletas.id, "pessoa_nome": "Maria", "quantidade": 1},
+            format="json",
+        )
+
+        assert sobra.status_code == 201
+        assert passou.status_code == 400
+        assert "quantidade" in passou.data
+
+    def test_devolvido_libera_a_quantidade(self, staff, muletas):
+        Emprestimo.objects.create(
+            doacao=muletas,
+            pessoa_nome="Ana",
+            quantidade=3,
+            devolvido_em=timezone.localdate(),
+        )
+
+        response = staff.post(
+            self.URL,
+            {"doacao": muletas.id, "pessoa_nome": "Seu João", "quantidade": 3},
+            format="json",
+        )
+
+        assert response.status_code == 201
+
+    def test_editar_um_emprestimo_nao_conta_a_si_mesmo(self, staff, muletas):
+        e = Emprestimo.objects.create(doacao=muletas, pessoa_nome="Ana", quantidade=3)
+
+        response = staff.patch(f"{self.URL}{e.id}/", {"pessoa_nome": "Ana Lima"}, format="json")
+
+        assert response.status_code == 200
+        assert response.data["pessoa_nome"] == "Ana Lima"
+
+    def test_data_do_emprestimo_nao_pode_ser_futura(self, staff, muletas):
+        amanha = timezone.localdate() + timedelta(days=1)
+
+        response = staff.post(
+            self.URL,
+            {"doacao": muletas.id, "pessoa_nome": "Seu João", "emprestado_em": str(amanha)},
+            format="json",
+        )
+
+        assert response.status_code == 400
+        assert "emprestado_em" in response.data
+
+    def test_devolucao_nao_pode_ser_antes_do_emprestimo(self, staff, muletas):
+        e = Emprestimo.objects.create(doacao=muletas, pessoa_nome="Ana")
+        ontem = timezone.localdate() - timedelta(days=1)
+
+        response = staff.patch(
+            f"{self.URL}{e.id}/", {"devolvido_em": str(ontem)}, format="json"
+        )
+
+        assert response.status_code == 400
+        assert "devolvido_em" in response.data
+
+    def test_status_passa_a_atrasado_depois_de_3_meses(self, muletas):
+        recente = Emprestimo(doacao=muletas, pessoa_nome="A", emprestado_em=self.meses_atras(2))
+        limite = Emprestimo(doacao=muletas, pessoa_nome="B", emprestado_em=self.meses_atras(3))
+        velho = Emprestimo(doacao=muletas, pessoa_nome="C", emprestado_em=self.meses_atras(3, 5))
+
+        assert recente.status == "EMPRESTADO"
+        assert limite.status == "EMPRESTADO"
+        assert velho.status == "ATRASADO"
+
+    def test_devolvido_nunca_e_atrasado(self, muletas):
+        e = Emprestimo(
+            doacao=muletas,
+            pessoa_nome="A",
+            emprestado_em=self.meses_atras(8),
+            devolvido_em=timezone.localdate(),
+        )
+
+        assert e.status == "DEVOLVIDO"
+
+    def test_filtra_por_status(self, staff, muletas):
+        Emprestimo.objects.create(
+            doacao=muletas, pessoa_nome="A", emprestado_em=self.meses_atras(2)
+        )
+        Emprestimo.objects.create(
+            doacao=muletas, pessoa_nome="B", emprestado_em=self.meses_atras(5)
+        )
+        Emprestimo.objects.create(
+            doacao=muletas,
+            pessoa_nome="C",
+            emprestado_em=self.meses_atras(5),
+            devolvido_em=timezone.localdate(),
+        )
+
+        def nomes(status):
+            data = staff.get(self.URL, {"status": status}).data
+            return {r["pessoa_nome"] for r in data["results"]}
+
+        assert nomes("EMPRESTADO") == {"A"}
+        assert nomes("ATRASADO") == {"B"}
+        assert nomes("DEVOLVIDO") == {"C"}
+
+    def test_marca_devolucao_com_patch(self, staff, muletas):
+        e = Emprestimo.objects.create(
+            doacao=muletas, pessoa_nome="A", emprestado_em=self.meses_atras(5)
+        )
+        assert e.status == "ATRASADO"
+
+        response = staff.patch(
+            f"{self.URL}{e.id}/",
+            {"devolvido_em": str(timezone.localdate())},
+            format="json",
+        )
+
+        assert response.status_code == 200
+        assert response.data["status"] == "DEVOLVIDO"
+
+    def test_nao_exclui_doacao_com_emprestimo(self, staff, muletas):
+        Emprestimo.objects.create(doacao=muletas, pessoa_nome="Ana")
+
+        response = staff.delete(f"/api/v1/doacoes/itens/{muletas.id}/")
+
+        assert response.status_code == 409
+        assert DoacaoItem.objects.filter(pk=muletas.pk).exists()
+
+    def test_nao_reduz_doacao_abaixo_do_que_esta_emprestado(self, staff, muletas):
+        Emprestimo.objects.create(doacao=muletas, pessoa_nome="Ana", quantidade=2)
+
+        response = staff.patch(
+            f"/api/v1/doacoes/itens/{muletas.id}/", {"quantidade": 1}, format="json"
+        )
+
+        assert response.status_code == 400
+        assert "quantidade" in response.data
+
+
+class TestItensEmprestaveis:
+    URL = "/api/v1/doacoes/itens/emprestaveis/"
+
+    @pytest.fixture
+    def staff(self, cliente, admin):
+        cliente.force_authenticate(admin)
+        return cliente
+
+    def test_anonimo_nao_acessa(self, cliente):
+        assert cliente.get(self.URL).status_code in (401, 403)
+
+    def test_lista_so_o_que_pode_ser_emprestado(self, staff):
+        livre = DoacaoItem.objects.create(item="CADEIRA_RODAS", quantidade=2)
+        parcial = DoacaoItem.objects.create(item="MULETAS", quantidade=3)
+        todo_fora = DoacaoItem.objects.create(item="CADEIRA_BANHO", quantidade=1)
+        devolvido = DoacaoItem.objects.create(item="OUTRO", item_descricao="Andador", quantidade=1)
+        DoacaoItem.objects.create(item="ALIMENTOS", quantidade=10)
+        Emprestimo.objects.create(doacao=parcial, pessoa_nome="Ana", quantidade=2)
+        Emprestimo.objects.create(doacao=todo_fora, pessoa_nome="Ana", quantidade=1)
+        Emprestimo.objects.create(
+            doacao=devolvido,
+            pessoa_nome="Ana",
+            quantidade=1,
+            devolvido_em=timezone.localdate(),
+        )
+
+        response = staff.get(self.URL)
+
+        assert response.status_code == 200
+        disponiveis = {r["id"]: r["disponivel"] for r in response.data}
+        assert disponiveis == {livre.id: 2, parcial.id: 1, devolvido.id: 1}
+        assert {r["id"]: r["item_rotulo"] for r in response.data}[devolvido.id] == "Andador"

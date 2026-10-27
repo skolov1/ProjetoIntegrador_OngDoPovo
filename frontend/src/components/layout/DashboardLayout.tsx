@@ -12,13 +12,13 @@ import {
   Users,
   Clipboard,
   MessageCircle,
-  LogOut,
+  CalendarDays,
+  History,
   Plus,
   Edit,
   Trash2,
   UserCheck,
   UserX,
-  X,
   type LucideIcon,
 } from "lucide-react";
 
@@ -28,30 +28,42 @@ import {
   useTurmas,
   useCreateTurma,
   useUpdateTurma,
-  useDeleteTurma,
   useAlunos,
   useCreateAluno,
   useUpdateAluno,
   useDeleteAluno,
   useAlterarAtivoAluno,
-  useProfessores,
   useCreateProfessor,
   useUpdateProfessor,
-  useDeleteProfessor,
   useDoacoesItens,
   useDoacoesItensResumo,
   useCreateDoacaoItem,
   useUpdateDoacaoItem,
   useDeleteDoacaoItem,
 } from "@/features/dashboard/api";
-import { encerrarSessao } from "@/lib/api";
 import { PresencasTela } from "@/features/dashboard/PresencasTela";
+import { AuditoriaTela } from "@/features/dashboard/AuditoriaTela";
+import { GradeTela } from "@/features/dashboard/GradeTela";
+import { UsuarioLogado } from "@/features/dashboard/UsuarioLogado";
+import { TurmasTela } from "@/features/dashboard/TurmasTela";
+import { HorariosTurmaCampos } from "@/features/dashboard/HorariosTurmaCampos";
+import { dataLocalISO } from "@/lib/emprestimo";
+import { horarioVazio, validarHorarios, type HorarioForm } from "@/lib/horarios";
+import { ProfessoresTela } from "@/features/dashboard/ProfessoresTela";
+import { Paginacao } from "@/features/dashboard/pecas";
+import { Sunburst } from "@/components/ui/Sunburst";
+import { EmprestimosSecao } from "@/features/dashboard/EmprestimosSecao";
+import {
+  CLASSE_CAMPO,
+  ConfirmModal,
+  FormModal,
+  type Confirmacao,
+} from "@/features/dashboard/modais";
 import { alunosRetrieve } from "@/api/generated/alunos/alunos";
 import { professoresRetrieve } from "@/api/generated/professores/professores";
 import { turmasRetrieve } from "@/api/generated/turmas/turmas";
 import type {
   ComprovanteResidenciaEnum,
-  DiaSemanaEnum,
   ExameAptidaoEnum,
   ItemEnum,
   SexoEnum,
@@ -68,7 +80,14 @@ import {
 } from "@/lib/aluno";
 // import types removed as they're not directly used
 
-type Screen = "presenca" | "alunos" | "doacoes" | "turmas" | "professores";
+type Screen =
+  | "presenca"
+  | "alunos"
+  | "doacoes"
+  | "turmas"
+  | "professores"
+  | "grade"
+  | "auditoria";
 type TipoCadastro = "turma" | "aluno" | "professor";
 
 const ITENS_MENU: { id: Screen; label: string; Icon: LucideIcon }[] = [
@@ -77,17 +96,29 @@ const ITENS_MENU: { id: Screen; label: string; Icon: LucideIcon }[] = [
   { id: "turmas", label: "Turmas", Icon: Clipboard },
   { id: "professores", label: "Professores", Icon: MessageCircle },
   { id: "doacoes", label: "Doações", Icon: Clipboard },
+  { id: "grade", label: "Grade", Icon: CalendarDays },
+  { id: "auditoria", label: "Auditoria", Icon: History },
 ];
 
 type FormTurma = {
   nome: string;
-  dia_semana: DiaSemanaEnum;
-  horario_inicio: string;
-  horario_fim: string;
+  horarios: HorarioForm[];
   data_inicio: string;
   data_fim: string;
   ativo: boolean;
+  visivel_na_grade: boolean;
+  nome_publico: string;
 };
+
+const TURMA_VAZIA = (): FormTurma => ({
+  nome: "",
+  horarios: [horarioVazio()],
+  data_inicio: dataLocalISO(),
+  data_fim: "",
+  ativo: true,
+  visivel_na_grade: false,
+  nome_publico: "",
+});
 type FormAluno = {
   nome: string;
   cpf: string;
@@ -150,16 +181,6 @@ const DOACAO_VAZIA = (): FormDoacao => ({
   observacao: "",
 });
 
-const CLASSE_CAMPO =
-  "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-grafite outline-none focus:border-verde focus:ring-4 focus:ring-verde/10";
-
-// Ação que espera confirmação num popup antes de rodar.
-type Confirmacao = {
-  titulo: string;
-  texto: string;
-  rotulo: string;
-  onConfirm: () => void;
-};
 type FormDoacao = {
   item: ItemEnum;
   item_descricao: string;
@@ -197,19 +218,13 @@ function erroDoAluno(f: FormAluno, menor: boolean): string {
 
 export function DashboardLayout() {
   const [screen, setScreen] = useState<Screen>("presenca");
+  const [paginaAlunos, setPaginaAlunos] = useState(1);
+  const [paginaDoacoes, setPaginaDoacoes] = useState(1);
   const [showForm, setShowForm] = useState<
     "turma" | "aluno" | "professor" | "doacao" | null
   >(null);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [formTurma, setFormTurma] = useState<FormTurma>({
-    nome: "",
-    dia_semana: "SEG",
-    horario_inicio: "08:00",
-    horario_fim: "09:00",
-    data_inicio: new Date().toISOString().split("T")[0],
-    data_fim: "",
-    ativo: true,
-  });
+  const [formTurma, setFormTurma] = useState<FormTurma>(TURMA_VAZIA());
   const [formAluno, setFormAluno] = useState<FormAluno>(ALUNO_VAZIO);
   const [formDoacao, setFormDoacao] = useState<FormDoacao>(DOACAO_VAZIA());
   const [erroForm, setErroForm] = useState("");
@@ -224,25 +239,22 @@ export function DashboardLayout() {
   });
 
   // Queries - ALWAYS called first to maintain hook order
-  const {
-    data: turmasData,
-    isLoading: loadingTurmas,
-    error: errorTurmas,
-  } = useTurmas();
+  // Todas as turmas (até 100), para os checkboxes dos formulários. A lista paginada
+  // da tela de Turmas tem a própria consulta em TurmasTela.
+  const { data: turmasData } = useTurmas({ page_size: 100 });
   const {
     data: alunosData,
     isLoading: loadingAlunos,
     error: errorAlunos,
-  } = useAlunos();
+  } = useAlunos({ page: paginaAlunos });
   const { data: doacoesResumo } = useDoacoesItensResumo();
-  const { data: doacoesData } = useDoacoesItens();
-  const { data: professoresData, isLoading: loadingProfessores } =
-    useProfessores();
+  const { data: doacoesData, error: errorDoacoes } = useDoacoesItens({
+    page: paginaDoacoes,
+  });
 
   // Mutations - ALWAYS called to maintain hook order
   const createTurma = useCreateTurma();
   const updateTurma = useUpdateTurma();
-  const deleteTurma = useDeleteTurma();
   const createAluno = useCreateAluno();
   const updateAluno = useUpdateAluno();
   const deleteAluno = useDeleteAluno();
@@ -252,26 +264,16 @@ export function DashboardLayout() {
   const deleteDoacao = useDeleteDoacaoItem();
   const createProfessor = useCreateProfessor();
   const updateProfessor = useUpdateProfessor();
-  const deleteProfessor = useDeleteProfessor();
 
   // Extract results from paginated responses
   const turmas = turmasData?.results ?? [];
   const alunos = alunosData?.results ?? [];
-  const professores = professoresData?.results || [];
 
   // Helper functions
   const closeForm = () => {
     setShowForm(null);
     setEditingId(null);
-    setFormTurma({
-      nome: "",
-      dia_semana: "SEG",
-      horario_inicio: "08:00",
-      horario_fim: "09:00",
-      data_inicio: new Date().toISOString().split("T")[0],
-      data_fim: "",
-      ativo: true,
-    });
+    setFormTurma(TURMA_VAZIA());
     setFormAluno(ALUNO_VAZIO);
     setFormDoacao(DOACAO_VAZIA());
     setErroForm("");
@@ -303,7 +305,17 @@ export function DashboardLayout() {
 
   const handleSubmitTurma = (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = { ...formTurma, data_fim: formTurma.data_fim || null };
+    const problema = validarHorarios(formTurma.horarios);
+    if (problema) {
+      setErroForm(problema);
+      return;
+    }
+    setErroForm("");
+    const payload = {
+      ...formTurma,
+      nome_publico: formTurma.nome_publico.trim(),
+      data_fim: formTurma.data_fim || null,
+    };
     if (editingId !== null) {
       updateTurma.mutate({ id: editingId, data: payload }, aoSalvar);
     } else {
@@ -375,12 +387,16 @@ export function DashboardLayout() {
         const t = (await turmasRetrieve(id)).data;
         setFormTurma({
           nome: t.nome,
-          dia_semana: t.dia_semana,
-          horario_inicio: t.horario_inicio.slice(0, 5),
-          horario_fim: t.horario_fim.slice(0, 5),
+          horarios: t.horarios.map((h) => ({
+            dia_semana: h.dia_semana,
+            horario_inicio: h.horario_inicio.slice(0, 5),
+            horario_fim: h.horario_fim.slice(0, 5),
+          })),
           data_inicio: t.data_inicio,
           data_fim: t.data_fim ?? "",
           ativo: t.ativo ?? true,
+          visivel_na_grade: t.visivel_na_grade ?? false,
+          nome_publico: t.nome_publico ?? "",
         });
       } else if (tipo === "aluno") {
         const a = (await alunosRetrieve(id)).data;
@@ -425,7 +441,7 @@ export function DashboardLayout() {
 
   const handleDelete = (
     id: number,
-    type: "turma" | "aluno" | "professor" | "doacao",
+    type: "aluno" | "doacao",
   ) => {
     const definitiva =
       type === "aluno"
@@ -435,11 +451,23 @@ export function DashboardLayout() {
       titulo: "Excluir definitivamente?",
       texto: definitiva,
       rotulo: "Excluir",
+      perigo: true,
       onConfirm: () => {
-        if (type === "turma") deleteTurma.mutate(id);
-        else if (type === "aluno") deleteAluno.mutate(id);
-        else if (type === "doacao") deleteDoacao.mutate(id);
-        else deleteProfessor.mutate(id);
+        // Excluir o único item da página recua uma página (a atual deixaria de existir).
+        if (type === "aluno") {
+          deleteAluno.mutate(id, {
+            onSuccess: () => {
+              if (alunos.length === 1 && paginaAlunos > 1) setPaginaAlunos(paginaAlunos - 1);
+            },
+          });
+        } else {
+          deleteDoacao.mutate(id, {
+            onSuccess: () => {
+              const itens = doacoesData?.results ?? [];
+              if (itens.length === 1 && paginaDoacoes > 1) setPaginaDoacoes(paginaDoacoes - 1);
+            },
+          });
+        }
       },
     });
   };
@@ -456,6 +484,27 @@ export function DashboardLayout() {
   };
 
   const menor = ehMenor(formAluno.data_nascimento);
+
+  const abrirNovaTurma = () => {
+    closeForm();
+    setEditingId(null);
+    setFormTurma(TURMA_VAZIA());
+    setShowForm("turma");
+  };
+
+  const abrirNovoProfessor = () => {
+    closeForm();
+    setEditingId(null);
+    setFormProfessor({
+      nome: "",
+      cpf: "",
+      email: "",
+      telefone: "",
+      turmas: [],
+      ativo: true,
+    });
+    setShowForm("professor");
+  };
 
   const renderFormModal = () => {
     if (showForm === "doacao")
@@ -577,55 +626,10 @@ export function DashboardLayout() {
             required
             className={`${CLASSE_CAMPO} lg:col-span-2`}
           />
-          <label className="text-sm text-grafite/70 lg:col-span-2">
-            Dia da semana
-            <select
-              name="dia_semana"
-              value={formTurma.dia_semana}
-              onChange={(e) =>
-                setFormTurma({
-                  ...formTurma,
-                  dia_semana: e.target.value as DiaSemanaEnum,
-                })
-              }
-              required
-              className={`${CLASSE_CAMPO} mt-1`}
-            >
-              <option value="SEG">Segunda</option>
-              <option value="TER">Terça</option>
-              <option value="QUA">Quarta</option>
-              <option value="QUI">Quinta</option>
-              <option value="SEX">Sexta</option>
-              <option value="SAB">Sábado</option>
-              <option value="DOM">Domingo</option>
-            </select>
-          </label>
-          <label className="text-sm text-grafite/70">
-            Horário de início
-            <input
-              type="time"
-              name="horario_inicio"
-              value={formTurma.horario_inicio}
-              onChange={(e) =>
-                setFormTurma({ ...formTurma, horario_inicio: e.target.value })
-              }
-              required
-              className={`${CLASSE_CAMPO} mt-1`}
-            />
-          </label>
-          <label className="text-sm text-grafite/70">
-            Horário de fim
-            <input
-              type="time"
-              name="horario_fim"
-              value={formTurma.horario_fim}
-              onChange={(e) =>
-                setFormTurma({ ...formTurma, horario_fim: e.target.value })
-              }
-              required
-              className={`${CLASSE_CAMPO} mt-1`}
-            />
-          </label>
+          <HorariosTurmaCampos
+            horarios={formTurma.horarios}
+            onChange={(horarios) => setFormTurma({ ...formTurma, horarios })}
+          />
           <label className="text-sm text-grafite/70">
             Data de início
             <input
@@ -661,6 +665,42 @@ export function DashboardLayout() {
             />{" "}
             Ativa
           </label>
+          <fieldset className="lg:col-span-2 rounded-2xl border border-slate-200 p-4">
+            <legend className="px-2 text-sm font-bold text-verde-escuro">
+              Grade pública (site)
+            </legend>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={formTurma.visivel_na_grade}
+                onChange={(e) =>
+                  setFormTurma({ ...formTurma, visivel_na_grade: e.target.checked })
+                }
+              />{" "}
+              Mostrar esta turma na grade da semana do site
+            </label>
+            <p className="mt-1 text-xs text-grafite/60">
+              Desligado, a turma é só interna: não aparece para os visitantes.
+            </p>
+            <label className="mt-3 block text-sm text-grafite/70">
+              Nome na grade (opcional)
+              <input
+                name="nome_publico"
+                placeholder="Como o visitante vê. Vazio = usa o nome da turma"
+                maxLength={100}
+                value={formTurma.nome_publico}
+                onChange={(e) =>
+                  setFormTurma({ ...formTurma, nome_publico: e.target.value })
+                }
+                className={`${CLASSE_CAMPO} mt-1`}
+              />
+            </label>
+          </fieldset>
+          {erroForm && (
+            <p role="alert" className="lg:col-span-2 text-sm text-vermelho">
+              {erroForm}
+            </p>
+          )}
         </FormModal>
       );
     if (showForm === "aluno")
@@ -692,6 +732,7 @@ export function DashboardLayout() {
           <input
             type="date"
             name="data_nascimento"
+            aria-label="Data de nascimento"
             value={formAluno.data_nascimento}
             onChange={(e) =>
               setFormAluno({ ...formAluno, data_nascimento: e.target.value })
@@ -1032,116 +1073,86 @@ export function DashboardLayout() {
 
   return (
     <div className="min-h-screen bg-mist-50 flex flex-row">
-      <aside className="w-64 bg-verde-escuro min-h-screen flex flex-col">
-        <div className="flex h-16 items-center justify-between px-6 border-b border-white/10">
-          <h2 className="font-extrabold text-white">ONG do Povo</h2>
-          <button
-            type="button"
-            onClick={() => void encerrarSessao()}
-            className="p-2 rounded-md hover:bg-white/10 transition-colors"
-            aria-label="Sair"
-          >
-            <LogOut className="size-4 text-white" />
-          </button>
+      <aside className="relative sticky top-0 flex h-screen w-64 shrink-0 flex-col overflow-hidden bg-linear-to-b from-verde-900 via-verde-escuro to-verde-escuro">
+        <Sunburst
+          tone="white"
+          size={420}
+          rays={24}
+          fill={0.06}
+          spin={false}
+          className="pointer-events-none absolute -left-40 bottom-16 text-white opacity-15"
+        />
+        <div className="relative flex h-16 items-center gap-3 px-6 border-b border-white/10">
+          <picture>
+            <source srcSet="/logo-icone.webp" type="image/webp" />
+            <img
+              src="/logo-icone.png"
+              alt=""
+              width={36}
+              height={36}
+              className="size-9 object-contain"
+            />
+          </picture>
+          <h2 className="text-lg font-extrabold tracking-tight text-white">ONG do Povo</h2>
         </div>
 
-        <nav className="flex flex-col gap-2 px-6 py-8">
+        <nav className="relative flex flex-col gap-1.5 px-4 py-6">
           {ITENS_MENU.map(({ id, label, Icon }) => (
             <button
               key={id}
               onClick={() => setScreen(id)}
-              className={`flex items-center gap-3 rounded-lg px-4 py-3 text-left font-medium transition-colors ${screen === id ? "bg-white/10 text-verde hover:bg-white/20" : "text-white/70 hover:text-white/100"}`}
+              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-bold transition-all duration-300 ${screen === id ? "bg-verde text-white shadow-lg shadow-verde/25" : "text-white/75 hover:bg-white/10 hover:text-white"}`}
             >
               <Icon className="size-4" />
               <span>{label}</span>
             </button>
           ))}
         </nav>
+
+        <UsuarioLogado />
       </aside>
 
-      <main className="ml-2 p-6 bg-mist-50">
-        <div className="mb-6">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-verde">
-            Dashboard
-          </p>
-          <h1 className="mt-2 text-3xl font-extrabold text-verde-escuro">
-            Painel de Administração
-          </h1>
-          <p className="mt-2 text-grafite/70">
-            Gerencie as operações da ONG do Povo.
-          </p>
+      <main className="min-w-0 flex-1 bg-linear-to-b from-mist-50 via-white to-mist-50 p-6 lg:p-10">
+        <div className="relative mb-8 overflow-hidden rounded-3xl bg-linear-to-br from-verde-900 to-verde-escuro p-6 text-white shadow-lg sm:p-8">
+          <Sunburst
+            tone="white"
+            size={360}
+            rays={24}
+            fill={0.06}
+            spin={false}
+            className="pointer-events-none absolute -right-24 -top-36 text-white opacity-30"
+          />
+          <div className="relative">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-amarelo">
+              Dashboard
+            </p>
+            <h1 className="mt-2 text-3xl font-extrabold">Painel de Administração</h1>
+            <p className="mt-2 text-white/70">Gerencie as operações da ONG do Povo.</p>
+          </div>
         </div>
 
         {/* PRESENÇAS */}
         {screen === "presenca" && <PresencasTela />}
 
+        {/* GRADE DA SEMANA (atividades avulsas e prévia do site) */}
+        {screen === "grade" && <GradeTela />}
+
+        {/* AUDITORIA */}
+        {screen === "auditoria" && <AuditoriaTela />}
+
         {/* TURMAS */}
         {screen === "turmas" && (
-          <div className="mt-6 space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-xl font-bold text-verde">Turmas</h3>
-              <Button
-                variante="secundaria"
-                onClick={() => {
-                  closeForm();
-                  setEditingId(null);
-                  setFormTurma({
-                    nome: "",
-                    dia_semana: "SEG",
-                    horario_inicio: "08:00",
-                    horario_fim: "09:00",
-                    data_inicio: new Date().toISOString().split("T")[0],
-                    data_fim: "",
-                    ativo: true,
-                  });
-                  setShowForm("turma");
-                }}
-              >
-                <Plus className="size-4 mr-2" />
-                Nova Turma
-              </Button>
-            </div>
-            {loadingTurmas ? (
-              <p>Carregando...</p>
-            ) : errorTurmas ? (
-              <p className="text-vermelho">Erro ao carregar turmas</p>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {turmas.map((t) => (
-                  <div key={t.id} className="bg-white p-4 rounded-xl shadow">
-                    <h4 className="font-bold text-verde mb-2">{t.nome}</h4>
-                    <p className="text-sm text-grafite/60">
-                      {t.horario_formatado}
-                    </p>
-                    <p className="text-xs text-grafite/50">
-                      {t.ativo ? "Ativa" : "Inativa"}
-                    </p>
-                    <div className="mt-3 flex gap-2">
-                      <Button
-                        variante="contorno-claro"
-                        onClick={() => void handleEdit("turma", t.id)}
-                      >
-                        <Edit className="size-4" />
-                      </Button>
-                      <Button
-                        variante="contorno-claro"
-                        onClick={() => handleDelete(t.id, "turma")}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <TurmasTela
+            onNova={abrirNovaTurma}
+            onEditar={(id) => void handleEdit("turma", id)}
+          />
         )}
 
         {/* ALUNOS */}
         {screen === "alunos" && (
           <div className="mt-6 space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-xl font-bold text-verde">Alunos</h3>
+              <h3 className="text-xl font-extrabold text-verde-escuro">Alunos</h3>
               <Button
                 variante="secundaria"
                 onClick={() => {
@@ -1158,12 +1169,23 @@ export function DashboardLayout() {
             {loadingAlunos ? (
               <p>Carregando...</p>
             ) : errorAlunos ? (
-              <p className="text-vermelho">Erro ao carregar alunos</p>
+              <p className="text-vermelho">
+                Erro ao carregar alunos.{" "}
+                {paginaAlunos > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setPaginaAlunos(1)}
+                    className="font-semibold underline underline-offset-4"
+                  >
+                    Voltar à primeira página
+                  </button>
+                )}
+              </p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full bg-white rounded-xl shadow">
-                  <thead className="bg-mist-100">
-                    <tr className="text-left text-grafite/70 text-sm">
+              <div className="overflow-x-auto rounded-2xl border border-slate-200/70 bg-white shadow-sm">
+                <table className="w-full">
+                  <thead className="bg-mist-100/70">
+                    <tr className="text-left text-xs font-bold uppercase tracking-wider text-verde-escuro/70">
                       <th className="p-3">Nome</th>
                       <th className="p-3">CPF</th>
                       <th className="p-3">Turmas</th>
@@ -1176,7 +1198,7 @@ export function DashboardLayout() {
                   </thead>
                   <tbody>
                     {alunos.map((a) => (
-                      <tr key={a.id} className="border-t border-mist-200">
+                      <tr key={a.id} className="border-t border-mist-200 transition-colors hover:bg-mist-50">
                         <td className="p-3 font-medium text-grafite">
                           {a.nome}
                         </td>
@@ -1197,7 +1219,7 @@ export function DashboardLayout() {
                         </td>
                         <td className="p-3">
                           <span
-                            className={`px-2 py-1 rounded text-xs ${a.ativo ? "bg-verde/10 text-verde" : "bg-vermelho/10 text-vermelho"}`}
+                            className={`px-3 py-1 rounded-full text-xs font-bold ${a.ativo ? "bg-verde/10 text-verde" : "bg-vermelho/10 text-vermelho"}`}
                           >
                             {a.ativo ? "Ativo" : "Inativo"}
                           </span>
@@ -1206,14 +1228,16 @@ export function DashboardLayout() {
                           <div className="flex gap-2">
                             <Button
                               variante="contorno-claro"
+                              aria-label={`Editar ${a.nome}`}
+                              title={`Editar ${a.nome}`}
                               onClick={() => void handleEdit("aluno", a.id)}
                             >
                               <Edit className="size-4" />
                             </Button>
                             <Button
                               variante="contorno-claro"
-                              aria-label={a.ativo ? "Inativar aluno" : "Reativar aluno"}
-                              title={a.ativo ? "Inativar" : "Reativar"}
+                              aria-label={`${a.ativo ? "Inativar" : "Reativar"} ${a.nome}`}
+                              title={`${a.ativo ? "Inativar" : "Reativar"} ${a.nome}`}
                               onClick={() =>
                                 handleAlterarAtivo(a.id, a.nome, !a.ativo)
                               }
@@ -1226,8 +1250,8 @@ export function DashboardLayout() {
                             </Button>
                             <Button
                               variante="contorno-claro"
-                              aria-label="Excluir definitivamente"
-                              title="Excluir definitivamente"
+                              aria-label={`Excluir definitivamente ${a.nome}`}
+                              title={`Excluir definitivamente ${a.nome}`}
                               onClick={() => handleDelete(a.id, "aluno")}
                             >
                               <Trash2 className="size-4" />
@@ -1240,74 +1264,27 @@ export function DashboardLayout() {
                 </table>
               </div>
             )}
+            <Paginacao
+              pagina={paginaAlunos}
+              total={alunosData?.count ?? 0}
+              onMudar={setPaginaAlunos}
+            />
           </div>
         )}
 
         {/* PROFESSORES */}
         {screen === "professores" && (
-          <div className="mt-6 space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-xl font-bold text-verde">Professores</h3>
-              <Button
-                variante="secundaria"
-                onClick={() => {
-                  closeForm();
-                  setEditingId(null);
-                  setFormProfessor({
-                    nome: "",
-                    cpf: "",
-                    email: "",
-                    telefone: "",
-                    turmas: [],
-                    ativo: true,
-                  });
-                  setShowForm("professor");
-                }}
-              >
-                <Plus className="size-4 mr-2" />
-                Novo Professor
-              </Button>
-            </div>
-            {loadingProfessores || !professoresData ? (
-              <p>Carregando...</p>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {professores.map((p) => (
-                  <div key={p.id} className="bg-white p-4 rounded-xl shadow">
-                    <h4 className="font-bold text-verde mb-2">{p.nome}</h4>
-                    <p className="text-sm text-grafite/60">CPF: {p.cpf}</p>
-                    <p className="text-sm text-grafite/60">
-                      Turmas: {p.turmas_nomes?.join(", ") || "—"}
-                    </p>
-                    <p className="text-xs text-grafite/50">
-                      Alunos: {p.total_alunos}
-                    </p>
-                    <div className="mt-3 flex gap-2">
-                      <Button
-                        variante="contorno-claro"
-                        onClick={() => void handleEdit("professor", p.id)}
-                      >
-                        <Edit className="size-4" />
-                      </Button>
-                      <Button
-                        variante="contorno-claro"
-                        onClick={() => handleDelete(p.id, "professor")}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <ProfessoresTela
+            onNovo={abrirNovoProfessor}
+            onEditar={(id) => void handleEdit("professor", id)}
+          />
         )}
 
         {/* DOAÇÕES (só itens; o PIX a ONG confere no extrato) */}
         {screen === "doacoes" && (
           <div className="mt-6 space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-xl font-bold text-verde">
+              <h3 className="text-xl font-extrabold text-verde-escuro">
                 Doações de itens
               </h3>
               <Button
@@ -1323,16 +1300,16 @@ export function DashboardLayout() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
               {(doacoesResumo ?? []).map((r) => (
-                <div key={r.item} className="rounded-xl bg-white p-6 shadow">
-                  <p className="text-3xl font-bold text-verde">{r.total}</p>
+                <div key={r.item} className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm">
+                  <p className="text-3xl font-extrabold text-verde">{r.total}</p>
                   <p className="text-sm text-grafite/60">{r.item_rotulo}</p>
                 </div>
               ))}
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full bg-white rounded-xl shadow">
-                <thead className="bg-mist-100">
-                  <tr className="text-left text-grafite/70 text-sm">
+            <div className="overflow-x-auto rounded-2xl border border-slate-200/70 bg-white shadow-sm">
+              <table className="w-full">
+                <thead className="bg-mist-100/70">
+                  <tr className="text-left text-xs font-bold uppercase tracking-wider text-verde-escuro/70">
                     <th className="p-3">Data</th>
                     <th className="p-3">Item</th>
                     <th className="p-3">Qtd.</th>
@@ -1343,7 +1320,7 @@ export function DashboardLayout() {
                 </thead>
                 <tbody>
                   {(doacoesData?.results ?? []).map((d) => (
-                    <tr key={d.id} className="border-t border-mist-200">
+                    <tr key={d.id} className="border-t border-mist-200 transition-colors hover:bg-mist-50">
                       <td className="p-3 text-grafite/60 text-sm">
                         {new Date(`${d.recebido_em}T00:00:00`).toLocaleDateString("pt-BR")}
                       </td>
@@ -1361,7 +1338,8 @@ export function DashboardLayout() {
                         <div className="flex gap-2">
                           <Button
                             variante="contorno-claro"
-                            aria-label="Editar doação"
+                            aria-label={`Editar doação de ${d.item_rotulo}`}
+                            title={`Editar doação de ${d.item_rotulo}`}
                             onClick={() => {
                               closeForm();
                               setFormDoacao({
@@ -1380,7 +1358,8 @@ export function DashboardLayout() {
                           </Button>
                           <Button
                             variante="contorno-claro"
-                            aria-label="Excluir doação"
+                            aria-label={`Excluir doação de ${d.item_rotulo}`}
+                            title={`Excluir doação de ${d.item_rotulo}`}
                             onClick={() => handleDelete(d.id, "doacao")}
                           >
                             <Trash2 className="size-4" />
@@ -1399,6 +1378,28 @@ export function DashboardLayout() {
                 </tbody>
               </table>
             </div>
+
+            {errorDoacoes && (
+              <p className="text-vermelho">
+                Erro ao carregar as doações.{" "}
+                {paginaDoacoes > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setPaginaDoacoes(1)}
+                    className="font-semibold underline underline-offset-4"
+                  >
+                    Voltar à primeira página
+                  </button>
+                )}
+              </p>
+            )}
+            <Paginacao
+              pagina={paginaDoacoes}
+              total={doacoesData?.count ?? 0}
+              onMudar={setPaginaDoacoes}
+            />
+
+            <EmprestimosSecao />
           </div>
         )}
 
@@ -1418,64 +1419,18 @@ export function DashboardLayout() {
   );
 }
 
-// Modal reutilizável
-function FormModal({
-  title,
-  onClose,
-  onSubmit,
-  submitting,
-  largura = "max-w-md",
-  children,
-}: {
-  title: string;
-  largura?: string;
-  onClose: () => void;
-  onSubmit: (e: React.FormEvent) => void;
-  submitting: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <form
-        onSubmit={onSubmit}
-        className={`bg-white rounded-2xl p-6 w-full ${largura} max-h-[90vh] overflow-y-auto`}
-      >
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-verde-escuro">{title}</h3>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1 hover:bg-mist-100 rounded"
-          >
-            <X className="size-5" />
-          </button>
-        </div>
-        <main className="grid grid-cols-1 lg:grid-cols-2 gap-4">{children}</main>
-        <div className="mt-6 flex justify-end gap-3">
-          <Button variante="contorno-claro" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button disabled={submitting}>
-            {submitting ? "Salvando..." : "Salvar"}
-          </Button>
-        </div>
-      </form>
-    </div>
-  );
-}
-
 // Selo dos documentos na listagem: "Em dia" ou quantos faltam (nomes no tooltip).
 function DocumentosBadge({ pendentes }: { pendentes: readonly string[] }) {
   if (pendentes.length === 0)
     return (
-      <span className="px-2 py-1 rounded text-xs bg-verde/10 text-verde">
+      <span className="px-3 py-1 rounded-full text-xs font-bold bg-verde/10 text-verde">
         Em dia
       </span>
     );
   return (
     <span
       title={`Pendentes: ${pendentes.join(", ")}`}
-      className="px-2 py-1 rounded text-xs bg-amarelo/10 text-amarelo"
+      className="px-3 py-1 rounded-full text-xs font-bold bg-amarelo/10 text-amarelo"
     >
       {pendentes.length} pendente{pendentes.length > 1 ? "s" : ""}
     </span>
@@ -1492,36 +1447,5 @@ function ExameBadge({ situacao }: { situacao?: string | null }) {
     nao_apto: ["Não apto", "bg-vermelho/10 text-vermelho"],
   };
   const [rotulo, classe] = visual[situacao] ?? ["—", ""];
-  return <span className={`px-2 py-1 rounded text-xs ${classe}`}>{rotulo}</span>;
-}
-
-// Popup de confirmação (no lugar do confirm() do navegador).
-function ConfirmModal({
-  titulo,
-  texto,
-  rotulo,
-  onConfirm,
-  onClose,
-}: Confirmacao & { onClose: () => void }) {
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="confirm-titulo"
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4"
-    >
-      <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
-        <h3 id="confirm-titulo" className="text-lg font-bold text-verde-escuro">
-          {titulo}
-        </h3>
-        <p className="mt-2 text-sm text-grafite/70">{texto}</p>
-        <div className="mt-6 flex justify-end gap-3">
-          <Button variante="contorno-claro" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button onClick={onConfirm}>{rotulo}</Button>
-        </div>
-      </div>
-    </div>
-  );
+  return <span className={`px-3 py-1 rounded-full text-xs font-bold ${classe}`}>{rotulo}</span>;
 }

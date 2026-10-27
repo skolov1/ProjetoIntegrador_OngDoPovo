@@ -25,9 +25,14 @@
   --color-mist-300: #aadcc0;
   --color-verde-900: #05281d;
 
-  /* --- Tipografia: Montserrat, conforme o manual --- */
+  /* --- Tipografia ---
+     Padrão (landing e privacidade): Atkinson Hyperlegible, feita para legibilidade.
+     Só existe em 400 e 700: os pesos 500/600/800 caem no mais próximo.
+     Login e painel (área restrita) usam a Montserrat da marca: o HTML deles tem
+     data-fonte="montserrat" (regra mais abaixo). O <link> de cada fonte fica no
+     HTML de cada página. */
   --font-sans:
-    'Montserrat', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    'Atkinson Hyperlegible', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   /* --- Animações declarativas (viram utilitários animate-*) --- */
   --animate-sunburst: sunburst 60s linear infinite;
@@ -77,6 +82,24 @@
    ========================================================================= */
 
 @layer base {
+  /* Páginas públicas: texto um degrau maior (Atkinson rende menor no mesmo tamanho). */
+  html:not([data-fonte='montserrat']) {
+    --text-xs: 0.8125rem; /* 13px (padrão 12) */
+    --text-sm: 0.9375rem; /* 15px (padrão 14) */
+    --text-base: 1.0625rem; /* 17px (padrão 16) */
+    --text-lg: 1.1875rem; /* 19px (padrão 18) */
+    --text-xl: 1.375rem; /* 22px (padrão 20) */
+    --text-4xl: 2.5rem; /* 40px (padrão 36) */
+    --text-5xl: 3.25rem; /* 52px (padrão 48) */
+    --text-6xl: 4rem; /* 64px (padrão 60) */
+  }
+
+  /* Área restrita (login e painel): Montserrat, como no manual de identidade. */
+  html[data-fonte='montserrat'] {
+    --font-sans:
+      'Montserrat', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+
   html {
     scroll-behavior: smooth;
     /* Compensa o header fixo ao pular para uma âncora (#programas etc). */

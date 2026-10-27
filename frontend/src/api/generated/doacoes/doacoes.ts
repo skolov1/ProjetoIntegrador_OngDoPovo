@@ -7,18 +7,100 @@
  */
 import type {
   DoacaoItem,
+  DoacaoItemEmprestavel,
   DoacaoItemRequest,
   DoacaoItemResumo,
+  DoacoesEmprestimosListParams,
+  DoacoesItensEmprestaveisListParams,
   DoacoesItensListParams,
   DoacoesItensResumoListParams,
+  Emprestimo,
+  EmprestimoRequest,
   PaginatedDoacaoItemList,
-  PatchedDoacaoItemRequest
+  PaginatedEmprestimoList,
+  PatchedDoacaoItemRequest,
+  PatchedEmprestimoRequest
 } from '../model';
 
 import { api } from '../../../lib/api';
 
 
 
+  /**
+ * Empréstimos de itens doados. A devolução é um PATCH de `devolvido_em`.
+ */
+export const doacoesEmprestimosList = (
+    params?: DoacoesEmprestimosListParams,
+ ) => {
+      return api<PaginatedEmprestimoList>(
+      {url: `/doacoes/emprestimos/`, method: 'GET',
+        params
+    },
+      );
+    }
+  /**
+ * Empréstimos de itens doados. A devolução é um PATCH de `devolvido_em`.
+ */
+export const doacoesEmprestimosCreate = (
+    emprestimoRequest: EmprestimoRequest,
+ ) => {
+      return api<Emprestimo>(
+      {url: `/doacoes/emprestimos/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: emprestimoRequest
+    },
+      );
+    }
+  /**
+ * Empréstimos de itens doados. A devolução é um PATCH de `devolvido_em`.
+ */
+export const doacoesEmprestimosRetrieve = (
+    id: number,
+ ) => {
+      return api<Emprestimo>(
+      {url: `/doacoes/emprestimos/${id}/`, method: 'GET'
+    },
+      );
+    }
+  /**
+ * Empréstimos de itens doados. A devolução é um PATCH de `devolvido_em`.
+ */
+export const doacoesEmprestimosUpdate = (
+    id: number,
+    emprestimoRequest: EmprestimoRequest,
+ ) => {
+      return api<Emprestimo>(
+      {url: `/doacoes/emprestimos/${id}/`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: emprestimoRequest
+    },
+      );
+    }
+  /**
+ * Empréstimos de itens doados. A devolução é um PATCH de `devolvido_em`.
+ */
+export const doacoesEmprestimosPartialUpdate = (
+    id: number,
+    patchedEmprestimoRequest?: PatchedEmprestimoRequest,
+ ) => {
+      return api<Emprestimo>(
+      {url: `/doacoes/emprestimos/${id}/`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: patchedEmprestimoRequest
+    },
+      );
+    }
+  /**
+ * Empréstimos de itens doados. A devolução é um PATCH de `devolvido_em`.
+ */
+export const doacoesEmprestimosDestroy = (
+    id: number,
+ ) => {
+      return api<void>(
+      {url: `/doacoes/emprestimos/${id}/`, method: 'DELETE'
+    },
+      );
+    }
   /**
  * Registro de doações de itens (alimentos, cadeiras, muletas), só da equipe.
  */
@@ -95,6 +177,19 @@ export const doacoesItensDestroy = (
       );
     }
   /**
+ * Tudo que pode sair emprestado: sem alimentos e sem o que já está todo fora.
+ * @summary Doações que ainda têm unidades para emprestar
+ */
+export const doacoesItensEmprestaveisList = (
+    params?: DoacoesItensEmprestaveisListParams,
+ ) => {
+      return api<DoacaoItemEmprestavel[]>(
+      {url: `/doacoes/itens/emprestaveis/`, method: 'GET',
+        params
+    },
+      );
+    }
+  /**
  * Soma das quantidades por item, incluindo os que ainda estão em zero.
  * @summary Total recebido de cada item
  */
@@ -107,10 +202,17 @@ export const doacoesItensResumoList = (
     },
       );
     }
-  export type DoacoesItensListResult = NonNullable<Awaited<ReturnType<typeof doacoesItensList>>>
+  export type DoacoesEmprestimosListResult = NonNullable<Awaited<ReturnType<typeof doacoesEmprestimosList>>>
+export type DoacoesEmprestimosCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesEmprestimosCreate>>>
+export type DoacoesEmprestimosRetrieveResult = NonNullable<Awaited<ReturnType<typeof doacoesEmprestimosRetrieve>>>
+export type DoacoesEmprestimosUpdateResult = NonNullable<Awaited<ReturnType<typeof doacoesEmprestimosUpdate>>>
+export type DoacoesEmprestimosPartialUpdateResult = NonNullable<Awaited<ReturnType<typeof doacoesEmprestimosPartialUpdate>>>
+export type DoacoesEmprestimosDestroyResult = NonNullable<Awaited<ReturnType<typeof doacoesEmprestimosDestroy>>>
+export type DoacoesItensListResult = NonNullable<Awaited<ReturnType<typeof doacoesItensList>>>
 export type DoacoesItensCreateResult = NonNullable<Awaited<ReturnType<typeof doacoesItensCreate>>>
 export type DoacoesItensRetrieveResult = NonNullable<Awaited<ReturnType<typeof doacoesItensRetrieve>>>
 export type DoacoesItensUpdateResult = NonNullable<Awaited<ReturnType<typeof doacoesItensUpdate>>>
 export type DoacoesItensPartialUpdateResult = NonNullable<Awaited<ReturnType<typeof doacoesItensPartialUpdate>>>
 export type DoacoesItensDestroyResult = NonNullable<Awaited<ReturnType<typeof doacoesItensDestroy>>>
+export type DoacoesItensEmprestaveisListResult = NonNullable<Awaited<ReturnType<typeof doacoesItensEmprestaveisList>>>
 export type DoacoesItensResumoListResult = NonNullable<Awaited<ReturnType<typeof doacoesItensResumoList>>>

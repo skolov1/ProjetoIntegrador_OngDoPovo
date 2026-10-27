@@ -25,3 +25,6 @@ whitenoise~=6.12.0
 
 # Necessário para ImageField (documentos do aluno)
 Pillow~=13.0.0
+
+# Auditoria: quem criou, alterou ou excluiu cada registro (ver doacoes/auditoria.py)
+django-auditlog~=3.4.1

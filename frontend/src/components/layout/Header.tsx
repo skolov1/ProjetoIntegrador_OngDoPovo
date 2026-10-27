@@ -101,7 +101,7 @@ export function Header() {
               {ONG.nome}
             </span>
             <span
-              className={`mt-0.5 text-[0.5rem] font-bold uppercase tracking-[0.15em] transition-colors ${
+              className={`mt-0.5 text-[0.625rem] font-bold uppercase tracking-[0.12em] transition-colors ${
                 rolou || menuAberto ? 'text-mist-200' : 'text-verde'
               }`}
             >
@@ -111,7 +111,7 @@ export function Header() {
         </a>
 
         {/* Navegação desktop */}
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="Navegação principal">
+        <nav className="hidden items-center gap-0.5 xl:gap-1 lg:flex" aria-label="Navegação principal">
           {NAVEGACAO.map(({ label, href }) => {
             const ativo = secaoAtiva === href
             return (
@@ -119,7 +119,7 @@ export function Header() {
                 key={href}
                 href={href}
                 aria-current={ativo ? 'true' : undefined}
-                className={`relative rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-300 ${
+                className={`relative whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold transition-colors duration-300 xl:px-4 ${
                   rolou || menuAberto
                     ? ativo
                       ? 'text-amarelo'
@@ -133,7 +133,7 @@ export function Header() {
                 {ativo && (
                   <span
                     aria-hidden="true"
-                    className={`absolute inset-x-4 -bottom-0.5 h-0.5 rounded-full ${
+                    className={`absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full xl:inset-x-4 ${
                       rolou || menuAberto ? 'bg-amarelo' : 'bg-verde'
                     }`}
                   />
@@ -159,14 +159,14 @@ export function Header() {
           <a
             href={URL_AREA_RESTRITA}
             aria-label={ROTULO_AREA_RESTRITA}
-            className={`hidden h-10 items-center justify-center gap-2 rounded-full text-sm font-semibold transition-all duration-300 sm:inline-flex sm:w-10 lg:w-auto lg:px-4 ${
+            className={`hidden h-10 items-center justify-center gap-2 rounded-full text-sm font-semibold transition-all duration-300 sm:inline-flex sm:w-10 xl:w-auto xl:px-4 ${
               rolou || menuAberto
                 ? 'bg-white/10 text-white hover:bg-white/20'
                 : 'bg-verde/10 text-verde hover:bg-verde/20'
             }`}
           >
             <Lock className="size-4" aria-hidden="true" />
-            <span className="hidden lg:inline">{ROTULO_AREA_RESTRITA}</span>
+            <span className="hidden whitespace-nowrap xl:inline">{ROTULO_AREA_RESTRITA}</span>
           </a>
 
           {/*<LinkBotao

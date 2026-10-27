@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type {
-  PaginatedProfessorList,
+  PaginatedProfessorListList,
   PatchedProfessorRequest,
   Professor,
   ProfessorRequest,
@@ -23,7 +23,7 @@ import { api } from '../../../lib/api';
 export const professoresList = (
     params?: ProfessoresListParams,
  ) => {
-      return api<PaginatedProfessorList>(
+      return api<PaginatedProfessorListList>(
       {url: `/professores/`, method: 'GET',
         params
     },

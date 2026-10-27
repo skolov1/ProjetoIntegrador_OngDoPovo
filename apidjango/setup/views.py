@@ -26,7 +26,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .serializers import CustomTokenObtainPairSerializer
+from .serializers import CustomTokenObtainPairSerializer, tipo_de_conta
 
 # --------------------------------------------------------------------------- #
 # Helpers de cookie
@@ -65,6 +65,7 @@ class MeSerializer(serializers.Serializer):
     email = serializers.EmailField(allow_blank=True)
     role = serializers.CharField()
     is_staff = serializers.BooleanField()
+    tipo_conta = serializers.CharField()
 
 
 class PingSerializer(serializers.Serializer):
@@ -87,6 +88,7 @@ class LoginUserSerializer(serializers.Serializer):
     name = serializers.CharField()
     role = serializers.CharField()
     is_staff = serializers.BooleanField()
+    tipo_conta = serializers.CharField()
 
 
 class LoginResponseSerializer(serializers.Serializer):
@@ -232,6 +234,7 @@ class MeView(APIView):
                 'email': user.email,
                 'role': getattr(user, 'role', 'VOLUNTARIO'),
                 'is_staff': user.is_staff,
+                'tipo_conta': tipo_de_conta(user),
             }
         )
 

@@ -1,7 +1,6 @@
 /**
  * Footer — identidade, navegação, contato e créditos.
- * Inclui navegação por teclado ao topo e links legais que ainda não existem
- * (marcados como pendentes no plano).
+ * Inclui navegação por teclado ao topo e links legais.
  */
 import { ArrowUp, Mail, MessageCircle } from "lucide-react";
 
@@ -18,8 +17,14 @@ const REDES = [
   { Icon: Mail, rotulo: "E-mail", href: `mailto:${ONG.email}` },
 ] as const;
 
-export function Footer() {
+interface FooterProps {
+  /** Ajusta as âncoras da landing quando o rodapé é reutilizado em outra página. */
+  onPrivacyPage?: boolean;
+}
+
+export function Footer({ onPrivacyPage = false }: FooterProps) {
   const ano = new Date().getFullYear();
+  const homePrefix = onPrivacyPage ? "/" : "";
 
   return (
     <footer className="relative overflow-hidden bg-verde-900 text-white">
@@ -51,7 +56,7 @@ export function Footer() {
                 <span className="text-xl font-extrabold tracking-tight">
                   {ONG.nome}
                 </span>
-                <span className="mt-1 text-[0.6rem] font-bold uppercase tracking-[0.15em] text-mist-200">
+                <span className="mt-1 text-[0.7rem] font-bold uppercase tracking-[0.15em] text-mist-200">
                   {ONG.areas.join(" · ")}
                 </span>
               </span>
@@ -65,7 +70,7 @@ export function Footer() {
               {REDES.map(({ Icon, rotulo, href }) => (
                 <li key={rotulo}>
                   <a
-                    href={href}
+                    href={`${homePrefix}${href}`}
                     aria-label={rotulo}
                     {...(href.startsWith("http")
                       ? { target: "_blank", rel: "noreferrer noopener" }
@@ -146,12 +151,14 @@ export function Footer() {
           </p>
 
           <div className="flex items-center gap-5">
-            <span className="text-xs text-mist-200/50">
-              {/* Páginas legais ainda não implementadas — ver PLANO_REMODELAGEM.md */}
-              Política de Privacidade
-            </span>
             <a
-              href="#inicio"
+              href="/privacidade.html"
+              className="text-xs text-mist-200/70 transition-colors hover:text-white"
+            >
+              Política de Privacidade
+            </a>
+            <a
+              href={onPrivacyPage ? "/#inicio" : "#inicio"}
               className="grid size-9 place-items-center rounded-full bg-white/10 transition-all duration-300 hover:bg-verde hover:text-white"
               aria-label="Voltar ao topo"
             >

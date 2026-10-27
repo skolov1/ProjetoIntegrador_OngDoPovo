@@ -24,6 +24,8 @@ import {
   type DadosInscricao,
 } from '@/lib/inscricao'
 import { linkWhatsapp } from '@/lib/whatsapp'
+import fotoNossoEspaco from '../../../../refs/imagens_ong/interbairros-011.jpg'
+
 
 const CAMPO =
   'mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition placeholder:text-slate-400 focus:border-verde focus:ring-4 focus:ring-verde/10'
@@ -320,11 +322,11 @@ export function PreRegisterSection() {
           <div className="relative">
             <div
               aria-hidden="true"
-              className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-verde/15 to-amarelo/15 blur-2xl"
+              className="absolute -inset-4 rounded-4xl bg-linear-to-br from-verde/15 to-amarelo/15 blur-2xl"
             />
             <div className="relative overflow-hidden rounded-[1.75rem] shadow-2xl ring-1 ring-slate-900/5">
               <img
-                src="https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=900&q=85"
+                src={fotoNossoEspaco}
                 alt="Crianças com bolas de basquete após o treino"
                 loading="lazy"
                 className="h-full w-full object-cover"

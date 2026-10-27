@@ -47,7 +47,7 @@ function CartaoIndicador({
           {animado}
           <span className="text-amarelo">{sufixo}</span>
         </p>
-        <p className="mt-2 font-semibold text-verde-escuro">{rotulo}</p>
+        <p className="mt-2 text-lg font-semibold text-verde-escuro">{rotulo}</p>
       </div>
     </Reveal>
   )

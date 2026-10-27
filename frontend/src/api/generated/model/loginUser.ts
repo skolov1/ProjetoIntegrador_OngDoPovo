@@ -15,4 +15,5 @@ export interface LoginUser {
   name: string;
   role: string;
   is_staff: boolean;
+  tipo_conta: string;
 }

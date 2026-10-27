@@ -7,21 +7,38 @@ e correções pontuais.
 
 from django.contrib import admin
 
-from .models import Aluno, Consentimento, DoacaoItem, Presenca, Professor, Turma
+from .models import (
+    Aluno,
+    AtividadeAvulsa,
+    Consentimento,
+    DoacaoItem,
+    Emprestimo,
+    HorarioTurma,
+    Presenca,
+    Professor,
+    Turma,
+)
+
+
+class HorarioTurmaInline(admin.TabularInline):
+    """Os dias e horários em que a turma acontece (um ou mais)."""
+
+    model = HorarioTurma
+    extra = 1
 
 
 @admin.register(Turma)
 class TurmaAdmin(admin.ModelAdmin):
+    inlines = [HorarioTurmaInline]
     list_display = (
         "nome",
-        "dia_semana",
-        "horario_inicio",
-        "horario_fim",
+        "horario_formatado",
         "data_inicio",
         "ativo",
+        "visivel_na_grade",
         "total_alunos",
     )
-    list_filter = ("ativo", "dia_semana", "data_inicio")
+    list_filter = ("ativo", "visivel_na_grade", "horarios__dia_semana", "data_inicio")
     search_fields = ("nome", "descricao")
     date_hierarchy = "data_inicio"
     list_per_page = 25
@@ -163,6 +180,43 @@ class DoacaoItemAdmin(admin.ModelAdmin):
     list_filter = ("item", "recebido_em")
     search_fields = ("doador_nome", "observacao")
     date_hierarchy = "recebido_em"
+
+
+@admin.register(Emprestimo)
+class EmprestimoAdmin(admin.ModelAdmin):
+    list_display = (
+        "emprestado_em",
+        "doacao",
+        "quantidade",
+        "pessoa_nome",
+        "status_rotulo",
+        "devolvido_em",
+    )
+    list_filter = ("emprestado_em", "devolvido_em")
+    search_fields = ("pessoa_nome", "observacao")
+    date_hierarchy = "emprestado_em"
+    list_select_related = ("doacao",)
+
+    @admin.display(description="Status")
+    def status_rotulo(self, obj: Emprestimo) -> str:
+        return obj.status_rotulo
+
+
+@admin.register(AtividadeAvulsa)
+class AtividadeAvulsaAdmin(admin.ModelAdmin):
+    list_display = (
+        "nome",
+        "dia_semana",
+        "horario_exibido",
+        "status",
+        "visivel_na_grade",
+    )
+    list_filter = ("status", "visivel_na_grade", "dia_semana")
+    search_fields = ("nome",)
+
+    @admin.display(description="Horário")
+    def horario_exibido(self, obj: AtividadeAvulsa) -> str:
+        return obj.horario_exibido
 
 
 @admin.register(Presenca)
