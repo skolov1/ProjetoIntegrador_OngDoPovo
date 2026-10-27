@@ -1037,7 +1037,17 @@ export function DashboardLayout() {
   return (
     <div className="min-h-screen bg-mist-50 flex flex-row">
       <aside className="sticky top-0 h-screen w-64 shrink-0 bg-verde-escuro flex flex-col">
-        <div className="flex h-16 items-center px-6 border-b border-white/10">
+        <div className="flex h-16 items-center gap-3 px-6 border-b border-white/10">
+          <picture>
+            <source srcSet="/logo-icone.webp" type="image/webp" />
+            <img
+              src="/logo-icone.png"
+              alt=""
+              width={36}
+              height={36}
+              className="size-9 object-contain"
+            />
+          </picture>
           <h2 className="font-extrabold text-white">ONG do Povo</h2>
         </div>
 
