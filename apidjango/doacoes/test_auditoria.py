@@ -222,6 +222,22 @@ class TestEndpointAuditoria:
         assert "Muletas" in linha["objeto"]
         assert "quantidade" in linha["mudancas"]
 
+    def test_detalhe_legivel_sem_id_sem_relacoes_e_com_rotulo_da_escolha(self, maria):
+        cliente_de(maria).post(
+            "/api/v1/doacoes/itens/",
+            {"item": "ALIMENTOS", "quantidade": 3, "doador_nome": "Joana"},
+            format="json",
+        )
+
+        mudancas = cliente_de(maria).get(URL_AUDITORIA).data["results"][0]["mudancas"]
+
+        assert "id" not in mudancas
+        assert "emprestimos" not in mudancas
+        assert mudancas["item"]["para"] == "Alimentos não perecíveis"
+        assert mudancas["doador_nome"] == {"rotulo": "Doador", "de": "", "para": "Joana"}
+        # Campo que ficou vazio na criação não entra no detalhe.
+        assert "observacao" not in mudancas
+
     def test_sem_autor_aparece_como_sistema(self, maria):
         DoacaoItem.objects.create(item="MULETAS", quantidade=1)
 

@@ -295,35 +295,45 @@ class AuditoriaSerializer(serializers.ModelSerializer):
         nome = modelo._meta.verbose_name if modelo else obj.content_type.model
         return _primeira_maiuscula(str(nome))
 
-    def _rotulo_do_campo(self, obj: LogEntry, campo: str) -> str:
+    @staticmethod
+    def _campo(obj: LogEntry, nome: str):
         modelo = obj.content_type.model_class()
         try:
-            return _primeira_maiuscula(str(modelo._meta.get_field(campo).verbose_name))
+            return modelo._meta.get_field(nome)
         except (AttributeError, FieldDoesNotExist):
-            return campo
+            return None
 
     @staticmethod
-    def _texto(valor) -> str:
-        return "" if valor in (None, "None") else str(valor)
+    def _texto(valor, campo=None) -> str:
+        if valor in (None, "None"):
+            return ""
+        # Campo de escolha: mostra o rótulo ("Alimentos não perecíveis"), não o código.
+        if campo is not None and getattr(campo, "flatchoices", None):
+            return str(dict(campo.flatchoices).get(valor, valor))
+        return str(valor)
 
     def get_mudancas(self, obj: LogEntry) -> dict:
         """Campo a campo: rótulo, valor antigo e valor novo. Na exclusão não há detalhe."""
         if obj.action == LogEntry.Action.DELETE:
             return {}
         saida = {}
-        for campo, valor in obj.changes_dict.items():
-            rotulo = self._rotulo_do_campo(obj, campo)
+        for nome, valor in obj.changes_dict.items():
+            campo = self._campo(obj, nome)
+            # O id e as relações inversas (ex.: empréstimos de uma doação) só fazem ruído.
+            if nome == "id" or (campo is not None and campo.auto_created and not campo.concrete):
+                continue
+            rotulo = (
+                _primeira_maiuscula(str(campo.verbose_name)) if campo is not None else nome
+            )
             if isinstance(valor, dict):  # relação M2M (ex.: turmas do aluno)
                 verbo = "adicionou" if valor.get("operation") == "add" else "removeu"
                 itens = ", ".join(str(o) for o in valor.get("objects", []))
-                saida[campo] = {"rotulo": rotulo, "de": "", "para": f"{verbo}: {itens}"}
-            else:
-                antigo, novo = valor
-                saida[campo] = {
-                    "rotulo": rotulo,
-                    "de": self._texto(antigo),
-                    "para": self._texto(novo),
-                }
+                saida[nome] = {"rotulo": rotulo, "de": "", "para": f"{verbo}: {itens}"}
+                continue
+            antigo, novo = valor
+            de, para = self._texto(antigo, campo), self._texto(novo, campo)
+            if de or para:  # campo que ficou vazio dos dois lados não conta
+                saida[nome] = {"rotulo": rotulo, "de": de, "para": para}
         return saida
 
 
