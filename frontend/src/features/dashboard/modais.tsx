@@ -16,6 +16,8 @@ export type Confirmacao = {
   texto: string;
   rotulo: string;
   onConfirm: () => void;
+  /** Ação destrutiva (excluir): o botão de confirmar fica vermelho. */
+  perigo?: boolean;
 };
 
 // Modal reutilizável
@@ -70,6 +72,7 @@ export function ConfirmModal({
   texto,
   rotulo,
   onConfirm,
+  perigo = false,
   onClose,
 }: Confirmacao & { onClose: () => void }) {
   return (
@@ -88,7 +91,9 @@ export function ConfirmModal({
           <Button variante="contorno-claro" onClick={onClose}>
             Cancelar
           </Button>
-          <Button onClick={onConfirm}>{rotulo}</Button>
+          <Button variante={perigo ? "perigo" : "primaria"} onClick={onConfirm}>
+            {rotulo}
+          </Button>
         </div>
       </div>
     </div>

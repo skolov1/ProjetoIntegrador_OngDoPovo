@@ -158,6 +158,7 @@ export function EmprestimosSecao() {
       titulo: "Excluir empréstimo?",
       texto: "O registro some do histórico. Esta ação não pode ser desfeita.",
       rotulo: "Excluir",
+      perigo: true,
       onConfirm: () => excluir.mutate(e.id),
     });
 

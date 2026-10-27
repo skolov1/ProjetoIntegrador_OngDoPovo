@@ -7,7 +7,7 @@
  */
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-type Variante = "primaria" | "secundaria" | "contorno-claro";
+type Variante = "primaria" | "secundaria" | "contorno-claro" | "perigo";
 type Tamanho = "md" | "lg";
 
 const VARIANTES: Record<Variante, string> = {
@@ -17,6 +17,8 @@ const VARIANTES: Record<Variante, string> = {
     "bg-amarelo text-verde-escuro shadow-lg shadow-amarelo/25 hover:bg-[#ffd54a] hover:-translate-y-0.5",
   "contorno-claro":
     "border-2 border-verde text-verde hover:bg-verde hover:text-white hover:-translate-y-0.5",
+  perigo:
+    "bg-vermelho text-white shadow-lg shadow-vermelho/25 hover:bg-[#c62828] hover:-translate-y-0.5",
 };
 
 const TAMANHOS: Record<Tamanho, string> = {

@@ -27,16 +27,13 @@ import {
   useTurmas,
   useCreateTurma,
   useUpdateTurma,
-  useDeleteTurma,
   useAlunos,
   useCreateAluno,
   useUpdateAluno,
   useDeleteAluno,
   useAlterarAtivoAluno,
-  useProfessores,
   useCreateProfessor,
   useUpdateProfessor,
-  useDeleteProfessor,
   useDoacoesItens,
   useDoacoesItensResumo,
   useCreateDoacaoItem,
@@ -46,6 +43,9 @@ import {
 import { PresencasTela } from "@/features/dashboard/PresencasTela";
 import { AuditoriaTela } from "@/features/dashboard/AuditoriaTela";
 import { UsuarioLogado } from "@/features/dashboard/UsuarioLogado";
+import { TurmasTela } from "@/features/dashboard/TurmasTela";
+import { ProfessoresTela } from "@/features/dashboard/ProfessoresTela";
+import { Paginacao } from "@/features/dashboard/pecas";
 import { Sunburst } from "@/components/ui/Sunburst";
 import { EmprestimosSecao } from "@/features/dashboard/EmprestimosSecao";
 import {
@@ -202,6 +202,8 @@ function erroDoAluno(f: FormAluno, menor: boolean): string {
 
 export function DashboardLayout() {
   const [screen, setScreen] = useState<Screen>("presenca");
+  const [paginaAlunos, setPaginaAlunos] = useState(1);
+  const [paginaDoacoes, setPaginaDoacoes] = useState(1);
   const [showForm, setShowForm] = useState<
     "turma" | "aluno" | "professor" | "doacao" | null
   >(null);
@@ -229,25 +231,22 @@ export function DashboardLayout() {
   });
 
   // Queries - ALWAYS called first to maintain hook order
-  const {
-    data: turmasData,
-    isLoading: loadingTurmas,
-    error: errorTurmas,
-  } = useTurmas();
+  // Todas as turmas (até 100), para os checkboxes dos formulários. A lista paginada
+  // da tela de Turmas tem a própria consulta em TurmasTela.
+  const { data: turmasData } = useTurmas({ page_size: 100 });
   const {
     data: alunosData,
     isLoading: loadingAlunos,
     error: errorAlunos,
-  } = useAlunos();
+  } = useAlunos({ page: paginaAlunos });
   const { data: doacoesResumo } = useDoacoesItensResumo();
-  const { data: doacoesData } = useDoacoesItens();
-  const { data: professoresData, isLoading: loadingProfessores } =
-    useProfessores();
+  const { data: doacoesData, error: errorDoacoes } = useDoacoesItens({
+    page: paginaDoacoes,
+  });
 
   // Mutations - ALWAYS called to maintain hook order
   const createTurma = useCreateTurma();
   const updateTurma = useUpdateTurma();
-  const deleteTurma = useDeleteTurma();
   const createAluno = useCreateAluno();
   const updateAluno = useUpdateAluno();
   const deleteAluno = useDeleteAluno();
@@ -257,12 +256,10 @@ export function DashboardLayout() {
   const deleteDoacao = useDeleteDoacaoItem();
   const createProfessor = useCreateProfessor();
   const updateProfessor = useUpdateProfessor();
-  const deleteProfessor = useDeleteProfessor();
 
   // Extract results from paginated responses
   const turmas = turmasData?.results ?? [];
   const alunos = alunosData?.results ?? [];
-  const professores = professoresData?.results || [];
 
   // Helper functions
   const closeForm = () => {
@@ -430,7 +427,7 @@ export function DashboardLayout() {
 
   const handleDelete = (
     id: number,
-    type: "turma" | "aluno" | "professor" | "doacao",
+    type: "aluno" | "doacao",
   ) => {
     const definitiva =
       type === "aluno"
@@ -440,11 +437,23 @@ export function DashboardLayout() {
       titulo: "Excluir definitivamente?",
       texto: definitiva,
       rotulo: "Excluir",
+      perigo: true,
       onConfirm: () => {
-        if (type === "turma") deleteTurma.mutate(id);
-        else if (type === "aluno") deleteAluno.mutate(id);
-        else if (type === "doacao") deleteDoacao.mutate(id);
-        else deleteProfessor.mutate(id);
+        // Excluir o único item da página recua uma página (a atual deixaria de existir).
+        if (type === "aluno") {
+          deleteAluno.mutate(id, {
+            onSuccess: () => {
+              if (alunos.length === 1 && paginaAlunos > 1) setPaginaAlunos(paginaAlunos - 1);
+            },
+          });
+        } else {
+          deleteDoacao.mutate(id, {
+            onSuccess: () => {
+              const itens = doacoesData?.results ?? [];
+              if (itens.length === 1 && paginaDoacoes > 1) setPaginaDoacoes(paginaDoacoes - 1);
+            },
+          });
+        }
       },
     });
   };
@@ -461,6 +470,35 @@ export function DashboardLayout() {
   };
 
   const menor = ehMenor(formAluno.data_nascimento);
+
+  const abrirNovaTurma = () => {
+    closeForm();
+    setEditingId(null);
+    setFormTurma({
+      nome: "",
+      dia_semana: "SEG",
+      horario_inicio: "08:00",
+      horario_fim: "09:00",
+      data_inicio: new Date().toISOString().split("T")[0],
+      data_fim: "",
+      ativo: true,
+    });
+    setShowForm("turma");
+  };
+
+  const abrirNovoProfessor = () => {
+    closeForm();
+    setEditingId(null);
+    setFormProfessor({
+      nome: "",
+      cpf: "",
+      email: "",
+      telefone: "",
+      turmas: [],
+      ativo: true,
+    });
+    setShowForm("professor");
+  };
 
   const renderFormModal = () => {
     if (showForm === "doacao")
@@ -1103,66 +1141,10 @@ export function DashboardLayout() {
 
         {/* TURMAS */}
         {screen === "turmas" && (
-          <div className="mt-6 space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-xl font-extrabold text-verde-escuro">Turmas</h3>
-              <Button
-                variante="secundaria"
-                onClick={() => {
-                  closeForm();
-                  setEditingId(null);
-                  setFormTurma({
-                    nome: "",
-                    dia_semana: "SEG",
-                    horario_inicio: "08:00",
-                    horario_fim: "09:00",
-                    data_inicio: new Date().toISOString().split("T")[0],
-                    data_fim: "",
-                    ativo: true,
-                  });
-                  setShowForm("turma");
-                }}
-              >
-                <Plus className="size-4 mr-2" />
-                Nova Turma
-              </Button>
-            </div>
-            {loadingTurmas ? (
-              <p>Carregando...</p>
-            ) : errorTurmas ? (
-              <p className="text-vermelho">Erro ao carregar turmas</p>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {turmas.map((t) => (
-                  <div key={t.id} className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
-                    <h4 className="font-bold text-verde mb-2">{t.nome}</h4>
-                    <p className="text-sm text-grafite/60">
-                      {t.horario_formatado}
-                    </p>
-                    <p className="text-xs text-grafite/50">
-                      {t.ativo ? "Ativa" : "Inativa"}
-                    </p>
-                    <div className="mt-3 flex gap-2">
-                      <Button
-                        tamanho="md"
-                        variante="contorno-claro"
-                        onClick={() => void handleEdit("turma", t.id)}
-                      >
-                        <Edit className="size-4" />
-                      </Button>
-                      <Button
-                        tamanho="md"
-                        variante="contorno-claro"
-                        onClick={() => handleDelete(t.id, "turma")}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <TurmasTela
+            onNova={abrirNovaTurma}
+            onEditar={(id) => void handleEdit("turma", id)}
+          />
         )}
 
         {/* ALUNOS */}
@@ -1186,7 +1168,18 @@ export function DashboardLayout() {
             {loadingAlunos ? (
               <p>Carregando...</p>
             ) : errorAlunos ? (
-              <p className="text-vermelho">Erro ao carregar alunos</p>
+              <p className="text-vermelho">
+                Erro ao carregar alunos.{" "}
+                {paginaAlunos > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setPaginaAlunos(1)}
+                    className="font-semibold underline underline-offset-4"
+                  >
+                    Voltar à primeira página
+                  </button>
+                )}
+              </p>
             ) : (
               <div className="overflow-x-auto rounded-2xl border border-slate-200/70 bg-white shadow-sm">
                 <table className="w-full">
@@ -1268,69 +1261,20 @@ export function DashboardLayout() {
                 </table>
               </div>
             )}
+            <Paginacao
+              pagina={paginaAlunos}
+              total={alunosData?.count ?? 0}
+              onMudar={setPaginaAlunos}
+            />
           </div>
         )}
 
         {/* PROFESSORES */}
         {screen === "professores" && (
-          <div className="mt-6 space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-xl font-extrabold text-verde-escuro">Professores</h3>
-              <Button
-                variante="secundaria"
-                onClick={() => {
-                  closeForm();
-                  setEditingId(null);
-                  setFormProfessor({
-                    nome: "",
-                    cpf: "",
-                    email: "",
-                    telefone: "",
-                    turmas: [],
-                    ativo: true,
-                  });
-                  setShowForm("professor");
-                }}
-              >
-                <Plus className="size-4 mr-2" />
-                Novo Professor
-              </Button>
-            </div>
-            {loadingProfessores || !professoresData ? (
-              <p>Carregando...</p>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {professores.map((p) => (
-                  <div key={p.id} className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
-                    <h4 className="font-bold text-verde mb-2">{p.nome}</h4>
-                    <p className="text-sm text-grafite/60">CPF: {p.cpf}</p>
-                    <p className="text-sm text-grafite/60">
-                      Turmas: {p.turmas_nomes?.join(", ") || "—"}
-                    </p>
-                    <p className="text-xs text-grafite/50">
-                      Alunos: {p.total_alunos}
-                    </p>
-                    <div className="mt-3 flex gap-2">
-                      <Button
-                        tamanho="md"
-                        variante="contorno-claro"
-                        onClick={() => void handleEdit("professor", p.id)}
-                      >
-                        <Edit className="size-4" />
-                      </Button>
-                      <Button
-                        tamanho="md"
-                        variante="contorno-claro"
-                        onClick={() => handleDelete(p.id, "professor")}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <ProfessoresTela
+            onNovo={abrirNovoProfessor}
+            onEditar={(id) => void handleEdit("professor", id)}
+          />
         )}
 
         {/* DOAÇÕES (só itens; o PIX a ONG confere no extrato) */}
@@ -1429,6 +1373,26 @@ export function DashboardLayout() {
                 </tbody>
               </table>
             </div>
+
+            {errorDoacoes && (
+              <p className="text-vermelho">
+                Erro ao carregar as doações.{" "}
+                {paginaDoacoes > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setPaginaDoacoes(1)}
+                    className="font-semibold underline underline-offset-4"
+                  >
+                    Voltar à primeira página
+                  </button>
+                )}
+              </p>
+            )}
+            <Paginacao
+              pagina={paginaDoacoes}
+              total={doacoesData?.count ?? 0}
+              onMudar={setPaginaDoacoes}
+            />
 
             <EmprestimosSecao />
           </div>

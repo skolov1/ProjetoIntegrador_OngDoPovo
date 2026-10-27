@@ -8,7 +8,13 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { turmasList, turmasCreate, turmasUpdate, turmasDestroy } from '@/api/generated/turmas/turmas'
+import {
+  turmasList,
+  turmasCreate,
+  turmasUpdate,
+  turmasPartialUpdate,
+  turmasDestroy,
+} from '@/api/generated/turmas/turmas'
 import { presencasChamadaList, presencasLoteCreate } from '@/api/generated/presencas/presencas'
 import { auditoriaList, auditoriaUsuariosList } from '@/api/generated/auditoria/auditoria'
 import { authMeRetrieve } from '@/api/generated/auth/auth'
@@ -17,6 +23,7 @@ import {
   professoresList,
   professoresCreate,
   professoresUpdate,
+  professoresPartialUpdate,
   professoresDestroy,
 } from '@/api/generated/professores/professores'
 import {
@@ -34,7 +41,7 @@ import {
 import type {
   PaginatedTurmaListList,
   PaginatedAlunoListList,
-  PaginatedProfessorList,
+  PaginatedProfessorListList,
   PaginatedDoacaoItemList,
   DoacaoItemResumo,
   DoacaoItemRequest,
@@ -51,6 +58,11 @@ import type {
   PaginatedAuditoriaList,
 } from '@/api/generated/model'
 
+// Página que não existe mais (ex.: excluiu o último item da última página) volta 404.
+// Não adianta repetir: a tela recua uma página.
+const semRepetirNo404 = (tentativas: number, erro: unknown) =>
+  (erro as { response?: { status?: number } })?.response?.status !== 404 && tentativas < 2
+
 // Helper para extrair data da resposta do axios
 const extractData = <T,>(response: { data: T }) => response.data
 
@@ -58,11 +70,12 @@ const extractData = <T,>(response: { data: T }) => response.data
 // TURMAS
 // ============================================================================
 
-export function useTurmas(params?: import('@/api/generated/model').DoacoesTurmasListParams) {
+export function useTurmas(params?: import('@/api/generated/model').TurmasListParams) {
   return useQuery<PaginatedTurmaListList>({
     queryKey: ['turmas', params],
     queryFn: () => turmasList(params).then(extractData),
     staleTime: 30_000,
+    retry: semRepetirNo404,
   })
 }
 
@@ -82,6 +95,16 @@ export function useUpdateTurma() {
   })
 }
 
+// Inativar não apaga nada: a turma só sai da lista de chamada e o histórico fica.
+export function useAlterarAtivoTurma() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ativo }: { id: number; ativo: boolean }) =>
+      turmasPartialUpdate(id, { ativo }).then(extractData),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['turmas'] }),
+  })
+}
+
 export function useDeleteTurma() {
   const qc = useQueryClient()
   return useMutation({
@@ -94,11 +117,12 @@ export function useDeleteTurma() {
 // ALUNOS
 // ============================================================================
 
-export function useAlunos(params?: import('@/api/generated/model').DoacoesAlunosListParams) {
+export function useAlunos(params?: import('@/api/generated/model').AlunosListParams) {
   return useQuery<PaginatedAlunoListList>({
     queryKey: ['alunos', params],
     queryFn: () => alunosList(params).then(extractData),
     staleTime: 30_000,
+    retry: semRepetirNo404,
   })
 }
 
@@ -140,11 +164,12 @@ export function useDeleteAluno() {
 // PROFESSORES
 // ============================================================================
 
-export function useProfessores(params?: import('@/api/generated/model').DoacoesProfessoresListParams) {
-  return useQuery<PaginatedProfessorList>({
+export function useProfessores(params?: import('@/api/generated/model').ProfessoresListParams) {
+  return useQuery<PaginatedProfessorListList>({
     queryKey: ['professores', params],
     queryFn: () => professoresList(params).then(extractData),
     staleTime: 60_000,
+    retry: semRepetirNo404,
   })
 }
 
@@ -160,6 +185,15 @@ export function useUpdateProfessor() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: import('@/api/generated/model').ProfessorRequest }) => professoresUpdate(id, data).then(extractData),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['professores'] }),
+  })
+}
+
+export function useAlterarAtivoProfessor() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ativo }: { id: number; ativo: boolean }) =>
+      professoresPartialUpdate(id, { ativo }).then(extractData),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['professores'] }),
   })
 }
@@ -181,6 +215,7 @@ export function useDoacoesItens(params?: import('@/api/generated/model').Doacoes
     queryKey: ['doacoes-itens', params],
     queryFn: () => doacoesItensList(params).then(extractData),
     staleTime: 30_000,
+    retry: semRepetirNo404,
   })
 }
 
