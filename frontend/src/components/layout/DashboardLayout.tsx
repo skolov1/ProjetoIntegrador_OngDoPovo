@@ -12,7 +12,7 @@ import {
   Users,
   Clipboard,
   MessageCircle,
-  LogOut,
+  History,
   Plus,
   Edit,
   Trash2,
@@ -43,8 +43,9 @@ import {
   useUpdateDoacaoItem,
   useDeleteDoacaoItem,
 } from "@/features/dashboard/api";
-import { encerrarSessao } from "@/lib/api";
 import { PresencasTela } from "@/features/dashboard/PresencasTela";
+import { AuditoriaTela } from "@/features/dashboard/AuditoriaTela";
+import { UsuarioLogado } from "@/features/dashboard/UsuarioLogado";
 import { EmprestimosSecao } from "@/features/dashboard/EmprestimosSecao";
 import {
   CLASSE_CAMPO,
@@ -74,7 +75,13 @@ import {
 } from "@/lib/aluno";
 // import types removed as they're not directly used
 
-type Screen = "presenca" | "alunos" | "doacoes" | "turmas" | "professores";
+type Screen =
+  | "presenca"
+  | "alunos"
+  | "doacoes"
+  | "turmas"
+  | "professores"
+  | "auditoria";
 type TipoCadastro = "turma" | "aluno" | "professor";
 
 const ITENS_MENU: { id: Screen; label: string; Icon: LucideIcon }[] = [
@@ -83,6 +90,7 @@ const ITENS_MENU: { id: Screen; label: string; Icon: LucideIcon }[] = [
   { id: "turmas", label: "Turmas", Icon: Clipboard },
   { id: "professores", label: "Professores", Icon: MessageCircle },
   { id: "doacoes", label: "Doações", Icon: Clipboard },
+  { id: "auditoria", label: "Auditoria", Icon: History },
 ];
 
 type FormTurma = {
@@ -1028,17 +1036,9 @@ export function DashboardLayout() {
 
   return (
     <div className="min-h-screen bg-mist-50 flex flex-row">
-      <aside className="w-64 bg-verde-escuro min-h-screen flex flex-col">
-        <div className="flex h-16 items-center justify-between px-6 border-b border-white/10">
+      <aside className="sticky top-0 h-screen w-64 shrink-0 bg-verde-escuro flex flex-col">
+        <div className="flex h-16 items-center px-6 border-b border-white/10">
           <h2 className="font-extrabold text-white">ONG do Povo</h2>
-          <button
-            type="button"
-            onClick={() => void encerrarSessao()}
-            className="p-2 rounded-md hover:bg-white/10 transition-colors"
-            aria-label="Sair"
-          >
-            <LogOut className="size-4 text-white" />
-          </button>
         </div>
 
         <nav className="flex flex-col gap-2 px-6 py-8">
@@ -1053,6 +1053,8 @@ export function DashboardLayout() {
             </button>
           ))}
         </nav>
+
+        <UsuarioLogado />
       </aside>
 
       <main className="ml-2 p-6 bg-mist-50">
@@ -1070,6 +1072,9 @@ export function DashboardLayout() {
 
         {/* PRESENÇAS */}
         {screen === "presenca" && <PresencasTela />}
+
+        {/* AUDITORIA */}
+        {screen === "auditoria" && <AuditoriaTela />}
 
         {/* TURMAS */}
         {screen === "turmas" && (

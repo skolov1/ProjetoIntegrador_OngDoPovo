@@ -10,6 +10,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { turmasList, turmasCreate, turmasUpdate, turmasDestroy } from '@/api/generated/turmas/turmas'
 import { presencasChamadaList, presencasLoteCreate } from '@/api/generated/presencas/presencas'
+import { auditoriaList, auditoriaUsuariosList } from '@/api/generated/auditoria/auditoria'
+import { authMeRetrieve } from '@/api/generated/auth/auth'
 import { alunosList, alunosCreate, alunosUpdate, alunosPartialUpdate, alunosDestroy } from '@/api/generated/alunos/alunos'
 import {
   professoresList,
@@ -43,6 +45,10 @@ import type {
   PatchedEmprestimoRequest,
   ChamadaItem,
   PresencaLoteRequest,
+  AuditoriaListParams,
+  AuditoriaUsuario,
+  Me,
+  PaginatedAuditoriaList,
 } from '@/api/generated/model'
 
 // Helper para extrair data da resposta do axios
@@ -286,5 +292,37 @@ export function useSalvarChamada() {
     mutationFn: (data: PresencaLoteRequest) => presencasLoteCreate(data).then(extractData),
     // A situação salva muda a contagem de faltas seguidas dos próximos dias.
     onSuccess: () => qc.invalidateQueries({ queryKey: ['presencas'] }),
+  })
+}
+
+// ============================================================================
+// USUÁRIO LOGADO E AUDITORIA
+// ============================================================================
+
+// Quem está logado (nome completo e tipo de conta), para o cartão da barra lateral.
+export function useUsuarioLogado() {
+  return useQuery<Me>({
+    queryKey: ['usuario-logado'],
+    queryFn: () => authMeRetrieve().then(extractData),
+    staleTime: 5 * 60_000,
+  })
+}
+
+export function useAuditoria(params?: AuditoriaListParams) {
+  return useQuery<PaginatedAuditoriaList>({
+    queryKey: ['auditoria', params],
+    queryFn: () => auditoriaList(params).then(extractData),
+    staleTime: 10_000,
+    // Mantém a página anterior na tela enquanto a próxima carrega.
+    placeholderData: (anterior) => anterior,
+  })
+}
+
+// Pessoas da equipe, para o filtro "quem fez".
+export function useAuditoriaUsuarios() {
+  return useQuery<AuditoriaUsuario[]>({
+    queryKey: ['auditoria', 'usuarios'],
+    queryFn: () => auditoriaUsuariosList().then(extractData),
+    staleTime: 60_000,
   })
 }
