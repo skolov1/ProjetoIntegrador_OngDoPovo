@@ -1,9 +1,11 @@
 """
-Modelos do painel da ONG: alunos, turmas, professores, presenças e doações de itens.
+Modelos do painel da ONG: alunos, turmas, professores, presenças, doações de itens
+e empréstimos desses itens.
 
 Doação em dinheiro não é registrada no sistema: o PIX a ONG confere no extrato.
 """
 
+import calendar
 from datetime import date
 from decimal import Decimal
 
@@ -66,6 +68,85 @@ class DoacaoItem(models.Model):
     @property
     def doador_exibido(self) -> str:
         return self.doador_nome or "Anônimo"
+
+    @property
+    def quantidade_emprestada(self) -> int:
+        """Unidades deste registro que ainda estão emprestadas (não devolvidas)."""
+        total = self.emprestimos.filter(devolvido_em__isnull=True).aggregate(
+            total=models.Sum("quantidade")
+        )["total"]
+        return total or 0
+
+
+# Depois deste prazo sem devolução, o empréstimo passa a "atrasado".
+PRAZO_EMPRESTIMO_MESES = 3
+
+
+def somar_meses(dia: date, meses: int) -> date:
+    """`dia` deslocado em `meses` (pode ser negativo), travando no fim do mês."""
+    indice = dia.year * 12 + (dia.month - 1) + meses
+    ano, mes = divmod(indice, 12)
+    mes += 1
+    ultimo_dia = calendar.monthrange(ano, mes)[1]
+    return dia.replace(year=ano, month=mes, day=min(dia.day, ultimo_dia))
+
+
+class Emprestimo(models.Model):
+    """Item de uma doação que a ONG emprestou a uma pessoa.
+
+    Só o nome de quem pegou é guardado (sem telefone nem documento). O status
+    não é coluna: sai das datas, para nunca ficar desatualizado.
+    """
+
+    class Status(models.TextChoices):
+        EMPRESTADO = "EMPRESTADO", "Emprestado"
+        ATRASADO = "ATRASADO", "Atrasado"
+        DEVOLVIDO = "DEVOLVIDO", "Devolvido"
+
+    # PROTECT: não dá para apagar a doação enquanto houver histórico de empréstimo.
+    doacao = models.ForeignKey(
+        DoacaoItem,
+        on_delete=models.PROTECT,
+        related_name="emprestimos",
+        verbose_name="item doado",
+    )
+    quantidade = models.PositiveIntegerField(
+        "quantidade", default=1, validators=[MinValueValidator(1)]
+    )
+    pessoa_nome = models.CharField("emprestado para", max_length=150)
+    emprestado_em = models.DateField("emprestado em", default=timezone.localdate)
+    devolvido_em = models.DateField("devolvido em", null=True, blank=True)
+    observacao = models.CharField("observação", max_length=255, blank=True)
+    criado_em = models.DateTimeField("registrado em", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Empréstimo de item"
+        verbose_name_plural = "Empréstimos de itens"
+        ordering = ["-emprestado_em", "-criado_em"]
+
+    def __str__(self) -> str:
+        return f"{self.quantidade}x {self.doacao.item_exibido} - {self.pessoa_nome}"
+
+    @staticmethod
+    def limite_atraso(hoje: date | None = None) -> date:
+        """Quem foi emprestado antes desta data já passou do prazo."""
+        return somar_meses(hoje or timezone.localdate(), -PRAZO_EMPRESTIMO_MESES)
+
+    @property
+    def status(self) -> str:
+        if self.devolvido_em:
+            return self.Status.DEVOLVIDO
+        if self.emprestado_em < self.limite_atraso():
+            return self.Status.ATRASADO
+        return self.Status.EMPRESTADO
+
+    @property
+    def status_rotulo(self) -> str:
+        return self.Status(self.status).label
+
+    @property
+    def devolver_ate(self) -> date:
+        return somar_meses(self.emprestado_em, PRAZO_EMPRESTIMO_MESES)
 
 
 # =============================================================================

@@ -1,10 +1,12 @@
 """
-Serializers do painel: doações de itens, turmas, alunos, presenças e professores.
+Serializers do painel: doações de itens, empréstimos, turmas, alunos, presenças e professores.
 """
 
 from datetime import date
 
 from django.db import transaction
+from django.db.models import Sum
+from django.utils import timezone
 from rest_framework import serializers
 
 from .documentos import cpf_valido, so_digitos, telefone_valido
@@ -13,6 +15,7 @@ from .models import (
     Aluno,
     Consentimento,
     DoacaoItem,
+    Emprestimo,
     Presenca,
     Professor,
     Turma,
@@ -100,6 +103,19 @@ class DoacaoItemSerializer(serializers.ModelSerializer):
         else:
             descricao = ""
         attrs["item_descricao"] = descricao
+
+        quantidade = attrs.get("quantidade")
+        if self.instance and quantidade is not None:
+            emprestada = self.instance.quantidade_emprestada
+            if quantidade < emprestada:
+                raise serializers.ValidationError(
+                    {
+                        "quantidade": (
+                            f"{emprestada} unidade(s) estão emprestadas; "
+                            "a quantidade não pode ser menor."
+                        )
+                    }
+                )
         return attrs
 
 
@@ -109,6 +125,94 @@ class DoacaoItemResumoSerializer(serializers.Serializer):
     item = serializers.CharField()
     item_rotulo = serializers.CharField()
     total = serializers.IntegerField()
+
+
+# =============================================================================
+# Empréstimo de itens (item de uma doação que saiu da ONG por um tempo)
+# =============================================================================
+
+
+class EmprestimoSerializer(serializers.ModelSerializer):
+    item_rotulo = serializers.CharField(source="doacao.item_exibido", read_only=True)
+    status = serializers.CharField(read_only=True)
+    status_rotulo = serializers.CharField(read_only=True)
+    devolver_ate = serializers.DateField(read_only=True)
+
+    class Meta:
+        model = Emprestimo
+        fields = [
+            "id",
+            "doacao",
+            "item_rotulo",
+            "quantidade",
+            "pessoa_nome",
+            "emprestado_em",
+            "devolvido_em",
+            "devolver_ate",
+            "status",
+            "status_rotulo",
+            "observacao",
+            "criado_em",
+        ]
+        read_only_fields = [
+            "criado_em",
+            "item_rotulo",
+            "status",
+            "status_rotulo",
+            "devolver_ate",
+        ]
+
+    def validate_pessoa_nome(self, valor: str) -> str:
+        valor = valor.strip()
+        if not valor:
+            raise serializers.ValidationError("Informe quem pegou o item emprestado.")
+        return valor
+
+    def validate_doacao(self, doacao: DoacaoItem) -> DoacaoItem:
+        # Alimento é consumido: não volta, então não é emprestado.
+        if doacao.item == DoacaoItem.Item.ALIMENTOS:
+            raise serializers.ValidationError("Alimentos não são emprestados.")
+        return doacao
+
+    def validate_emprestado_em(self, valor: date) -> date:
+        if valor > timezone.localdate():
+            raise serializers.ValidationError("A data do empréstimo não pode ser futura.")
+        return valor
+
+    def validate(self, attrs):
+        atual = self.instance
+        doacao = attrs.get("doacao", getattr(atual, "doacao", None))
+        quantidade = attrs.get("quantidade", getattr(atual, "quantidade", 1))
+        emprestado_em = attrs.get("emprestado_em", getattr(atual, "emprestado_em", None))
+        devolvido_em = attrs.get("devolvido_em", getattr(atual, "devolvido_em", None))
+
+        if devolvido_em:
+            if emprestado_em and devolvido_em < emprestado_em:
+                raise serializers.ValidationError(
+                    {"devolvido_em": "A devolução não pode ser antes do empréstimo."}
+                )
+            if devolvido_em > timezone.localdate():
+                raise serializers.ValidationError(
+                    {"devolvido_em": "A data da devolução não pode ser futura."}
+                )
+        elif doacao is not None:
+            # Só o que ainda está fora conta contra o que foi doado.
+            em_aberto = doacao.emprestimos.filter(devolvido_em__isnull=True)
+            if atual:
+                em_aberto = em_aberto.exclude(pk=atual.pk)
+            livre = doacao.quantidade - (
+                em_aberto.aggregate(total=Sum("quantidade"))["total"] or 0
+            )
+            if quantidade > livre:
+                raise serializers.ValidationError(
+                    {
+                        "quantidade": (
+                            f"Só há {max(livre, 0)} unidade(s) disponível(is) "
+                            "deste item para emprestar."
+                        )
+                    }
+                )
+        return attrs
 
 
 # =============================================================================

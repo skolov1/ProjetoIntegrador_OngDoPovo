@@ -1,13 +1,14 @@
 """
-Views do painel: doações de itens, turmas, alunos, presenças e professores.
+Views do painel: doações de itens, empréstimos, turmas, alunos, presenças e professores.
 
 Tudo aqui é só para a equipe (`IsAdminUser`); não há rota pública de doação.
 """
 
 from datetime import date
 
+import django_filters
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import ProtectedError, Sum
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
@@ -15,13 +16,14 @@ from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 
 from .faltas import eh_faltante, faltas_seguidas
-from .models import Aluno, DoacaoItem, Presenca, Professor, Turma
+from .models import Aluno, DoacaoItem, Emprestimo, Presenca, Professor, Turma
 from .serializers import (
     AlunoListSerializer,
     AlunoSerializer,
     ChamadaItemSerializer,
     DoacaoItemResumoSerializer,
     DoacaoItemSerializer,
+    EmprestimoSerializer,
     PresencaCreateSerializer,
     PresencaLoteSerializer,
     PresencaSerializer,
@@ -69,6 +71,58 @@ class DoacaoItemViewSet(
             for valor, rotulo in DoacaoItem.Item.choices
         ]
         return Response(DoacaoItemResumoSerializer(dados, many=True).data)
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except ProtectedError:
+            return Response(
+                {"detail": "Este item tem empréstimos registrados e não pode ser excluído."},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+
+# =============================================================================
+# Empréstimo de itens
+# =============================================================================
+
+
+class EmprestimoFilter(django_filters.FilterSet):
+    status = django_filters.ChoiceFilter(
+        choices=Emprestimo.Status.choices, method="filtrar_status"
+    )
+
+    class Meta:
+        model = Emprestimo
+        fields = ["doacao"]
+
+    def filtrar_status(self, queryset, name, valor):
+        limite = Emprestimo.limite_atraso()
+        if valor == Emprestimo.Status.DEVOLVIDO:
+            return queryset.filter(devolvido_em__isnull=False)
+        em_aberto = queryset.filter(devolvido_em__isnull=True)
+        if valor == Emprestimo.Status.ATRASADO:
+            return em_aberto.filter(emprestado_em__lt=limite)
+        return em_aberto.filter(emprestado_em__gte=limite)
+
+
+class EmprestimoViewSet(
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet,
+):
+    """Empréstimos de itens doados. A devolução é um PATCH de `devolvido_em`."""
+
+    queryset = Emprestimo.objects.select_related("doacao")
+    serializer_class = EmprestimoSerializer
+    permission_classes = [IsAdminUser]
+    filterset_class = EmprestimoFilter
+    search_fields = ["pessoa_nome", "observacao"]
+    ordering_fields = ["emprestado_em", "devolvido_em"]
+    ordering = ["-emprestado_em", "-criado_em"]
 
 
 # =============================================================================

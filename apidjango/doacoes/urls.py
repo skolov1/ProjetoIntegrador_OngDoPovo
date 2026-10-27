@@ -1,5 +1,5 @@
 """
-Rotas do painel (todas só para a equipe): doações de itens, turmas, alunos,
+Rotas do painel (todas só para a equipe): doações de itens, empréstimos, turmas, alunos,
 presenças e professores.
 """
 
@@ -10,6 +10,9 @@ from . import views
 
 router = DefaultRouter()
 router.register("doacoes/itens", views.DoacaoItemViewSet, basename="doacao-item")
+router.register(
+    "doacoes/emprestimos", views.EmprestimoViewSet, basename="emprestimo"
+)
 router.register("turmas", views.TurmaViewSet, basename="turma")
 router.register("alunos", views.AlunoViewSet, basename="aluno")
 router.register("presencas", views.PresencaViewSet, basename="presenca")

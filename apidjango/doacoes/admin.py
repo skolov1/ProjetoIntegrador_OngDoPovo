@@ -7,7 +7,15 @@ e correções pontuais.
 
 from django.contrib import admin
 
-from .models import Aluno, Consentimento, DoacaoItem, Presenca, Professor, Turma
+from .models import (
+    Aluno,
+    Consentimento,
+    DoacaoItem,
+    Emprestimo,
+    Presenca,
+    Professor,
+    Turma,
+)
 
 
 @admin.register(Turma)
@@ -163,6 +171,26 @@ class DoacaoItemAdmin(admin.ModelAdmin):
     list_filter = ("item", "recebido_em")
     search_fields = ("doador_nome", "observacao")
     date_hierarchy = "recebido_em"
+
+
+@admin.register(Emprestimo)
+class EmprestimoAdmin(admin.ModelAdmin):
+    list_display = (
+        "emprestado_em",
+        "doacao",
+        "quantidade",
+        "pessoa_nome",
+        "status_rotulo",
+        "devolvido_em",
+    )
+    list_filter = ("emprestado_em", "devolvido_em")
+    search_fields = ("pessoa_nome", "observacao")
+    date_hierarchy = "emprestado_em"
+    list_select_related = ("doacao",)
+
+    @admin.display(description="Status")
+    def status_rotulo(self, obj: Emprestimo) -> str:
+        return obj.status_rotulo
 
 
 @admin.register(Presenca)
