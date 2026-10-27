@@ -7,7 +7,10 @@
  */
 
 /**
- * Listagem leve para selects/lookups.
+ * Listagem leve para selects e cards.
+ *
+ * `total_alunos` (só ativos) e `total_presencas` vêm contados na consulta. O
+ * segundo avisa, antes de excluir a turma, quantas presenças seriam apagadas junto.
  */
 export interface TurmaList {
   readonly id: number;
@@ -15,4 +18,6 @@ export interface TurmaList {
   nome: string;
   readonly horario_formatado: string;
   ativo?: boolean;
+  readonly total_alunos: number;
+  readonly total_presencas: number;
 }

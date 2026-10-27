@@ -19,6 +19,10 @@ ordering?: string;
  */
 page?: number;
 /**
+ * Number of results to return per page.
+ */
+page_size?: number;
+/**
  * A search term.
  */
 search?: string;

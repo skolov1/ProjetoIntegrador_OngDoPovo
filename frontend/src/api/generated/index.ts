@@ -1,4 +1,5 @@
 export * from './alunos/alunos';
+export * from './auditoria/auditoria';
 export * from './auth/auth';
 export * from './doacoes/doacoes';
 export * from './presencas/presencas';
