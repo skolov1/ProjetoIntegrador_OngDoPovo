@@ -67,7 +67,7 @@ export function HeroSection() {
               href={ONG.linkMaps}
               target="_blank"
               rel="noreferrer noopener"
-              className="inline-flex items-center gap-2 rounded-full border border-verde/25 bg-white/80 px-4 py-2 text-[0.7rem] font-bold uppercase tracking-[0.18em] text-verde backdrop-blur-sm transition-colors hover:bg-white"
+              className="inline-flex items-center gap-2 rounded-full border border-verde/25 bg-white/80 px-4 py-2 text-[0.8rem] font-bold uppercase tracking-[0.16em] text-verde backdrop-blur-sm transition-colors hover:bg-white"
             >
               <MapPin className="size-3.5" aria-hidden="true" />
               Ilha das Caieiras, Praia Grande - SP
@@ -75,7 +75,7 @@ export function HeroSection() {
           </Reveal>
 
           <Reveal delay={90}>
-            <h1 className="mt-6 text-4xl font-extrabold leading-[1.06] tracking-tight text-verde-escuro sm:text-5xl lg:text-6xl xl:text-[4.25rem]">
+            <h1 className="mt-6 text-4xl font-extrabold leading-[1.06] tracking-tight text-verde-escuro sm:text-5xl lg:text-6xl xl:text-[4.75rem]">
               Mais oportunidades para um{' '}
               <span className="relative whitespace-nowrap text-verde">
                 futuro

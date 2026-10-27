@@ -56,7 +56,7 @@ export function Footer({ onPrivacyPage = false }: FooterProps) {
                 <span className="text-xl font-extrabold tracking-tight">
                   {ONG.nome}
                 </span>
-                <span className="mt-1 text-[0.6rem] font-bold uppercase tracking-[0.15em] text-mist-200">
+                <span className="mt-1 text-[0.7rem] font-bold uppercase tracking-[0.15em] text-mist-200">
                   {ONG.areas.join(" · ")}
                 </span>
               </span>
