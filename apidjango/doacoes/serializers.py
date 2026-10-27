@@ -11,7 +11,7 @@ from django.db.models import Sum
 from django.utils import timezone
 from rest_framework import serializers
 
-from .documentos import cpf_valido, so_digitos, telefone_valido
+from .documentos import cpf_valido, mascarar_cpf, so_digitos, telefone_valido
 from .models import (
     VERSAO_TERMO,
     Aluno,
@@ -54,10 +54,23 @@ class TurmaSerializer(serializers.ModelSerializer):
 
 
 class TurmaListSerializer(TurmaSerializer):
-    """Listagem leve para selects/lookups."""
+    """Listagem leve para selects e cards.
+
+    `total_alunos` (só ativos) e `total_presencas` vêm contados na consulta. O
+    segundo avisa, antes de excluir a turma, quantas presenças seriam apagadas junto.
+    """
+
+    total_presencas = serializers.IntegerField(read_only=True)
 
     class Meta(TurmaSerializer.Meta):
-        fields = ["id", "nome", "horario_formatado", "ativo"]
+        fields = [
+            "id",
+            "nome",
+            "horario_formatado",
+            "ativo",
+            "total_alunos",
+            "total_presencas",
+        ]
 
 
 # =============================================================================
@@ -638,3 +651,22 @@ class ProfessorSerializer(serializers.ModelSerializer):
 
     def get_turmas_nomes(self, obj: Professor) -> list[str]:
         return list(obj.turmas.values_list("nome", flat=True))
+
+
+class ProfessorListSerializer(ProfessorSerializer):
+    """Listagem dos cards: só o CPF mascarado. O completo aparece ao abrir a edição."""
+
+    cpf_mascarado = serializers.SerializerMethodField()
+
+    class Meta(ProfessorSerializer.Meta):
+        fields = [
+            "id",
+            "nome",
+            "cpf_mascarado",
+            "turmas_nomes",
+            "ativo",
+            "total_alunos",
+        ]
+
+    def get_cpf_mascarado(self, obj: Professor) -> str:
+        return mascarar_cpf(obj.cpf)

@@ -11,7 +11,7 @@ from auditlog.context import set_actor
 from auditlog.models import LogEntry
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import F, ProtectedError, Q, Sum
+from django.db.models import Count, F, ProtectedError, Q, Sum
 from django.db.models.functions import Coalesce
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import mixins, status, viewsets
@@ -44,6 +44,7 @@ from .serializers import (
     PresencaCreateSerializer,
     PresencaLoteSerializer,
     PresencaSerializer,
+    ProfessorListSerializer,
     ProfessorSerializer,
     TurmaListSerializer,
     TurmaSerializer,
@@ -185,7 +186,10 @@ class TurmaViewSet(
 ):
     """CRUD de turmas (admin)."""
 
-    queryset = Turma.objects.select_related().prefetch_related("alunos", "professores").all()
+    queryset = Turma.objects.annotate(
+        total_alunos=Count("alunos", filter=Q(alunos__ativo=True), distinct=True),
+        total_presencas=Count("presencas", distinct=True),
+    )
     permission_classes = [IsAdminUser]
     filterset_fields = ["ativo", "dia_semana"]
     search_fields = ["nome", "descricao"]
@@ -389,12 +393,17 @@ class ProfessorViewSet(
     """CRUD de professores (admin)."""
 
     queryset = Professor.objects.prefetch_related("turmas").all()
-    serializer_class = ProfessorSerializer
     permission_classes = [IsAdminUser]
     filterset_fields = ["ativo", "turmas"]
-    search_fields = ["nome", "cpf", "email"]
+    # Só por nome: CPF e e-mail não vão em parâmetro de URL (ver docs/LGPD.md).
+    search_fields = ["nome"]
     ordering_fields = ["nome", "criado_em"]
     ordering = ["nome"]
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return ProfessorListSerializer
+        return ProfessorSerializer
 
 
 # =============================================================================
