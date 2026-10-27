@@ -7,13 +7,13 @@ import { ONG } from '@/features/home/data'
 const dadosTratados = [
   ['Nome, data de nascimento e sexo', 'Aluno', 'Identificar o aluno e separar menor de maior de idade.'],
   ['RG ou certidão de nascimento (opcional)', 'Aluno', 'Conferência na matrícula.'],
-  ['CPF (opcional)', 'Aluno maior de 18 anos', 'Identificação do adulto.'],
+  ['CPF (opcional)', 'Aluno maior de 18 anos', 'Identificação do adulto. O menor não tem CPF guardado.'],
   ['Nome, CPF, RG, telefone e endereço', 'Responsável do menor', 'Identificar quem responde pelo menor e permitir contato. Nome, CPF e telefone são obrigatórios.'],
   ['Situação do comprovante de residência e do título de eleitor', 'Aluno; título apenas para maior', 'Saber se a documentação da matrícula está completa. O documento não é guardado.'],
   ['Situação e validade do exame de aptidão física', 'Aluno menor', 'Saber se o menor pode praticar a atividade e quando o exame vence.'],
   ['Nome do responsável, data, hora e versão do termo', 'Menor', 'Provar que o responsável autorizou o tratamento dos dados.'],
-  ['Item, quantidade, data, observação e nome do doador (opcional)', 'Doador', 'Controlar o que a ONG recebeu. O nome vazio significa doação anônima.'],
-  ['Turmas, situação, presenças e mensalidade calculada', 'Aluno', 'Operação da ONG, cobrança e lista de chamada.'],
+  ['Item, quantidade, data, observação e nome do doador (opcional)', 'Doador', 'Controlar o que a ONG recebeu, como alimentos, cadeiras e muletas. Sem nome, a doação é anônima. Não guardamos telefone, e-mail nem documento do doador.'],
+  ['Turmas, situação (ativo ou inativo), presenças e mensalidade (R$ 20 por turma, podendo ser ajustada por aluno)', 'Aluno', 'Operação da ONG: turmas, cobrança e lista de chamada.'],
 ] as const
 
 export function PrivacyPage() {
@@ -75,8 +75,9 @@ export function PrivacyPage() {
             <p className="mt-4 leading-relaxed">
               Esta política explica o tratamento de dados realizado no painel
               administrativo da {ONG.nome}, utilizado para a gestão de alunos,
-              turmas, presenças e doações. O painel exige login de administrador
-              e o cadastro de menores depende da autorização do responsável.
+              turmas, presenças e doações, e também a pré-inscrição feita pelo
+              site. O painel exige login de administrador e o cadastro de
+              menores depende da autorização do responsável.
             </p>
           </section>
 
@@ -118,6 +119,23 @@ export function PrivacyPage() {
             </div>
           </section>
 
+          <section aria-labelledby="pre-inscricao">
+            <h2 id="pre-inscricao" className="text-2xl font-extrabold text-verde-900">
+              Pré-inscrição pelo WhatsApp
+            </h2>
+            <p className="mt-4 leading-relaxed">
+              O formulário de pré-inscrição do site não grava nada em nosso
+              sistema. Ele apenas monta uma mensagem, que você mesmo envia pelo
+              WhatsApp para a coordenação. Nessa mensagem vão o nome e a data de
+              nascimento do aluno, as atividades de interesse e um telefone para
+              contato (o do responsável, quando o aluno é menor de idade).
+            </p>
+            <p className="mt-4 rounded-xl border-l-4 border-amarelo bg-amarelo/10 p-4 text-sm leading-relaxed">
+              Nenhum documento é pedido nem enviado nessa etapa. RG, CPF e
+              demais documentos só são conferidos na matrícula presencial.
+            </p>
+          </section>
+
           <section aria-labelledby="nao-coletado">
             <h2 id="nao-coletado" className="text-2xl font-extrabold text-verde-900">
               O que não é coletado
@@ -142,7 +160,7 @@ export function PrivacyPage() {
             </h2>
             <ul className="mt-5 space-y-3 leading-relaxed">
               <li>O painel exige login de administrador.</li>
-              <li>Na listagem, o CPF aparece mascarado e os dados do responsável não são exibidos.</li>
+              <li>Na listagem de alunos, o CPF aparece mascarado (só para maiores de idade) e os dados do responsável não são exibidos. O CPF completo só aparece ao abrir o cadastro para edição.</li>
               <li>CPF e telefone não aparecem em URLs nem em parâmetros de busca; a busca é apenas por nome.</li>
               <li>Menores só são cadastrados com o checkbox de autorização do responsável. Cada autorização registra a versão do termo.</li>
             </ul>
@@ -150,18 +168,17 @@ export function PrivacyPage() {
 
           <section aria-labelledby="direitos">
             <h2 id="direitos" className="text-2xl font-extrabold text-verde-900">
-              Como atender ao pedido de um titular
+              Seus direitos
             </h2>
             <p className="mt-4 leading-relaxed">
-              O titular, ou o responsável pelo menor, pode solicitar correção,
-              inativação, exclusão ou cópia dos dados. A equipe atende aos
-              pedidos diretamente no cadastro de alunos:
+              Você, ou o responsável pelo menor, pode pedir à ONG a qualquer
+              momento:
             </p>
             <ul className="mt-5 space-y-3 leading-relaxed">
-              <li><strong>Correção:</strong> editar o cadastro e salvar os dados corrigidos.</li>
-              <li><strong>Saída da atividade:</strong> inativar o aluno, preservando o cadastro e retirando-o das turmas e da chamada.</li>
-              <li><strong>Exclusão:</strong> excluir definitivamente o cadastro, o consentimento e as presenças, após confirmação. Não é possível desfazer.</li>
-              <li><strong>Cópia:</strong> consultar o cadastro ou o admin do Django e entregar as informações ao titular.</li>
+              <li><strong>Correção:</strong> atualizamos o cadastro com os dados corretos.</li>
+              <li><strong>Saída da atividade:</strong> o aluno deixa as turmas e a lista de chamada, e o cadastro fica guardado.</li>
+              <li><strong>Exclusão:</strong> apagamos definitivamente o cadastro, a autorização do responsável e as presenças do aluno. Depois de confirmada, a exclusão não pode ser desfeita.</li>
+              <li><strong>Cópia:</strong> entregamos a você as informações que constam no cadastro.</li>
             </ul>
             <p className="mt-5 rounded-xl border-l-4 border-amarelo bg-amarelo/10 p-4 text-sm leading-relaxed">
               Guardamos apenas o necessário para a operação e apagamos o
@@ -175,8 +192,8 @@ export function PrivacyPage() {
               Fale com a ONG do Povo
             </h2>
             <p className="mt-4 leading-relaxed">
-              Para dúvidas ou solicitações sobre seus dados, entre em contato
-              pelo e-mail{' '}
+              Para dúvidas ou para fazer qualquer um dos pedidos acima, escreva
+              para{' '}
               <a className="font-bold text-verde underline underline-offset-4" href={`mailto:${ONG.email}`}>
                 {ONG.email}
               </a>
