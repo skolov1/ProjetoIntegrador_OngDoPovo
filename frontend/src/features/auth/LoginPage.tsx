@@ -53,13 +53,13 @@ export function LoginPage() {
           className="mb-5 flex flex-col items-center gap-2"
         >
           <picture>
-            <source srcSet="/logo-ong-do-povo.webp" type="image/webp" />
+            <source srcSet="/logo-verdadeira.webp" type="image/webp" />
             <img
-              src="/logo-ong-do-povo.png"
+              src="/logo-verdadeira.png"
               alt=""
-              width={72}
-              height={72}
-              className="size-18 object-contain"
+              width={120}
+              height={104}
+              className="h-26 w-auto object-contain"
             />
           </picture>
           <span className="text-2xl font-extrabold uppercase tracking-tight text-verde-escuro">
