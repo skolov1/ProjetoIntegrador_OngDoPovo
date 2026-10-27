@@ -25,10 +25,12 @@
   --color-mist-300: #aadcc0;
   --color-verde-900: #05281d;
 
-  /* --- Tipografia: Atkinson Hyperlegible (feita para legibilidade) ---
-     Só existe em 400 e 700: os pesos 500/600/800 usados nas classes
-     font-medium/semibold/extrabold caem no mais próximo. O <link> que
-     carrega a fonte está em cada HTML (index, login, dashboard, privacidade). */
+  /* --- Tipografia ---
+     Padrão (landing e privacidade): Atkinson Hyperlegible, feita para legibilidade.
+     Só existe em 400 e 700: os pesos 500/600/800 caem no mais próximo.
+     Login e painel (área restrita) usam a Montserrat da marca: o HTML deles tem
+     data-fonte="montserrat" (regra mais abaixo). O <link> de cada fonte fica no
+     HTML de cada página. */
   --font-sans:
     'Atkinson Hyperlegible', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
@@ -80,6 +82,12 @@
    ========================================================================= */
 
 @layer base {
+  /* Área restrita (login e painel): Montserrat, como no manual de identidade. */
+  html[data-fonte='montserrat'] {
+    --font-sans:
+      'Montserrat', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+
   html {
     scroll-behavior: smooth;
     /* Compensa o header fixo ao pular para uma âncora (#programas etc). */
