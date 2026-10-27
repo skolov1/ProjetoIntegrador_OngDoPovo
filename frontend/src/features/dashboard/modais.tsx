@@ -47,9 +47,11 @@ export function FormModal({
           <button
             type="button"
             onClick={onClose}
+            aria-label="Fechar"
+            title="Fechar"
             className="p-1 hover:bg-mist-100 rounded"
           >
-            <X className="size-5" />
+            <X className="size-5" aria-hidden="true" />
           </button>
         </div>
         <main className="grid grid-cols-1 lg:grid-cols-2 gap-4">{children}</main>

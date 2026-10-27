@@ -735,6 +735,7 @@ export function DashboardLayout() {
           <input
             type="date"
             name="data_nascimento"
+            aria-label="Data de nascimento"
             value={formAluno.data_nascimento}
             onChange={(e) =>
               setFormAluno({ ...formAluno, data_nascimento: e.target.value })
@@ -1227,14 +1228,16 @@ export function DashboardLayout() {
                           <div className="flex gap-2">
                             <Button
                               variante="contorno-claro"
+                              aria-label={`Editar ${a.nome}`}
+                              title={`Editar ${a.nome}`}
                               onClick={() => void handleEdit("aluno", a.id)}
                             >
                               <Edit className="size-4" />
                             </Button>
                             <Button
                               variante="contorno-claro"
-                              aria-label={a.ativo ? "Inativar aluno" : "Reativar aluno"}
-                              title={a.ativo ? "Inativar" : "Reativar"}
+                              aria-label={`${a.ativo ? "Inativar" : "Reativar"} ${a.nome}`}
+                              title={`${a.ativo ? "Inativar" : "Reativar"} ${a.nome}`}
                               onClick={() =>
                                 handleAlterarAtivo(a.id, a.nome, !a.ativo)
                               }
@@ -1247,8 +1250,8 @@ export function DashboardLayout() {
                             </Button>
                             <Button
                               variante="contorno-claro"
-                              aria-label="Excluir definitivamente"
-                              title="Excluir definitivamente"
+                              aria-label={`Excluir definitivamente ${a.nome}`}
+                              title={`Excluir definitivamente ${a.nome}`}
                               onClick={() => handleDelete(a.id, "aluno")}
                             >
                               <Trash2 className="size-4" />
@@ -1335,7 +1338,8 @@ export function DashboardLayout() {
                         <div className="flex gap-2">
                           <Button
                             variante="contorno-claro"
-                            aria-label="Editar doação"
+                            aria-label={`Editar doação de ${d.item_rotulo}`}
+                            title={`Editar doação de ${d.item_rotulo}`}
                             onClick={() => {
                               closeForm();
                               setFormDoacao({
@@ -1354,7 +1358,8 @@ export function DashboardLayout() {
                           </Button>
                           <Button
                             variante="contorno-claro"
-                            aria-label="Excluir doação"
+                            aria-label={`Excluir doação de ${d.item_rotulo}`}
+                            title={`Excluir doação de ${d.item_rotulo}`}
                             onClick={() => handleDelete(d.id, "doacao")}
                           >
                             <Trash2 className="size-4" />

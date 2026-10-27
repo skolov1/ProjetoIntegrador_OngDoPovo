@@ -247,7 +247,7 @@ export function EmprestimosSecao() {
                     {!e.devolvido_em && (
                       <Button
                         variante="contorno-claro"
-                        aria-label="Marcar devolução"
+                        aria-label={`Marcar devolução de ${e.item_rotulo} (${e.pessoa_nome})`}
                         title="Marcar devolução"
                         onClick={() => devolver(e)}
                       >
@@ -256,14 +256,16 @@ export function EmprestimosSecao() {
                     )}
                     <Button
                       variante="contorno-claro"
-                      aria-label="Editar empréstimo"
+                      aria-label={`Editar empréstimo de ${e.item_rotulo} (${e.pessoa_nome})`}
+                      title="Editar empréstimo"
                       onClick={() => abrirEdicao(e)}
                     >
                       <Edit className="size-4" />
                     </Button>
                     <Button
                       variante="contorno-claro"
-                      aria-label="Excluir empréstimo"
+                      aria-label={`Excluir empréstimo de ${e.item_rotulo} (${e.pessoa_nome})`}
+                      title="Excluir empréstimo"
                       onClick={() => apagar(e)}
                     >
                       <Trash2 className="size-4" />
