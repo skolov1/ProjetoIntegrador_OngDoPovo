@@ -13,6 +13,7 @@ const dadosTratados = [
   ['Situação e validade do exame de aptidão física', 'Aluno menor', 'Saber se o menor pode praticar a atividade e quando o exame vence.'],
   ['Nome do responsável, data, hora e versão do termo', 'Menor', 'Provar que o responsável autorizou o tratamento dos dados.'],
   ['Item, quantidade, data, observação e nome do doador (opcional)', 'Doador', 'Controlar o que a ONG recebeu, como alimentos, cadeiras e muletas. Sem nome, a doação é anônima. Não guardamos telefone, e-mail nem documento do doador.'],
+  ['Item emprestado, quantidade, nome de quem pegou, datas do empréstimo e da devolução', 'Quem pegou o item emprestado', 'Saber onde está o item e avisar quando passa de 3 meses sem devolução. Guardamos só o nome, sem telefone, e-mail nem documento.'],
   ['Turmas, situação (ativo ou inativo), presenças e mensalidade (R$ 20 por turma, podendo ser ajustada por aluno)', 'Aluno', 'Operação da ONG: turmas, cobrança e lista de chamada.'],
 ] as const
 

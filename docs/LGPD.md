@@ -14,6 +14,7 @@ Este documento resume quais dados pessoais o painel da ONG do Povo guarda, por q
 | Exame de aptidão física: situação (pendente, apto, não apto) e validade | Aluno menor | Saber se o menor pode praticar a atividade e quando o exame vence. |
 | Consentimento: nome do responsável, data e hora, versão do termo | Menor | Provar que o responsável autorizou o tratamento dos dados do menor. |
 | Doação de item: item (ou outro, escrito pela equipe), quantidade, data, observação e nome do doador (opcional; vazio = anônimo) | Doador | Controlar o que a ONG recebeu (alimentos, cadeiras, muletas). Sem telefone, e-mail ou documento. |
+| Empréstimo de item: item emprestado (de uma doação), quantidade, nome de quem pegou, data do empréstimo e da devolução, observação | Quem pegou o item | Saber onde está o item e avisar quando passa de 3 meses sem devolução. Só o nome: sem telefone, e-mail ou documento. |
 | Turmas, situação (ativo/inativo) e presenças; a mensalidade é calculada (R$ 20 por turma), podendo ser ajustada por aluno | Aluno | Operação da ONG: turmas, cobrança e lista de chamada. |
 
 ## O que não é coletado
