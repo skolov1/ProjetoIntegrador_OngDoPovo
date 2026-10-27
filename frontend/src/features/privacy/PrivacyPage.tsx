@@ -14,6 +14,7 @@ const dadosTratados = [
   ['Nome do responsável, data, hora e versão do termo', 'Menor', 'Provar que o responsável autorizou o tratamento dos dados.'],
   ['Item, quantidade, data, observação e nome do doador (opcional)', 'Doador', 'Controlar o que a ONG recebeu, como alimentos, cadeiras e muletas. Sem nome, a doação é anônima. Não guardamos telefone, e-mail nem documento do doador.'],
   ['Item emprestado, quantidade, nome de quem pegou, datas do empréstimo e da devolução', 'Quem pegou o item emprestado', 'Saber onde está o item e avisar quando passa de 3 meses sem devolução. Guardamos só o nome, sem telefone, e-mail nem documento.'],
+  ['Registro de ações: conta de quem criou, alterou ou excluiu, data e hora, tipo de registro e campos alterados', 'Equipe da ONG', 'Saber quem fez cada alteração e proteger os dados. CPF, RG, telefone e endereço aparecem ocultos nesse registro.'],
   ['Turmas, situação (ativo ou inativo), presenças e mensalidade (R$ 20 por turma, podendo ser ajustada por aluno)', 'Aluno', 'Operação da ONG: turmas, cobrança e lista de chamada.'],
 ] as const
 
@@ -160,7 +161,8 @@ export function PrivacyPage() {
               Como os dados são protegidos
             </h2>
             <ul className="mt-5 space-y-3 leading-relaxed">
-              <li>O painel exige login de administrador.</li>
+              <li>O painel exige login de administrador, e cada pessoa da equipe usa a própria conta.</li>
+              <li>O painel registra quem criou, alterou ou excluiu cada informação. Esse registro não guarda CPF, RG, telefone nem endereço, e ao excluir um aluno o nome dele também sai do histórico.</li>
               <li>Na listagem de alunos, o CPF aparece mascarado (só para maiores de idade) e os dados do responsável não são exibidos. O CPF completo só aparece ao abrir o cadastro para edição.</li>
               <li>CPF e telefone não aparecem em URLs nem em parâmetros de busca; a busca é apenas por nome.</li>
               <li>Menores só são cadastrados com o checkbox de autorização do responsável. Cada autorização registra a versão do termo.</li>
