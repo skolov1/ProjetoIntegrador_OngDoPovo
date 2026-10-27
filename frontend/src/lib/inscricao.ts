@@ -17,8 +17,6 @@ export const MODALIDADES = [
   'Ballet',
   'Funcional',
   'Jazz',
-  'Judô',
-  'Violão',
 ] as const
 
 /** Cursos com lista de espera (cartaz da ONG). */

@@ -6,7 +6,7 @@
  * Todas as operações CRUD funcionam via hooks em src/features/dashboard/api.ts
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Shield,
   Users,
@@ -44,7 +44,7 @@ import {
   useUpdateDoacaoItem,
   useDeleteDoacaoItem,
 } from "@/features/dashboard/api";
-import { encerrarSessao, restaurarSessao } from "@/lib/api";
+import { encerrarSessao } from "@/lib/api";
 import { PresencasTela } from "@/features/dashboard/PresencasTela";
 import { alunosRetrieve } from "@/api/generated/alunos/alunos";
 import { professoresRetrieve } from "@/api/generated/professores/professores";
@@ -201,7 +201,6 @@ export function DashboardLayout() {
     "turma" | "aluno" | "professor" | "doacao" | null
   >(null);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [formTurma, setFormTurma] = useState<FormTurma>({
     nome: "",
     dia_semana: "SEG",
@@ -254,24 +253,6 @@ export function DashboardLayout() {
   const createProfessor = useCreateProfessor();
   const updateProfessor = useUpdateProfessor();
   const deleteProfessor = useDeleteProfessor();
-
-  // O access token fica so em memoria: ao abrir o painel, pedimos um novo pelo
-  // cookie httpOnly de refresh. Sem sessao valida, volta para o login.
-  useEffect(() => {
-    restaurarSessao().then((ok) => {
-      if (ok) setIsLoading(false);
-      else window.location.href = "/login.html";
-    });
-  }, []);
-
-  // Show loading while checking auth
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-mist-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-verde border-t-transparent"></div>
-      </div>
-    );
-  }
 
   // Extract results from paginated responses
   const turmas = turmasData?.results ?? [];
@@ -1060,7 +1041,7 @@ export function DashboardLayout() {
             className="p-2 rounded-md hover:bg-white/10 transition-colors"
             aria-label="Sair"
           >
-            <LogOut className="size-4" />
+            <LogOut className="size-4 text-white" />
           </button>
         </div>
 

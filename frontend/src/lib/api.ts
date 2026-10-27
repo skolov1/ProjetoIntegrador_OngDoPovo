@@ -27,7 +27,13 @@ import axios, {
  * Se o prefixo aparecesse nos dois lados, a chamada viraria
  * `/api/v1/api/v1/ping/` e o Django responderia 404.
  */
-const BASE_URL = import.meta.env.VITE_API_URL
+const BASE_URL = import.meta.env.VITE_API_URL?.trim()
+
+if (!BASE_URL) {
+  throw new Error(
+    'VITE_API_URL não está configurada. Copie frontend/.env.example para frontend/.env.local e reinicie o Vite.',
+  )
+}
 
 export const api = axios.create({
   baseURL: BASE_URL,

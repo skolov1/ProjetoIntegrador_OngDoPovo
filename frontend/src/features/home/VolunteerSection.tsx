@@ -9,6 +9,7 @@ import { Eyebrow, Section, SectionLead, SectionTitle } from '@/components/ui/Sec
 import { Reveal } from '@/components/ui/Reveal'
 import { FRONTEIRAS_VOLUNTARIADO } from '@/features/home/data'
 import { linkWhatsapp, topicoEmNegrito } from '@/lib/whatsapp'
+import fotoVoluntario from '../../../../refs/imagens_ong/interbairros-122.jpg'
 
 const MENSAGEM_VOLUNTARIO = [
   topicoEmNegrito('Voluntariado'),
@@ -23,10 +24,10 @@ export function VolunteerSection() {
         <Reveal direction="left">
           <div className="relative overflow-hidden rounded-[1.75rem] shadow-2xl ring-1 ring-slate-900/5">
             <img
-              src="https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=900&q=85"
-              alt="Professora em sala de aula com crianças"
+              src={fotoVoluntario}
+              alt="Voluntário durante partida do Interbairros"
               loading="lazy"
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover aspect-square"
             />
           </div>
         </Reveal>
@@ -57,16 +58,15 @@ export function VolunteerSection() {
           </div>
 
           <Reveal delay={240}>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <LinkBotao href="#contato">Quero ser voluntário</LinkBotao>
+            <div className="mt-8 w-full items-center justify-center flex flex-col gap-3 sm:flex-row">
               <LinkBotao
                 href={linkWhatsapp(MENSAGEM_VOLUNTARIO)}
-                variante="contorno-claro"
+                variante="primaria"
                 seta={false}
                 externa
               >
                 <MessageCircle className="size-4" aria-hidden="true" />
-                Falar com nosso time no WhatsApp
+                Falar com nosso time sobre ser um voluntário
               </LinkBotao>
             </div>
           </Reveal>
