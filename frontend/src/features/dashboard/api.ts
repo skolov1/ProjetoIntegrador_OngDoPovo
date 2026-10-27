@@ -18,7 +18,7 @@ import {
 import { presencasChamadaList, presencasLoteCreate } from '@/api/generated/presencas/presencas'
 import { auditoriaList, auditoriaUsuariosList } from '@/api/generated/auditoria/auditoria'
 import { authMeRetrieve } from '@/api/generated/auth/auth'
-import { gradeList } from '@/api/generated/grade/grade'
+import { api } from '@/lib/api'
 import {
   atividadesAvulsasList,
   atividadesAvulsasCreate,
@@ -387,10 +387,12 @@ export function useAtividadesAvulsas(params?: AtividadesAvulsasListParams) {
 }
 
 // A prévia mostra o que a landing mostra: mexer em turma ou atividade a atualiza.
+// A API deixa a grade 60 s em cache (para a landing); aqui o parâmetro `t` muda a URL a cada
+// pedido para a prévia nunca vir do cache do navegador logo depois de uma edição.
 export function useGradePublica() {
   return useQuery<GradeItem[]>({
     queryKey: ['grade'],
-    queryFn: () => gradeList().then(extractData),
+    queryFn: () => api.get<GradeItem[]>('/grade/', { params: { t: Date.now() } }).then(extractData),
     staleTime: 10_000,
   })
 }
