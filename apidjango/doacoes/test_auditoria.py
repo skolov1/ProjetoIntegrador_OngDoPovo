@@ -276,6 +276,21 @@ class TestEndpointAuditoria:
 
         assert cliente_de(maria).get(URL_AUDITORIA).data["count"] == 0
 
+    def test_lista_os_usuarios_da_equipe_para_o_filtro(self, maria, joao):
+        comum = User.objects.create_user(username="comum", password="SenhaForte@123")
+
+        resposta = cliente_de(maria).get(URL_AUDITORIA + "usuarios/")
+
+        assert resposta.status_code == 200
+        nomes = [u["nome"] for u in resposta.data]
+        assert nomes == ["João Souza", "Maria Silva"]
+        assert comum.id not in [u["id"] for u in resposta.data]
+
+    def test_usuarios_exige_equipe(self, db):
+        comum = User.objects.create_user(username="comum", password="SenhaForte@123")
+
+        assert cliente_de(comum).get(URL_AUDITORIA + "usuarios/").status_code == 403
+
     def test_nao_aceita_escrita(self, maria):
         c = cliente_de(maria)
 

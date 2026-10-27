@@ -9,6 +9,7 @@ from datetime import date
 import django_filters
 from auditlog.context import set_actor
 from auditlog.models import LogEntry
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import F, ProtectedError, Q, Sum
 from django.db.models.functions import Coalesce
@@ -34,6 +35,7 @@ from .serializers import (
     AlunoListSerializer,
     AlunoSerializer,
     AuditoriaSerializer,
+    AuditoriaUsuarioSerializer,
     ChamadaItemSerializer,
     DoacaoItemEmprestavelSerializer,
     DoacaoItemResumoSerializer,
@@ -438,3 +440,21 @@ class AuditoriaViewSet(
     permission_classes = [IsAdminUser]
     filterset_class = AuditoriaFilter
     search_fields = ["object_repr"]
+
+    @extend_schema(
+        summary="Pessoas da equipe (para filtrar o histórico por quem fez)",
+        tags=["auditoria"],
+        responses={200: AuditoriaUsuarioSerializer(many=True)},
+    )
+    @action(detail=False, methods=["get"], url_path="usuarios", pagination_class=None)
+    def usuarios(self, request):
+        """Equipe atual e quem já aparece no histórico (mesmo que a conta tenha saído)."""
+        no_historico = LogEntry.objects.exclude(actor=None).values("actor_id")
+        pessoas = [
+            {"id": u.id, "nome": u.get_full_name() or u.get_username()}
+            for u in get_user_model().objects.filter(
+                Q(is_staff=True) | Q(pk__in=no_historico)
+            )
+        ]
+        pessoas.sort(key=lambda p: p["nome"].casefold())
+        return Response(AuditoriaUsuarioSerializer(pessoas, many=True).data)

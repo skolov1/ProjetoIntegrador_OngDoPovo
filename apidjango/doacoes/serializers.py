@@ -244,6 +244,13 @@ def _primeira_maiuscula(texto: str) -> str:
     return texto[:1].upper() + texto[1:]
 
 
+class AuditoriaUsuarioSerializer(serializers.Serializer):
+    """Pessoa da equipe, para o filtro "quem fez" da tela de auditoria."""
+
+    id = serializers.IntegerField()
+    nome = serializers.CharField()
+
+
 class AuditoriaSerializer(serializers.ModelSerializer):
     quando = serializers.DateTimeField(source="timestamp", read_only=True)
     usuario_id = serializers.IntegerField(source="actor_id", read_only=True, allow_null=True)
