@@ -523,8 +523,10 @@ class GradeView(APIView):
                     "dia_rotulo": t.get_dia_semana_display(),
                     "horario_inicio": t.horario_inicio.strftime("%H:%M"),
                     "horario_fim": t.horario_fim.strftime("%H:%M"),
+                    # Travessão (U+2013), o mesmo de `Turma.horario_formatado`.
                     "horario": (
-                        f"{t.horario_inicio.strftime('%H:%M')}–{t.horario_fim.strftime('%H:%M')}"
+                        f"{t.horario_inicio.strftime('%H:%M')}–"
+                        f"{t.horario_fim.strftime('%H:%M')}"
                     ),
                     "status": situacao,
                     "status_rotulo": ROTULOS_STATUS[situacao],
