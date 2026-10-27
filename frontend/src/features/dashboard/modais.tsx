@@ -38,10 +38,10 @@ export function FormModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <form
         onSubmit={onSubmit}
-        className={`bg-white rounded-2xl p-6 w-full ${largura} max-h-[90vh] overflow-y-auto`}
+        className={`bg-white rounded-3xl p-6 sm:p-8 shadow-2xl w-full ${largura} max-h-[90vh] overflow-y-auto`}
       >
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-verde-escuro">{title}</h3>
+          <h3 className="text-xl font-extrabold text-verde-escuro">{title}</h3>
           <button
             type="button"
             onClick={onClose}
@@ -79,7 +79,7 @@ export function ConfirmModal({
       aria-labelledby="confirm-titulo"
       className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4"
     >
-      <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+      <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-2xl w-full max-w-sm">
         <h3 id="confirm-titulo" className="text-lg font-bold text-verde-escuro">
           {titulo}
         </h3>

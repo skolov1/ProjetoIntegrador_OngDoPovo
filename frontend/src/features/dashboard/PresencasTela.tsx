@@ -110,7 +110,7 @@ export function PresencasTela() {
 
   return (
     <div className="mt-6 space-y-4">
-      <h3 className="text-xl font-bold text-verde">Presenças</h3>
+      <h3 className="text-xl font-extrabold text-verde-escuro">Presenças</h3>
 
       <div className="grid gap-4 sm:grid-cols-2 max-w-2xl">
         <label className="text-sm text-grafite/70">
@@ -182,10 +182,10 @@ export function PresencasTela() {
             </Button>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full bg-white rounded-xl shadow">
-              <thead className="bg-mist-100">
-                <tr className="text-left text-grafite/70 text-sm">
+          <div className="overflow-x-auto rounded-2xl border border-slate-200/70 bg-white shadow-sm">
+            <table className="w-full">
+              <thead className="bg-mist-100/70">
+                <tr className="text-left text-xs font-bold uppercase tracking-wider text-verde-escuro/70">
                   <th className="p-3">Aluno</th>
                   <th className="p-3">Idade</th>
                   <th className="p-3">Situação</th>
@@ -195,13 +195,13 @@ export function PresencasTela() {
                 {visiveis.map((i) => {
                   const atual = situacaoDe(i.aluno_id, i.situacao);
                   return (
-                    <tr key={i.aluno_id} className="border-t border-mist-200">
+                    <tr key={i.aluno_id} className="border-t border-mist-200 transition-colors hover:bg-mist-50">
                       <td className="p-3 font-medium text-grafite">
                         {i.aluno_nome}
                         {i.faltante ? (
                           <span
                             title="3 faltas seguidas (justificadas não contam)"
-                            className="ml-2 px-2 py-1 rounded text-xs bg-vermelho/10 text-vermelho"
+                            className="ml-2 px-3 py-1 rounded-full text-xs font-bold bg-vermelho/10 text-vermelho"
                           >
                             Faltante · {i.faltas_seguidas} seguidas
                           </span>

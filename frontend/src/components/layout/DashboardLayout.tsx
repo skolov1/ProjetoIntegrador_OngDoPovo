@@ -46,6 +46,7 @@ import {
 import { PresencasTela } from "@/features/dashboard/PresencasTela";
 import { AuditoriaTela } from "@/features/dashboard/AuditoriaTela";
 import { UsuarioLogado } from "@/features/dashboard/UsuarioLogado";
+import { Sunburst } from "@/components/ui/Sunburst";
 import { EmprestimosSecao } from "@/features/dashboard/EmprestimosSecao";
 import {
   CLASSE_CAMPO,
@@ -1036,8 +1037,16 @@ export function DashboardLayout() {
 
   return (
     <div className="min-h-screen bg-mist-50 flex flex-row">
-      <aside className="sticky top-0 h-screen w-64 shrink-0 bg-verde-escuro flex flex-col">
-        <div className="flex h-16 items-center gap-3 px-6 border-b border-white/10">
+      <aside className="relative sticky top-0 flex h-screen w-64 shrink-0 flex-col overflow-hidden bg-linear-to-b from-verde-900 via-verde-escuro to-verde-escuro">
+        <Sunburst
+          tone="white"
+          size={420}
+          rays={24}
+          fill={0.06}
+          spin={false}
+          className="pointer-events-none absolute -left-40 bottom-16 text-white opacity-15"
+        />
+        <div className="relative flex h-16 items-center gap-3 px-6 border-b border-white/10">
           <picture>
             <source srcSet="/logo-icone.webp" type="image/webp" />
             <img
@@ -1048,15 +1057,15 @@ export function DashboardLayout() {
               className="size-9 object-contain"
             />
           </picture>
-          <h2 className="font-extrabold text-white">ONG do Povo</h2>
+          <h2 className="text-lg font-extrabold tracking-tight text-white">ONG do Povo</h2>
         </div>
 
-        <nav className="flex flex-col gap-2 px-6 py-8">
+        <nav className="relative flex flex-col gap-1.5 px-4 py-6">
           {ITENS_MENU.map(({ id, label, Icon }) => (
             <button
               key={id}
               onClick={() => setScreen(id)}
-              className={`flex items-center gap-3 rounded-lg px-4 py-3 text-left font-medium transition-colors ${screen === id ? "bg-white/10 text-verde hover:bg-white/20" : "text-white/70 hover:text-white/100"}`}
+              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-bold transition-all duration-300 ${screen === id ? "bg-verde text-white shadow-lg shadow-verde/25" : "text-white/75 hover:bg-white/10 hover:text-white"}`}
             >
               <Icon className="size-4" />
               <span>{label}</span>
@@ -1067,17 +1076,23 @@ export function DashboardLayout() {
         <UsuarioLogado />
       </aside>
 
-      <main className="ml-2 p-6 bg-mist-50">
-        <div className="mb-6">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-verde">
-            Dashboard
-          </p>
-          <h1 className="mt-2 text-3xl font-extrabold text-verde-escuro">
-            Painel de Administração
-          </h1>
-          <p className="mt-2 text-grafite/70">
-            Gerencie as operações da ONG do Povo.
-          </p>
+      <main className="min-w-0 flex-1 bg-linear-to-b from-mist-50 via-white to-mist-50 p-6 lg:p-10">
+        <div className="relative mb-8 overflow-hidden rounded-3xl bg-linear-to-br from-verde-900 to-verde-escuro p-6 text-white shadow-lg sm:p-8">
+          <Sunburst
+            tone="white"
+            size={360}
+            rays={24}
+            fill={0.06}
+            spin={false}
+            className="pointer-events-none absolute -right-24 -top-36 text-white opacity-30"
+          />
+          <div className="relative">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-amarelo">
+              Dashboard
+            </p>
+            <h1 className="mt-2 text-3xl font-extrabold">Painel de Administração</h1>
+            <p className="mt-2 text-white/70">Gerencie as operações da ONG do Povo.</p>
+          </div>
         </div>
 
         {/* PRESENÇAS */}
@@ -1090,7 +1105,7 @@ export function DashboardLayout() {
         {screen === "turmas" && (
           <div className="mt-6 space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-xl font-bold text-verde">Turmas</h3>
+              <h3 className="text-xl font-extrabold text-verde-escuro">Turmas</h3>
               <Button
                 variante="secundaria"
                 onClick={() => {
@@ -1119,7 +1134,7 @@ export function DashboardLayout() {
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {turmas.map((t) => (
-                  <div key={t.id} className="bg-white p-4 rounded-xl shadow">
+                  <div key={t.id} className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
                     <h4 className="font-bold text-verde mb-2">{t.nome}</h4>
                     <p className="text-sm text-grafite/60">
                       {t.horario_formatado}
@@ -1152,7 +1167,7 @@ export function DashboardLayout() {
         {screen === "alunos" && (
           <div className="mt-6 space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-xl font-bold text-verde">Alunos</h3>
+              <h3 className="text-xl font-extrabold text-verde-escuro">Alunos</h3>
               <Button
                 variante="secundaria"
                 onClick={() => {
@@ -1171,10 +1186,10 @@ export function DashboardLayout() {
             ) : errorAlunos ? (
               <p className="text-vermelho">Erro ao carregar alunos</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full bg-white rounded-xl shadow">
-                  <thead className="bg-mist-100">
-                    <tr className="text-left text-grafite/70 text-sm">
+              <div className="overflow-x-auto rounded-2xl border border-slate-200/70 bg-white shadow-sm">
+                <table className="w-full">
+                  <thead className="bg-mist-100/70">
+                    <tr className="text-left text-xs font-bold uppercase tracking-wider text-verde-escuro/70">
                       <th className="p-3">Nome</th>
                       <th className="p-3">CPF</th>
                       <th className="p-3">Turmas</th>
@@ -1187,7 +1202,7 @@ export function DashboardLayout() {
                   </thead>
                   <tbody>
                     {alunos.map((a) => (
-                      <tr key={a.id} className="border-t border-mist-200">
+                      <tr key={a.id} className="border-t border-mist-200 transition-colors hover:bg-mist-50">
                         <td className="p-3 font-medium text-grafite">
                           {a.nome}
                         </td>
@@ -1208,7 +1223,7 @@ export function DashboardLayout() {
                         </td>
                         <td className="p-3">
                           <span
-                            className={`px-2 py-1 rounded text-xs ${a.ativo ? "bg-verde/10 text-verde" : "bg-vermelho/10 text-vermelho"}`}
+                            className={`px-3 py-1 rounded-full text-xs font-bold ${a.ativo ? "bg-verde/10 text-verde" : "bg-vermelho/10 text-vermelho"}`}
                           >
                             {a.ativo ? "Ativo" : "Inativo"}
                           </span>
@@ -1258,7 +1273,7 @@ export function DashboardLayout() {
         {screen === "professores" && (
           <div className="mt-6 space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-xl font-bold text-verde">Professores</h3>
+              <h3 className="text-xl font-extrabold text-verde-escuro">Professores</h3>
               <Button
                 variante="secundaria"
                 onClick={() => {
@@ -1284,7 +1299,7 @@ export function DashboardLayout() {
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {professores.map((p) => (
-                  <div key={p.id} className="bg-white p-4 rounded-xl shadow">
+                  <div key={p.id} className="rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg">
                     <h4 className="font-bold text-verde mb-2">{p.nome}</h4>
                     <p className="text-sm text-grafite/60">CPF: {p.cpf}</p>
                     <p className="text-sm text-grafite/60">
@@ -1318,7 +1333,7 @@ export function DashboardLayout() {
         {screen === "doacoes" && (
           <div className="mt-6 space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-xl font-bold text-verde">
+              <h3 className="text-xl font-extrabold text-verde-escuro">
                 Doações de itens
               </h3>
               <Button
@@ -1334,16 +1349,16 @@ export function DashboardLayout() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
               {(doacoesResumo ?? []).map((r) => (
-                <div key={r.item} className="rounded-xl bg-white p-6 shadow">
-                  <p className="text-3xl font-bold text-verde">{r.total}</p>
+                <div key={r.item} className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm">
+                  <p className="text-3xl font-extrabold text-verde">{r.total}</p>
                   <p className="text-sm text-grafite/60">{r.item_rotulo}</p>
                 </div>
               ))}
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full bg-white rounded-xl shadow">
-                <thead className="bg-mist-100">
-                  <tr className="text-left text-grafite/70 text-sm">
+            <div className="overflow-x-auto rounded-2xl border border-slate-200/70 bg-white shadow-sm">
+              <table className="w-full">
+                <thead className="bg-mist-100/70">
+                  <tr className="text-left text-xs font-bold uppercase tracking-wider text-verde-escuro/70">
                     <th className="p-3">Data</th>
                     <th className="p-3">Item</th>
                     <th className="p-3">Qtd.</th>
@@ -1354,7 +1369,7 @@ export function DashboardLayout() {
                 </thead>
                 <tbody>
                   {(doacoesData?.results ?? []).map((d) => (
-                    <tr key={d.id} className="border-t border-mist-200">
+                    <tr key={d.id} className="border-t border-mist-200 transition-colors hover:bg-mist-50">
                       <td className="p-3 text-grafite/60 text-sm">
                         {new Date(`${d.recebido_em}T00:00:00`).toLocaleDateString("pt-BR")}
                       </td>
@@ -1435,14 +1450,14 @@ export function DashboardLayout() {
 function DocumentosBadge({ pendentes }: { pendentes: readonly string[] }) {
   if (pendentes.length === 0)
     return (
-      <span className="px-2 py-1 rounded text-xs bg-verde/10 text-verde">
+      <span className="px-3 py-1 rounded-full text-xs font-bold bg-verde/10 text-verde">
         Em dia
       </span>
     );
   return (
     <span
       title={`Pendentes: ${pendentes.join(", ")}`}
-      className="px-2 py-1 rounded text-xs bg-amarelo/10 text-amarelo"
+      className="px-3 py-1 rounded-full text-xs font-bold bg-amarelo/10 text-amarelo"
     >
       {pendentes.length} pendente{pendentes.length > 1 ? "s" : ""}
     </span>
@@ -1459,5 +1474,5 @@ function ExameBadge({ situacao }: { situacao?: string | null }) {
     nao_apto: ["Não apto", "bg-vermelho/10 text-vermelho"],
   };
   const [rotulo, classe] = visual[situacao] ?? ["—", ""];
-  return <span className={`px-2 py-1 rounded text-xs ${classe}`}>{rotulo}</span>;
+  return <span className={`px-3 py-1 rounded-full text-xs font-bold ${classe}`}>{rotulo}</span>;
 }

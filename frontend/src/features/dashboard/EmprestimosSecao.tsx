@@ -166,7 +166,7 @@ export function EmprestimosSecao() {
   return (
     <section aria-labelledby="emprestimos-titulo" className="space-y-4 pt-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 id="emprestimos-titulo" className="text-xl font-bold text-verde">
+        <h3 id="emprestimos-titulo" className="text-xl font-extrabold text-verde-escuro">
           Empréstimos de itens
         </h3>
         <Button variante="secundaria" onClick={abrirNovo}>
@@ -205,10 +205,10 @@ export function EmprestimosSecao() {
         ))}
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full bg-white rounded-xl shadow">
-          <thead className="bg-mist-100">
-            <tr className="text-left text-grafite/70 text-sm">
+      <div className="overflow-x-auto rounded-2xl border border-slate-200/70 bg-white shadow-sm">
+        <table className="w-full">
+          <thead className="bg-mist-100/70">
+            <tr className="text-left text-xs font-bold uppercase tracking-wider text-verde-escuro/70">
               <th className="p-3">Item</th>
               <th className="p-3">Quem pegou</th>
               <th className="p-3">Qtd.</th>
@@ -220,7 +220,7 @@ export function EmprestimosSecao() {
           </thead>
           <tbody>
             {emprestimos.map((e) => (
-              <tr key={e.id} className="border-t border-mist-200">
+              <tr key={e.id} className="border-t border-mist-200 transition-colors hover:bg-mist-50">
                 <td className="p-3 font-medium text-grafite">{e.item_rotulo}</td>
                 <td className="p-3 text-grafite/70 text-sm">{e.pessoa_nome}</td>
                 <td className="p-3 text-grafite/60">{e.quantidade}</td>
@@ -234,7 +234,7 @@ export function EmprestimosSecao() {
                 </td>
                 <td className="p-3">
                   <span
-                    className={`px-2 py-1 rounded text-xs font-semibold ${
+                    className={`px-3 py-1 rounded-full text-xs font-bold ${
                       CLASSE_STATUS[e.status] ?? ""
                     }`}
                   >

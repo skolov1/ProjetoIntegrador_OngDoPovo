@@ -14,11 +14,11 @@ export function UsuarioLogado() {
   const nome = usuario?.name ?? "";
 
   return (
-    <div className="mt-auto border-t border-white/10 p-4">
+    <div className="relative mt-auto border-t border-white/10 bg-black/10 p-4">
       <div className="flex items-center gap-3">
         <span
           aria-hidden="true"
-          className="grid size-10 shrink-0 place-items-center rounded-full bg-white/15 text-sm font-bold text-white"
+          className="grid size-10 shrink-0 place-items-center rounded-full bg-verde text-sm font-bold text-white shadow-lg shadow-verde/25"
         >
           {isLoading ? "…" : iniciais(nome)}
         </span>

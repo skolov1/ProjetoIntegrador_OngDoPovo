@@ -78,7 +78,7 @@ export function AuditoriaTela() {
   return (
     <div className="mt-6 space-y-4">
       <div>
-        <h3 className="text-xl font-bold text-verde">Auditoria</h3>
+        <h3 className="text-xl font-extrabold text-verde-escuro">Auditoria</h3>
         <p className="text-sm text-grafite/60">
           Quem criou, alterou ou excluiu cada registro, e quando.
         </p>
@@ -170,10 +170,10 @@ export function AuditoriaTela() {
       {isLoading && <p>Carregando...</p>}
       {error && <p className="text-vermelho">Erro ao carregar o histórico.</p>}
 
-      <div className="overflow-x-auto">
-        <table className="w-full bg-white rounded-xl shadow">
-          <thead className="bg-mist-100">
-            <tr className="text-left text-grafite/70 text-sm">
+      <div className="overflow-x-auto rounded-2xl border border-slate-200/70 bg-white shadow-sm">
+        <table className="w-full">
+          <thead className="bg-mist-100/70">
+            <tr className="text-left text-xs font-bold uppercase tracking-wider text-verde-escuro/70">
               <th className="p-3 w-8" />
               <th className="p-3">Data e hora</th>
               <th className="p-3">Quem fez</th>
@@ -189,7 +189,7 @@ export function AuditoriaTela() {
               const expandido = aberto === r.id;
               return (
                 <Fragment key={r.id}>
-                  <tr className="border-t border-mist-200">
+                  <tr className="border-t border-mist-200 transition-colors hover:bg-mist-50">
                     <td className="p-3">
                       {expandivel && (
                         <button
@@ -213,7 +213,7 @@ export function AuditoriaTela() {
                     <td className="p-3 font-medium text-grafite">{r.usuario_nome}</td>
                     <td className="p-3">
                       <span
-                        className={`px-2 py-1 rounded text-xs font-semibold ${
+                        className={`px-3 py-1 rounded-full text-xs font-bold ${
                           CLASSE_ACAO[r.acao] ?? ""
                         }`}
                       >
@@ -237,7 +237,7 @@ export function AuditoriaTela() {
                           </thead>
                           <tbody>
                             {linhas.map((l) => (
-                              <tr key={l.campo} className="border-t border-mist-200">
+                              <tr key={l.campo} className="border-t border-mist-200 transition-colors hover:bg-mist-50">
                                 <td className="py-1 pr-4 font-medium text-grafite">
                                   {l.rotulo}
                                 </td>
