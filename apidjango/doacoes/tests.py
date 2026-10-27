@@ -999,3 +999,37 @@ class TestEmprestimo:
 
         assert response.status_code == 400
         assert "quantidade" in response.data
+
+
+class TestItensEmprestaveis:
+    URL = "/api/v1/doacoes/itens/emprestaveis/"
+
+    @pytest.fixture
+    def staff(self, cliente, admin):
+        cliente.force_authenticate(admin)
+        return cliente
+
+    def test_anonimo_nao_acessa(self, cliente):
+        assert cliente.get(self.URL).status_code in (401, 403)
+
+    def test_lista_so_o_que_pode_ser_emprestado(self, staff):
+        livre = DoacaoItem.objects.create(item="CADEIRA_RODAS", quantidade=2)
+        parcial = DoacaoItem.objects.create(item="MULETAS", quantidade=3)
+        todo_fora = DoacaoItem.objects.create(item="CADEIRA_BANHO", quantidade=1)
+        devolvido = DoacaoItem.objects.create(item="OUTRO", item_descricao="Andador", quantidade=1)
+        DoacaoItem.objects.create(item="ALIMENTOS", quantidade=10)
+        Emprestimo.objects.create(doacao=parcial, pessoa_nome="Ana", quantidade=2)
+        Emprestimo.objects.create(doacao=todo_fora, pessoa_nome="Ana", quantidade=1)
+        Emprestimo.objects.create(
+            doacao=devolvido,
+            pessoa_nome="Ana",
+            quantidade=1,
+            devolvido_em=timezone.localdate(),
+        )
+
+        response = staff.get(self.URL)
+
+        assert response.status_code == 200
+        disponiveis = {r["id"]: r["disponivel"] for r in response.data}
+        assert disponiveis == {livre.id: 2, parcial.id: 1, devolvido.id: 1}
+        assert {r["id"]: r["item_rotulo"] for r in response.data}[devolvido.id] == "Andador"

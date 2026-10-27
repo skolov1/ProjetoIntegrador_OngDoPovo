@@ -8,7 +8,8 @@ from datetime import date
 
 import django_filters
 from django.db import transaction
-from django.db.models import ProtectedError, Sum
+from django.db.models import F, ProtectedError, Q, Sum
+from django.db.models.functions import Coalesce
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
@@ -21,6 +22,7 @@ from .serializers import (
     AlunoListSerializer,
     AlunoSerializer,
     ChamadaItemSerializer,
+    DoacaoItemEmprestavelSerializer,
     DoacaoItemResumoSerializer,
     DoacaoItemSerializer,
     EmprestimoSerializer,
@@ -71,6 +73,31 @@ class DoacaoItemViewSet(
             for valor, rotulo in DoacaoItem.Item.choices
         ]
         return Response(DoacaoItemResumoSerializer(dados, many=True).data)
+
+    @extend_schema(
+        summary="Doações que ainda têm unidades para emprestar",
+        tags=["doacoes"],
+        responses={200: DoacaoItemEmprestavelSerializer(many=True)},
+    )
+    @action(detail=False, methods=["get"], url_path="emprestaveis", pagination_class=None)
+    def emprestaveis(self, request):
+        """Tudo que pode sair emprestado: sem alimentos e sem o que já está todo fora."""
+        itens = (
+            DoacaoItem.objects.exclude(item=DoacaoItem.Item.ALIMENTOS)
+            .annotate(
+                emprestada=Coalesce(
+                    Sum(
+                        "emprestimos__quantidade",
+                        filter=Q(emprestimos__devolvido_em__isnull=True),
+                    ),
+                    0,
+                )
+            )
+            .annotate(disponivel=F("quantidade") - F("emprestada"))
+            .filter(disponivel__gt=0)
+            .order_by("item", "-recebido_em")
+        )
+        return Response(DoacaoItemEmprestavelSerializer(itens, many=True).data)
 
     def destroy(self, request, *args, **kwargs):
         try:

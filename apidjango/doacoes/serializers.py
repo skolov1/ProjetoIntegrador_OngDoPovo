@@ -127,6 +127,17 @@ class DoacaoItemResumoSerializer(serializers.Serializer):
     total = serializers.IntegerField()
 
 
+class DoacaoItemEmprestavelSerializer(serializers.Serializer):
+    """Doação que ainda tem unidades para emprestar (usada no seletor do painel)."""
+
+    id = serializers.IntegerField()
+    item_rotulo = serializers.CharField(source="item_exibido")
+    quantidade = serializers.IntegerField()
+    disponivel = serializers.IntegerField()
+    doador_exibido = serializers.CharField()
+    recebido_em = serializers.DateField()
+
+
 # =============================================================================
 # Empréstimo de itens (item de uma doação que saiu da ONG por um tempo)
 # =============================================================================
