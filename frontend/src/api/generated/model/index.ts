@@ -47,6 +47,7 @@ export * from './doacoesTurmasListParams';
 export * from './emprestimo';
 export * from './emprestimoRequest';
 export * from './exameAptidaoEnum';
+export * from './gradeItem';
 export * from './itemEnum';
 export * from './loginResponse';
 export * from './loginUser';

@@ -2,6 +2,7 @@ export * from './alunos/alunos';
 export * from './auditoria/auditoria';
 export * from './auth/auth';
 export * from './doacoes/doacoes';
+export * from './grade/grade';
 export * from './presencas/presencas';
 export * from './professores/professores';
 export * from './sistema/sistema';
