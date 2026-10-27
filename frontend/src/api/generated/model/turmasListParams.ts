@@ -35,4 +35,5 @@ page_size?: number;
  * A search term.
  */
 search?: string;
+visivel_na_grade?: boolean;
 };

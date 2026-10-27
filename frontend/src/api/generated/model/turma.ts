@@ -5,10 +5,10 @@
  * API do Sistema ONG do Povo (Projeto Integrador). O schema em /api/schema/ alimenta o gerador de client do frontend.
  * OpenAPI spec version: 1.0.0
  */
-import type { DiaSemanaEnum } from './diaSemanaEnum';
+import type { HorarioTurma } from './horarioTurma';
 
 /**
- * Serializer base da turma.
+ * Turma com seus dias e horários (um ou mais) e a visibilidade na grade pública.
  */
 export interface Turma {
   readonly id: number;
@@ -16,14 +16,19 @@ export interface Turma {
   nome: string;
   /** @maxLength 255 */
   descricao?: string;
-  dia_semana: DiaSemanaEnum;
-  horario_inicio: string;
-  horario_fim: string;
+  horarios: HorarioTurma[];
   readonly horario_formatado: string;
   data_inicio: string;
   /** @nullable */
   data_fim?: string | null;
   ativo?: boolean;
+  /** Desligado por padrão: turma interna não aparece no site. */
+  visivel_na_grade?: boolean;
+  /**
+     * Como o visitante vê a turma no site. Vazio = usa o nome da turma.
+     * @maxLength 100
+     */
+  nome_publico?: string;
   readonly total_alunos: number;
   readonly criado_em: string;
 }

@@ -18,6 +18,8 @@ export interface TurmaList {
   nome: string;
   readonly horario_formatado: string;
   ativo?: boolean;
+  /** Desligado por padrão: turma interna não aparece no site. */
+  visivel_na_grade?: boolean;
   readonly total_alunos: number;
   readonly total_presencas: number;
 }

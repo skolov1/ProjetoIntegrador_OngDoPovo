@@ -14,10 +14,16 @@ import { api } from '../../../lib/api';
 
 
   /**
- * GET /api/v1/grade/ — turmas da semana para a landing.
+ * GET /api/v1/grade/ - grade da semana para a landing.
  *
- * Público e só leitura. Não traz professor, aluno nem nada pessoal: só dia, nome da
- * turma, horário e situação. Turma inativa ou encerrada não aparece (ver `grade.py`).
+ * Público e só leitura. Não traz professor, aluno nem nada pessoal: só dia, nome,
+ * horário e situação. Entram:
+ *
+ * * turmas ativas, com `visivel_na_grade` ligado e ainda não encerradas, uma linha por
+ *   dia da semana em que acontecem (ver `grade.py` para a situação de cada uma);
+ * * atividades avulsas (evento, serviço) com `visivel_na_grade` ligado.
+ *
+ * A resposta pode ficar 60 s em cache no navegador e em proxies.
  * @summary Grade da semana (pública)
  */
 export const gradeList = (
