@@ -177,48 +177,6 @@ export const PROGRAMAS = [
 ] as const
 
 /* -------------------------------------------------------------------------- */
-/* Agenda da sede                                                               */
-/* -------------------------------------------------------------------------- */
-
-export const AGENDA = [
-  {
-    dia: 'Segunda',
-    atividade: 'Escola de Basquete',
-    horario: '18h às 20h',
-    local: 'Galpão',
-    status: 'Ativo',
-  },
-  {
-    dia: 'Terça',
-    atividade: 'Ballet Clássico (Infantil)',
-    horario: '17h às 18h',
-    local: 'Galpão',
-    status: 'Ativo',
-  },
-  {
-    dia: 'Quarta',
-    atividade: 'Treino de Basquete Sub-15',
-    horario: '18h às 20h',
-    local: 'Galpão',
-    status: 'Ativo',
-  },
-  {
-    dia: 'Quinta',
-    atividade: 'Atendimento Oftalmológico',
-    horario: 'Sob agendamento',
-    local: 'Sede',
-    status: 'Agendado',
-  },
-  {
-    dia: 'Sábado',
-    atividade: 'Aula de Reforço Escolar',
-    horario: '9h às 11h',
-    local: 'Espaço',
-    status: 'Aberto',
-  },
-] as const
-
-/* -------------------------------------------------------------------------- */
 /* Doação                                                                       */
 /* -------------------------------------------------------------------------- */
 

@@ -11,15 +11,13 @@ import {
   SectionTitle,
 } from "@/components/ui/Section";
 import { Reveal } from "@/components/ui/Reveal";
-import { AGENDA, ONG } from "@/features/home/data";
-
-const ESTILOS_STATUS: Record<string, string> = {
-  Ativo: "bg-verde/10 text-verde",
-  Aberto: "bg-amarelo/20 text-[#8a6100]",
-  Agendado: "bg-azul/10 text-azul",
-};
+import { ONG } from "@/features/home/data";
+import { useGrade } from "@/features/home/useGrade";
+import { estiloDoStatus } from "@/lib/grade";
 
 export function SpaceSection() {
+  const { data: grade, isLoading, isError } = useGrade();
+
   return (
     <Section id="espaco" tom="claro">
       <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
@@ -86,32 +84,43 @@ export function SpaceSection() {
               </span>
             </div>
 
-            <ul className="divide-y divide-slate-100">
-              {AGENDA.map((item) => (
+            <ul className="divide-y divide-slate-100" aria-live="polite">
+              {isLoading && (
+                <li className="px-5 py-6 text-sm text-grafite/60 sm:px-6">
+                  Carregando a grade...
+                </li>
+              )}
+              {isError && (
+                <li className="px-5 py-6 text-sm text-grafite/70 sm:px-6">
+                  Não foi possível carregar a grade agora. Tente de novo em
+                  instantes ou fale com a gente pelo WhatsApp.
+                </li>
+              )}
+              {grade?.length === 0 && (
+                <li className="px-5 py-6 text-sm text-grafite/70 sm:px-6">
+                  Nenhuma atividade na grade no momento.
+                </li>
+              )}
+              {grade?.map((item) => (
                 <li
-                  key={item.dia + item.atividade}
-                  className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 px-5 py-4 transition-colors hover:bg-mist-50 sm:px-6 lg:grid-cols-[5.5rem_1fr_4rem_auto]"
+                  key={item.id}
+                  className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 px-5 py-4 transition-colors hover:bg-mist-50 sm:px-6 lg:grid-cols-[6rem_1fr_auto]"
                 >
                   <span className="text-xs font-bold uppercase tracking-wider text-verde max-lg:col-start-1 max-lg:row-start-1">
-                    {item.dia}
+                    {item.dia_rotulo}
                   </span>
                   <div className="max-lg:col-span-2">
-                    <p className="font-bold text-verde-escuro">
-                      {item.atividade}
-                    </p>
+                    <p className="font-bold text-verde-escuro">{item.nome}</p>
                     <p className="mt-0.5 text-sm text-grafite/60">
                       {item.horario}
                     </p>
                   </div>
-                  <span className="hidden text-sm text-grafite/60 lg:block">
-                    {item.local}
-                  </span>
                   <span
-                    className={`w-fit rounded-full px-3 py-1 text-xs font-bold max-lg:col-start-2 max-lg:row-start-1 max-lg:justify-self-end ${
-                      ESTILOS_STATUS[item.status] ?? ESTILOS_STATUS.Ativo
-                    }`}
+                    className={`w-fit whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold max-lg:col-start-2 max-lg:row-start-1 max-lg:justify-self-end ${estiloDoStatus(
+                      item.status,
+                    )}`}
                   >
-                    {item.status}
+                    {item.status_rotulo}
                   </span>
                 </li>
               ))}
