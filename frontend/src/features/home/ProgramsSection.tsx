@@ -96,13 +96,13 @@ const outros = PROGRAMAS.filter((p) =>
 /* Fotos das práticas esportivas (prefixo imagens_ong_page-XXXX)              */
 /* -------------------------------------------------------------------------- */
 
-import fotoEsporte1 from '../../../../refs/imagens_ong/imagens_ong_page-0001.jpg'
-import fotoEsporte2 from '../../../../refs/imagens_ong/imagens_ong_page-0002.jpg'
-import fotoEsporte3 from '../../../../refs/imagens_ong/imagens_ong_page-0003.jpg'
-import fotoEsporte4 from '../../../../refs/imagens_ong/imagens_ong_page-0004.jpg'
-import fotoEsporte5 from '../../../../refs/imagens_ong/imagens_ong_page-0005.jpg'
-import fotoEsporte6 from '../../../../refs/imagens_ong/imagens_ong_page-0006.jpg'
-import fotoEsporte7 from '../../../../refs/imagens_ong/imagens_ong_page-0007.jpg'
+import fotoEsporte1 from '@/assets/fotos/imagens-ong-page-0001.webp'
+import fotoEsporte2 from '@/assets/fotos/imagens-ong-page-0002.webp'
+import fotoEsporte3 from '@/assets/fotos/imagens-ong-page-0003.webp'
+import fotoEsporte4 from '@/assets/fotos/imagens-ong-page-0004.webp'
+import fotoEsporte5 from '@/assets/fotos/imagens-ong-page-0005.webp'
+import fotoEsporte6 from '@/assets/fotos/imagens-ong-page-0006.webp'
+import fotoEsporte7 from '@/assets/fotos/imagens-ong-page-0007.webp'
 
 const FOTOS_ESPORTE = [
   { src: fotoEsporte1, alt: 'Prática esportiva na ONG do Povo' },

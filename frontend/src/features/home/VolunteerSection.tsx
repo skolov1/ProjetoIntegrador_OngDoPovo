@@ -9,7 +9,7 @@ import { Eyebrow, Section, SectionLead, SectionTitle } from '@/components/ui/Sec
 import { Reveal } from '@/components/ui/Reveal'
 import { FRONTEIRAS_VOLUNTARIADO } from '@/features/home/data'
 import { linkWhatsapp, topicoEmNegrito } from '@/lib/whatsapp'
-import fotoVoluntario from '../../../../refs/imagens_ong/interbairros-122.jpg'
+import fotoVoluntario from '@/assets/fotos/interbairros-122.webp'
 
 const MENSAGEM_VOLUNTARIO = [
   topicoEmNegrito('Voluntariado'),

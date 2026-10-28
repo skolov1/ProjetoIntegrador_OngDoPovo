@@ -21,12 +21,12 @@ import { cor, icone } from '@/features/home/icons'
 /* Fotos da história da ONG (prefixo imgXX)                                    */
 /* -------------------------------------------------------------------------- */
 
-import fotoHistoria1 from '../../../../refs/imagens_ong/img20.jpg'
-import fotoHistoria2 from '../../../../refs/imagens_ong/img45.jpg'
-import fotoHistoria3 from '../../../../refs/imagens_ong/img47.jpg'
-import fotoHistoria4 from '../../../../refs/imagens_ong/img67.jpg'
-import fotoHistoria5 from '../../../../refs/imagens_ong/img69.jpg'
-import fotoHistoria6 from '../../../../refs/imagens_ong/img87.jpg'
+import fotoHistoria1 from '@/assets/fotos/img20.webp'
+import fotoHistoria2 from '@/assets/fotos/img45.webp'
+import fotoHistoria3 from '@/assets/fotos/img47.webp'
+import fotoHistoria4 from '@/assets/fotos/img67.webp'
+import fotoHistoria5 from '@/assets/fotos/img69.webp'
+import fotoHistoria6 from '@/assets/fotos/img87.webp'
 
 const FOTOS_HISTORIA = [
   {

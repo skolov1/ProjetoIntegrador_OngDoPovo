@@ -5,7 +5,9 @@
  * padrão de raios da marca girando ao fundo e um mosaico de fotos à direita.
  */
 import { MapPin } from 'lucide-react'
-
+import foto2 from '@/assets/fotos/ballet-apres-082.webp'
+import foto1 from '@/assets/fotos/img-7655.webp'
+import foto3 from '@/assets/fotos/jogox1-45.webp'
 import { Header } from '@/components/layout/Header'
 import { LinkBotao } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
@@ -14,19 +16,19 @@ import { ONG } from '@/features/home/data'
 
 const FOTOS = [
   {
-    src: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=800&q=85',
+    src: foto1,
     alt: 'Crianças jogando basquete em uma quadra',
     className: 'col-span-2 row-span-2',
     flutua: true,
   },
   {
-    src: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=600&q=85',
+    src: foto2,
     alt: 'Jovens em treino de futebol',
     className: 'col-span-1 row-span-1',
     flutua: false,
   },
   {
-    src: 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&w=600&q=85',
+    src: foto3,
     alt: 'Criança sorrindo durante uma atividade',
     className: 'col-span-1 row-span-1',
     flutua: false,
