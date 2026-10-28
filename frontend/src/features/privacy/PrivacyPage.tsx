@@ -197,8 +197,8 @@ export function PrivacyPage() {
             <p className="mt-4 leading-relaxed">
               Para dúvidas ou para fazer qualquer um dos pedidos acima, escreva
               para{' '}
-              <a className="font-bold text-verde underline underline-offset-4" href={`mailto:${ONG.email}`}>
-                {ONG.email}
+              <a className="font-bold text-verde underline underline-offset-4" href={ONG.whatsapp}>
+                o nosso WhatsApp
               </a>
               .
             </p>
