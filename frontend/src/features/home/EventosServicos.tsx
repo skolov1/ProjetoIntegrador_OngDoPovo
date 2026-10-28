@@ -24,9 +24,12 @@ export function EventosServicos() {
             Atendimentos, campanhas e encontros que acontecem na sede
           </p>
         </div>
-        <ul className="grid gap-px bg-slate-100 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid gap-4 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-3">
           {itens.map((item) => (
-            <li key={item.chave} className="flex flex-col gap-3 bg-white p-5 sm:p-6">
+            <li
+              key={item.chave}
+              className="flex flex-col gap-3 rounded-xl border border-slate-200/70 p-5"
+            >
               <div className="flex items-start justify-between gap-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-verde">
                   {item.tipo_rotulo}
