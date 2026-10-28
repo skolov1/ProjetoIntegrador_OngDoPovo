@@ -1,0 +1,43 @@
+# Render Blueprint: a API Django (plano gratuito).
+# Guia completo, passo a passo: docs/DEPLOY.md
+#
+# Como usar: no Render, New > Blueprint e escolha este repositório. Depois preencha as
+# variáveis marcadas como "sync: false" (o Render pergunta; nenhuma fica no Git).
+
+services:
+  - type: web
+    name: ong-do-povo-api
+    runtime: python
+    plan: free
+    rootDir: apidjango
+    autoDeploy: true
+    healthCheckPath: /api/v1/ping/
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --no-input
+    # migrate a cada subida; o createsuperuser só cria a conta se as variáveis
+    # DJANGO_SUPERUSER_* estiverem preenchidas (se ela já existe, o erro é ignorado).
+    startCommand: >-
+      python manage.py migrate --no-input &&
+      (python manage.py createsuperuser --noinput || true) &&
+      gunicorn setup.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 60
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      # Endereço do banco (ex.: postgres://usuario:senha@host/banco?sslmode=require).
+      - key: DATABASE_URL
+        sync: false
+      # Endereço do site na Vercel, com https://, sem barra no fim.
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      # Primeira conta de administrador (opcional; troque a senha depois).
+      - key: DJANGO_SUPERUSER_USERNAME
+        sync: false
+      - key: DJANGO_SUPERUSER_EMAIL
+        sync: false
+      - key: DJANGO_SUPERUSER_PASSWORD
+        sync: false

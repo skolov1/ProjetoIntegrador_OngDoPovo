@@ -59,7 +59,7 @@ Instale as dependências (o arquivo de desenvolvimento já inclui as de produç�
 pip install -r requirements-dev.txt
 ```
 
-Configure o ambiente. **O `.env` é opcional em desenvolvimento**: os padrões do `settings.py` já batem com o `docker-compose.yml`. Se quiser personalizar:
+Configure o ambiente. **O `.env` é obrigatório em desenvolvimento**: ele liga o `DJANGO_DEBUG`. Sem isso o Django roda como produção e recusa subir sem uma `DJANGO_SECRET_KEY` real. Os demais padrões já batem com o `docker-compose.yml`.
 
 ```bash
 cp .env.example .env
@@ -190,7 +190,7 @@ Isso reescreve `frontend/src/api/generated/`. No Windows o gerador pode deixar v
 
 ## 6. Variáveis de ambiente
 
-### Back-end (`apidjango/.env`, opcional em desenvolvimento)
+### Back-end (`apidjango/.env`, obrigatório em desenvolvimento)
 
 | Variável | Padrão | Para que serve |
 |---|---|---|
@@ -246,16 +246,18 @@ Páginas HTML do front: `index.html` (site), `privacidade.html`, `login.html` e 
 
 ---
 
-## 9. Antes de publicar (produção)
+## 9. Publicar (produção)
 
-Ainda **não** está pronto para produção. Itens conhecidos para fechar antes:
+O repositório está pronto para **Vercel (site) + Render (API) + banco gratuito**. Passo a passo, variáveis e checklist: [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
-- `DJANGO_DEBUG=False` e uma `DJANGO_SECRET_KEY` real, definidos por ambiente (hoje os padrões são de desenvolvimento).
-- Servir os arquivos estáticos (WhiteNoise já está nas dependências, falta ligar no `MIDDLEWARE`) e rodar com `gunicorn`.
-- Cookie de refresh com `Secure` (já é automático quando `DEBUG=False`) e `CORS_ALLOWED_ORIGINS` com o domínio real.
+O que o back-end já faz sozinho fora do desenvolvimento: `DEBUG` desligado por padrão, `SECRET_KEY` obrigatória, HTTPS obrigatório, cookies `Secure`, arquivos estáticos pelo WhiteNoise e leitura do banco por `DATABASE_URL`.
+
+Ainda falta antes de usar com dados reais:
+
 - Definir o prazo de guarda dos cadastros inativos e do histórico de auditoria, e fechar as pendências do `docs/LGPD.md` (controlador, encarregado, base legal, texto do termo).
 - Decidir se o CPF/RG do responsável deve ser criptografado no banco.
-- Corrigir os avisos de estilo antigos do `ruff` e fazer o front responsivo (a barra lateral do painel tem largura fixa).
+- Fazer o painel responsivo (a barra lateral tem largura fixa).
+- Migrar para o MongoDB Atlas, se o time decidir (o bloco `DATABASES` do `settings.py` muda).
 
 ---
 

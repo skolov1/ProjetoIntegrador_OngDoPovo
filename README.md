@@ -82,7 +82,7 @@ cd apidjango
 python -m venv venv
 source venv/bin/activate          # Windows: venv\Scripts\activate
 pip install -r requirements-dev.txt
-cp .env.example .env              # opcional: os padrões já batem com o docker-compose
+cp .env.example .env              # obrigatório em dev: liga o DJANGO_DEBUG (sem ele o Django roda como produção)
 python manage.py migrate
 python manage.py seed_demo --com-admin   # dados de exemplo + usuário admin/admin (só dev)
 python manage.py runserver 8000
@@ -114,6 +114,12 @@ pnpm dev
 
 ---
 
+## ☁️ Deploy gratuito
+
+O repositório está pronto para **Vercel (site) + Render (API) + banco gratuito**: `render.yaml` e `frontend/vercel.json` já vêm configurados. Passo a passo, variáveis e checklist em [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
+---
+
 ## 📜 Decisões técnicas importantes
 
 1. **Autenticação:** JWT. O *access token* fica só em memória no navegador (header `Authorization`); o *refresh token* vai em cookie httpOnly (`/api/v1/auth/token/`, `.../refresh/`, `.../logout/`). Cada pessoa da equipe deve ter a **própria conta** (criada em `/admin/`), para a auditoria identificar o autor.
@@ -136,7 +142,7 @@ pnpm dev
 
 * [ ] Dados reais da ONG (modalidades, instrutores, alunos, doações) e indicadores de Impacto reais.
 * [ ] Painel responsivo e estatísticas públicas (presenças, alunos, modalidades).
-* [ ] Endurecimento para produção (`DEBUG`/`SECRET_KEY`, WhiteNoise, ruff).
+* [x] Endurecimento para produção (`DEBUG`/`SECRET_KEY`, HTTPS, WhiteNoise, ruff) e arquivos de deploy.
 * [ ] Decisão sobre o MongoDB (prova de conceito já feita).
 * [ ] Cadastro de patrocinadores e painel de evolução do aluno (sugestões).
 
