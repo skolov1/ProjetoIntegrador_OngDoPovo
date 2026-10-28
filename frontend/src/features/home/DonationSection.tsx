@@ -4,8 +4,9 @@
  * Decisão da reunião: sem QR Code, CNPJ ou chave PIX na página.
  */
 
-import { Wheat, Accessibility, Bath } from 'lucide-react'
+import { Wheat, Accessibility } from 'lucide-react'
 
+import { CadeiraBanhoIcon, MuletasIcon } from '@/components/ui/IconesDoacao'
 import { Eyebrow, Section, SectionLead, SectionTitle } from '@/components/ui/Section'
 import { Reveal } from '@/components/ui/Reveal'
 import { Sunburst } from '@/components/ui/Sunburst'
@@ -13,8 +14,8 @@ import { Sunburst } from '@/components/ui/Sunburst'
 const ITENS_ACEITOS = [
   { rotulo: 'Alimentos não perecíveis', Icon: Wheat },
   { rotulo: 'Cadeiras de rodas', Icon: Accessibility },
-  { rotulo: 'Muletas', Icon: Accessibility },
-  { rotulo: 'Cadeiras de banho', Icon: Bath },
+  { rotulo: 'Muletas', Icon: MuletasIcon },
+  { rotulo: 'Cadeiras de banho', Icon: CadeiraBanhoIcon },
 ] as const
 
 export function DonationSection() {
