@@ -26,7 +26,10 @@ export function VolunteerSection() {
             <img
               src={fotoVoluntario}
               alt="Voluntário durante partida do Interbairros"
+              width={1280}
+              height={1920}
               loading="lazy"
+              decoding="async"
               className="h-full w-full object-cover aspect-square"
             />
           </div>
