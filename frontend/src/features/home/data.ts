@@ -22,7 +22,7 @@ export const ONG = {
   areas: ['Esporte', 'Saúde', 'Educação', 'Comunidade'],
   instagram: 'ongdopovo_',
   instagramUrl: 'https://instagram.com/ongdopovo_',
-  facebook: 'https://facebook.com/ongdopovo',
+  facebook: 'https://facebook.com/OngdoPovocaieiras',
   // DDD 13 — Praia Grande/SP. O manual de marca citava (11) 98268-7879, mas o
   // número da ONG é este. Confirmado pelo time em 04/10/2026.
   whatsapp: 'https://wa.me/5513988066437',
