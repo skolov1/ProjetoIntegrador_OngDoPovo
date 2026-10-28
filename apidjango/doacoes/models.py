@@ -565,7 +565,8 @@ class Presenca(models.Model):
         ]
 
     def __str__(self) -> str:
-        return f"{self.aluno.nome} – {self.data.strftime('%d/%m/%Y')} – {self.get_situacao_display()}"
+        data = self.data.strftime("%d/%m/%Y")
+        return f"{self.aluno.nome} - {data} - {self.get_situacao_display()}"
 
 
 class Professor(models.Model):

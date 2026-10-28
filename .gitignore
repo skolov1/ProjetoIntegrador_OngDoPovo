@@ -595,3 +595,6 @@ $RECYCLE.BIN/
 # tokens de cor em frontend/src/index.css e logo otimizada em frontend/public/.
 # refs/
 refs/originais-usadas/
+
+# collectstatic (gerado no deploy)
+apidjango/staticfiles/

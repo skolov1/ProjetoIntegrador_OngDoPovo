@@ -322,7 +322,8 @@ class PresencaViewSet(
     @action(detail=False, methods=["post"], url_path="lote")
     def lote(self, request):
         """
-        Recebe: { turma: 1, data: "2026-10-20", presencas: [{aluno_id: 1, situacao: "PRESENTE"}, ...] }
+        Recebe: { turma: 1, data: "2026-10-20",
+                  presencas: [{aluno_id: 1, situacao: "PRESENTE"}, ...] }
         Cria/atualiza presenças em bulk.
         """
         serializer = PresencaLoteSerializer(data=request.data)
@@ -339,7 +340,7 @@ class PresencaViewSet(
                 situacao = p_data["situacao"]
                 observacao = p_data.get("observacao", "")
 
-                presenca, created = Presenca.objects.update_or_create(
+                presenca, _ = Presenca.objects.update_or_create(
                     aluno_id=aluno_id,
                     turma=turma,
                     data=data,

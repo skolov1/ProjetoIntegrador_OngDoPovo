@@ -10,9 +10,12 @@ Documentação:
 Variáveis de ambiente: ver .env.example
 """
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import parse_qs, unquote, urlparse
 
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -28,29 +31,38 @@ def env_bool(name, default=False):
 
 
 # --- Seguranca -------------------------------------------------------------
-# Em producao, DJANGO_SECRET_KEY e DJANGO_DEBUG devem vir obrigatoriamente do .env.
-SECRET_KEY = os.getenv(
-    "DJANGO_SECRET_KEY",
-    "django-insecure-dev-only-nao-usar-em-producao",
-)
-DEBUG = env_bool("DJANGO_DEBUG", True)
+# Seguro por padrao: sem DJANGO_DEBUG=True no ambiente, o Django roda como producao.
+# Para desenvolver, copie apidjango/.env.example para apidjango/.env (ele liga o DEBUG).
+DEBUG = env_bool("DJANGO_DEBUG", False)
 
-ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.getenv(
-        "DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,[::1]"
-    ).split(",")
-    if host.strip()
-]
+# Os testes (pytest) rodam sem .env e sem HTTPS: ficam de fora das regras de producao.
+TESTING = "pytest" in sys.modules
+PRODUCAO = not DEBUG and not TESTING
+
+_CHAVE_DE_DESENVOLVIMENTO = "django-insecure-dev-only-nao-usar-em-producao"
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", _CHAVE_DE_DESENVOLVIMENTO)
+if PRODUCAO and SECRET_KEY == _CHAVE_DE_DESENVOLVIMENTO:
+    raise ImproperlyConfigured(
+        "Defina DJANGO_SECRET_KEY no ambiente (em desenvolvimento, use DJANGO_DEBUG=True)."
+    )
+
+
+def _lista(nome, padrao):
+    return [item.strip() for item in os.getenv(nome, padrao).split(",") if item.strip()]
+
+
+ALLOWED_HOSTS = _lista("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,[::1]")
 
 # CSRF trusted origins para o login via cookie funcionar em dev.
-CSRF_TRUSTED_ORIGINS = [
-    origin.strip()
-    for origin in os.getenv(
-        "DJANGO_CSRF_TRUSTED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
-    ).split(",")
-    if origin.strip()
-]
+CSRF_TRUSTED_ORIGINS = _lista(
+    "DJANGO_CSRF_TRUSTED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
+)
+
+# O Render informa o proprio endereco: ja entra nos hosts e origens confiaveis.
+_HOST_RENDER = os.getenv("RENDER_EXTERNAL_HOSTNAME", "")
+if _HOST_RENDER:
+    ALLOWED_HOSTS.append(_HOST_RENDER)
+    CSRF_TRUSTED_ORIGINS.append(f"https://{_HOST_RENDER}")
 
 
 # --- Apps ------------------------------------------------------------------
@@ -76,6 +88,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # Serve os arquivos estaticos (admin do Django) sem Nginx. Logo apos o Security.
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     # CorsMiddleware precisa vir antes de qualquer middleware que possa gerar
     # resposta, senao o preflight OPTIONS sai sem os headers de CORS.
     "corsheaders.middleware.CorsMiddleware",
@@ -106,9 +120,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "setup.wsgi.application"
 
-# Serve os arquivos de STATIC_ROOT. Precisa vir APOS SecurityMiddleware.
 # https://whitenoise.readthedocs.io/
-WHITENOISE_AUTOREFRESH = True
+WHITENOISE_AUTOREFRESH = DEBUG
 
 
 # --- Django REST Framework -------------------------------------------------
@@ -208,16 +221,37 @@ SPECTACULAR_SETTINGS = {
 
 # Os padrões abaixo são os do banco que o docker-compose.yml cria (só para
 # desenvolvimento local). Em produção, defina DB_* no ambiente/.env.
-DATABASES = {
-    "default": {
+def _banco_da_url(url):
+    """Le `postgres://usuario:senha@host:porta/banco?sslmode=require` (padrao dos provedores)."""
+    partes = urlparse(url)
+    config = {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME", "ongdb"),
-        "USER": os.getenv("DB_USER", "postgres"),
-        "PASSWORD": os.getenv("DB_PASSWORD", "123"),
-        "HOST": os.getenv("DB_HOST", "localhost"),
-        "PORT": os.getenv("DB_PORT", "5432"),
+        "NAME": partes.path.lstrip("/"),
+        "USER": unquote(partes.username or ""),
+        "PASSWORD": unquote(partes.password or ""),
+        "HOST": partes.hostname or "",
+        "PORT": str(partes.port or 5432),
     }
-}
+    sslmode = parse_qs(partes.query).get("sslmode", [""])[0]
+    if sslmode:
+        config["OPTIONS"] = {"sslmode": sslmode}
+    return config
+
+
+# Em producao, o mais simples e definir DATABASE_URL (Render, Neon, Supabase...).
+if os.getenv("DATABASE_URL"):
+    DATABASES = {"default": _banco_da_url(os.environ["DATABASE_URL"])}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("DB_NAME", "ongdb"),
+            "USER": os.getenv("DB_USER", "postgres"),
+            "PASSWORD": os.getenv("DB_PASSWORD", "123"),
+            "HOST": os.getenv("DB_HOST", "localhost"),
+            "PORT": os.getenv("DB_PORT", "5432"),
+        }
+    }
 
 
 # --- Password validation ---------------------------------------------------
@@ -257,6 +291,15 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+if PRODUCAO:
+    # Arquivos com hash no nome e compactados; precisa de `collectstatic` no deploy.
+    STORAGES = {
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        },
+    }
+
 # Evita W042 e usa BigAutoField (64 bits) nas chaves primarias.
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -281,3 +324,18 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+
+# --- HTTPS em producao (atras do proxy do Render) -----------------------------
+
+if PRODUCAO:
+    # O Render termina o TLS e avisa pelo cabecalho; sem isto o Django acharia que
+    # toda requisicao e HTTP e redirecionaria em loop.
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = env_bool("DJANGO_SSL_REDIRECT", True)
+    # O health check do Render fala HTTP simples: nao pode ser redirecionado.
+    SECURE_REDIRECT_EXEMPT = [r"^api/v1/ping/$"]
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    # HSTS fica desligado ate o dominio definitivo estar no ar; depois, suba (ex.: 31536000).
+    SECURE_HSTS_SECONDS = int(os.getenv("DJANGO_HSTS_SECONDS", "0"))
