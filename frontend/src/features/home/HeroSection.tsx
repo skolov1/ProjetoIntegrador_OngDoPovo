@@ -37,7 +37,7 @@ export function HeroSection() {
   return (
     <section
       id="inicio"
-      className="relative overflow-hidden bg-linear-to-b from-mist-50 via-white to-mist-100 pt-24 pb-16 sm:pt-28 sm:pb-20 lg:pt-32 lg:pb-28 2xl:pb-[19rem]"
+      className="relative overflow-hidden bg-linear-to-b from-mist-50 via-white to-mist-100 pt-24 pb-16 sm:pt-28 sm:pb-20 lg:pt-32 lg:pb-28 2xl:pb-96"
     >
       {/* Padrão de raios — o elemento gráfico do manual, em marca d'água */}
       <Sunburst
@@ -59,7 +59,7 @@ export function HeroSection() {
 
       <Header />
 
-      <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-6 lg:grid-cols-[1fr_0.95fr] lg:gap-10 lg:px-8">
+      <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-6 lg:grid-cols-[1fr_0.95fr] lg:gap-10 lg:px-8 lg:my-22">
         {/* Coluna de texto */}
         <div>
           <Reveal>
