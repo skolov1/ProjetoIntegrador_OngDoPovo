@@ -8,7 +8,7 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import type { AxiosError } from 'axios'
-import { AlertCircle, Eye, EyeOff } from 'lucide-react'
+import { AlertCircle, ChevronLeft, Eye, EyeOff } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
 import { Eyebrow } from '@/components/ui/Section'
@@ -46,7 +46,14 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen bg-mist-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-sm sm:p-8">
+      <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-sm sm:p-8">
+        <a
+          href="/"
+          className="absolute top-4 left-4 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-semibold text-grafite/60 transition-colors hover:bg-mist-100 hover:text-verde focus-visible:outline-2 focus-visible:outline-verde"
+        >
+          <ChevronLeft className="size-4" aria-hidden="true" />
+          Voltar
+        </a>
         <a
           href="/"
           aria-label={`${ONG.nome} — voltar ao site`}
