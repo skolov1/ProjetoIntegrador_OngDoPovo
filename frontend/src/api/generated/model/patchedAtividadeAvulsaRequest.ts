@@ -5,8 +5,9 @@
  * API do Sistema ONG do Povo (Projeto Integrador). O schema em /api/schema/ alimenta o gerador de client do frontend.
  * OpenAPI spec version: 1.0.0
  */
-import type { AtividadeAvulsaStatusEnum } from './atividadeAvulsaStatusEnum';
 import type { PatchedAtividadeAvulsaRequestDiaSemana } from './patchedAtividadeAvulsaRequestDiaSemana';
+import type { Status79cEnum } from './status79cEnum';
+import type { TipoEnum } from './tipoEnum';
 
 export interface PatchedAtividadeAvulsaRequest {
   /**
@@ -14,6 +15,9 @@ export interface PatchedAtividadeAvulsaRequest {
      * @maxLength 120
      */
   nome?: string;
+  tipo?: TipoEnum;
+  /** @nullable */
+  data?: string | null;
   dia_semana?: typeof PatchedAtividadeAvulsaRequestDiaSemana[keyof typeof PatchedAtividadeAvulsaRequestDiaSemana];
   /** @nullable */
   horario_inicio?: string | null;
@@ -24,6 +28,6 @@ export interface PatchedAtividadeAvulsaRequest {
      * @maxLength 60
      */
   horario_texto?: string;
-  status?: AtividadeAvulsaStatusEnum;
+  status?: Status79cEnum;
   visivel_na_grade?: boolean;
 }

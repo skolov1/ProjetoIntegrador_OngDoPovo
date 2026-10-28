@@ -15,3 +15,15 @@ export function topicoEmNegrito(topico: string): string {
 export function linkWhatsapp(mensagem: string): string {
   return `${ONG.whatsapp}?text=${encodeURIComponent(mensagem)}`
 }
+
+/** Mensagem pronta para participar de um evento, serviço ou campanha do site. */
+export function mensagemParticipar(item: {
+  nome: string
+  tipo_rotulo: string
+  quando: string
+}): string {
+  return [
+    topicoEmNegrito(item.tipo_rotulo),
+    `Olá! Quero participar de "${item.nome}" (${item.quando}). Podem me explicar como faço?`,
+  ].join('\n')
+}

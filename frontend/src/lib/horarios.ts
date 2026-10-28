@@ -77,22 +77,40 @@ export function rotuloPublicoDoStatus(status: string): string {
   return 'Ativo'
 }
 
-/** Formulário de uma atividade avulsa da grade (evento ou serviço que não é turma). */
+/** Tipos e situações de um evento ou serviço (bloco "Eventos e serviços" do site). */
+export const TIPOS_EVENTO_SERVICO = [
+  ['EVENTO', 'Evento'],
+  ['SERVICO', 'Serviço'],
+  ['CAMPANHA', 'Campanha'],
+] as const
+
+export const SITUACOES_EVENTO_SERVICO = [
+  ['AGENDADO', 'Agendado'],
+  ['ABERTO', 'Aberto'],
+  ['ENCERRADO', 'Encerrado'],
+] as const
+
+/** Formulário de um evento, serviço ou campanha (não é turma: sem alunos nem chamada). */
 export type AtividadeForm = {
   nome: string
-  /** Vazio = "a combinar" (vai para o fim da grade). */
+  tipo: (typeof TIPOS_EVENTO_SERVICO)[number][0]
+  /** Data específica (AAAA-MM-DD). Não combina com dia da semana. */
+  data: string
+  /** Recorrência ("toda quinta"). Sem data e sem dia = "sob agendamento". */
   dia_semana: DiaSemanaEnum | ''
   horario_inicio: string
   horario_fim: string
   /** Usado quando não há faixa de horário. Ex.: "Sob agendamento". */
   horario_texto: string
-  status: 'ATIVO' | 'AGENDADO'
+  status: (typeof SITUACOES_EVENTO_SERVICO)[number][0]
+  /** "Mostrar no site". */
   visivel_na_grade: boolean
 }
 
 /** Mensagem do primeiro problema no formulário da atividade, ou `null` se estiver certo. */
 export function validarAtividadeAvulsa(f: AtividadeForm): string | null {
   if (!f.nome.trim()) return 'Informe o nome da atividade.'
+  if (f.data && f.dia_semana) return 'Use a data ou o dia da semana, não os dois.'
   if (Boolean(f.horario_inicio) !== Boolean(f.horario_fim)) {
     return 'Informe o início e o fim, ou deixe os dois vazios.'
   }

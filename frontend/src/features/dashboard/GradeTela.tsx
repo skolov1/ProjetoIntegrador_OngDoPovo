@@ -2,8 +2,8 @@
  * Grade da semana: o que aparece para os visitantes do site.
  *
  * As turmas entram sozinhas quando marcadas como "Mostrar na grade" no cadastro da
- * turma. Aqui ficam as atividades avulsas (evento ou serviço que não é turma, como o
- * atendimento oftalmológico) e uma prévia de como a grade está hoje no site.
+ * turma. Aqui ficam os eventos, serviços e campanhas (o bloco "Eventos e serviços" do
+ * site, que não é turma) e uma prévia de como a grade está hoje no site.
  */
 
 import { useState } from "react";
@@ -29,17 +29,21 @@ import { mensagemDeErroDaApi } from "@/lib/erros";
 import { estiloDoStatus } from "@/lib/grade";
 import {
   DIAS_DA_SEMANA,
+  SITUACOES_EVENTO_SERVICO,
+  TIPOS_EVENTO_SERVICO,
   validarAtividadeAvulsa,
   type AtividadeForm,
 } from "@/lib/horarios";
 
 const FORM_VAZIO = (): AtividadeForm => ({
   nome: "",
+  tipo: "SERVICO",
+  data: "",
   dia_semana: "",
   horario_inicio: "",
   horario_fim: "",
   horario_texto: "",
-  status: "ATIVO",
+  status: "ABERTO",
   visivel_na_grade: true,
 });
 
@@ -69,11 +73,13 @@ export function GradeTela() {
     setErro("");
     setForm({
       nome: a.nome,
+      tipo: a.tipo ?? "SERVICO",
+      data: a.data ?? "",
       dia_semana: a.dia_semana ?? "",
       horario_inicio: (a.horario_inicio ?? "").slice(0, 5),
       horario_fim: (a.horario_fim ?? "").slice(0, 5),
       horario_texto: a.horario_texto ?? "",
-      status: a.status === "AGENDADO" ? "AGENDADO" : "ATIVO",
+      status: a.status ?? "ABERTO",
       visivel_na_grade: a.visivel_na_grade ?? true,
     });
     setEditando(a);
@@ -90,6 +96,9 @@ export function GradeTela() {
     setErro("");
     const dados = {
       nome: form.nome.trim(),
+      tipo: form.tipo,
+      // Data vazia vira nulo: a API não aceita texto vazio num campo de data.
+      data: form.data || null,
       dia_semana: form.dia_semana,
       // Hora vazia vira nulo: a API não aceita texto vazio num campo de hora.
       horario_inicio: form.horario_inicio || null,
@@ -112,23 +121,25 @@ export function GradeTela() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 id="avulsas-titulo" className="text-xl font-extrabold text-verde-escuro">
-              Atividades avulsas
+              Eventos e serviços
             </h3>
             <p className="text-sm text-grafite/60">
-              Eventos e serviços que não são turma. As turmas entram na grade quando
-              marcadas como &quot;Mostrar na grade&quot; no cadastro delas.
+              Eventos, serviços e campanhas que não são turma. Aparecem no bloco &quot;Eventos
+              e serviços&quot; do site, abaixo da grade; Encerrado some do site. As turmas
+              entram na grade quando marcadas como &quot;Mostrar na grade&quot; no cadastro
+              delas.
             </p>
           </div>
           <Button variante="secundaria" onClick={() => { fechar(); setFormAberto(true); }}>
             <Plus className="size-4 mr-2" />
-            Nova atividade
+            Novo item
           </Button>
         </div>
 
         {isLoading && <p>Carregando...</p>}
         {!isLoading && atividades.length === 0 && (
           <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-grafite/60">
-            Nenhuma atividade avulsa cadastrada. Use Nova atividade para começar.
+            Nenhum evento ou serviço cadastrado. Use Novo item para começar.
           </p>
         )}
 
@@ -137,8 +148,9 @@ export function GradeTela() {
             <table className="w-full">
               <thead className="bg-mist-100/70">
                 <tr className="text-left text-xs font-bold uppercase tracking-wider text-verde-escuro/70">
-                  <th className="p-3">Atividade</th>
-                  <th className="p-3">Dia</th>
+                  <th className="p-3">Título</th>
+                  <th className="p-3">Tipo</th>
+                  <th className="p-3">Quando</th>
                   <th className="p-3">Horário</th>
                   <th className="p-3">Situação</th>
                   <th className="p-3">No site</th>
@@ -155,17 +167,18 @@ export function GradeTela() {
                   >
                     <td className="p-3 font-medium text-grafite">{a.nome}</td>
                     <td className="p-3 text-sm text-grafite/70">
-                      {DIAS_DA_SEMANA.find(([c]) => c === a.dia_semana)?.[1] ?? "A combinar"}
+                      {TIPOS_EVENTO_SERVICO.find(([c]) => c === a.tipo)?.[1]}
                     </td>
+                    <td className="p-3 text-sm text-grafite/70">{a.quando}</td>
                     <td className="p-3 text-sm text-grafite/70">{a.horario_exibido}</td>
                     <td className="p-3 text-sm text-grafite/70">
-                      {a.status === "AGENDADO" ? "Agendado" : "Ativo"}
+                      {SITUACOES_EVENTO_SERVICO.find(([c]) => c === a.status)?.[1]}
                     </td>
                     <td className="p-3">
                       <SeloAtivo
                         ativo={a.visivel_na_grade ?? true}
                         rotuloAtivo="Visível"
-                        rotuloInativo="Oculta"
+                        rotuloInativo="Oculto"
                       />
                     </td>
                     <td className="p-3">
@@ -186,8 +199,8 @@ export function GradeTela() {
                           perigo
                           onClick={() =>
                             setConfirmacao({
-                              titulo: "Excluir atividade?",
-                              texto: `${a.nome} sai da grade e do cadastro. Para só tirar do site por um tempo, use Ocultar.`,
+                              titulo: "Excluir item?",
+                              texto: `${a.nome} sai do site e do cadastro. Para só tirar do site, use Ocultar ou a situação Encerrado.`,
                               rotulo: "Excluir",
                               perigo: true,
                               onConfirm: () => excluir.mutate(a.id),
@@ -210,14 +223,14 @@ export function GradeTela() {
             Como está no site agora
           </h3>
           <p className="text-sm text-grafite/60">
-            É a grade que os visitantes veem: turmas marcadas para aparecer e atividades
-            visíveis, de segunda a domingo.
+            É a grade que os visitantes veem: as turmas marcadas para aparecer, de segunda a
+            domingo. Eventos e serviços ficam no bloco logo abaixo dela, no site.
           </p>
         </div>
         {grade && grade.length === 0 && (
           <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center text-grafite/60">
-            A grade do site está vazia. Marque turmas como &quot;Mostrar na grade&quot; ou
-            cadastre uma atividade avulsa.
+            A grade do site está vazia. Marque turmas como &quot;Mostrar na grade&quot; no
+            cadastro delas.
           </p>
         )}
         {grade && grade.length > 0 && (
@@ -247,14 +260,14 @@ export function GradeTela() {
 
       {formAberto && (
         <FormModal
-          title={editando ? "Editar atividade" : "Nova atividade"}
+          title={editando ? "Editar evento ou serviço" : "Novo evento ou serviço"}
           largura="max-w-2xl"
           onClose={fechar}
           onSubmit={salvar}
           submitting={criar.isPending || atualizar.isPending}
         >
           <label className="text-sm text-grafite/70 lg:col-span-2">
-            Nome na grade
+            Título
             <input
               name="nome"
               maxLength={120}
@@ -265,17 +278,14 @@ export function GradeTela() {
             />
           </label>
           <label className="text-sm text-grafite/70">
-            Dia da semana
+            Tipo
             <select
-              name="dia_semana"
-              value={form.dia_semana}
-              onChange={(e) =>
-                setForm({ ...form, dia_semana: e.target.value as AtividadeForm["dia_semana"] })
-              }
+              name="tipo"
+              value={form.tipo}
+              onChange={(e) => setForm({ ...form, tipo: e.target.value as AtividadeForm["tipo"] })}
               className={`${CLASSE_CAMPO} mt-1`}
             >
-              <option value="">A combinar</option>
-              {DIAS_DA_SEMANA.map(([codigo, rotulo]) => (
+              {TIPOS_EVENTO_SERVICO.map(([codigo, rotulo]) => (
                 <option key={codigo} value={codigo}>
                   {rotulo}
                 </option>
@@ -292,8 +302,43 @@ export function GradeTela() {
               }
               className={`${CLASSE_CAMPO} mt-1`}
             >
-              <option value="ATIVO">Ativo</option>
-              <option value="AGENDADO">Agendado</option>
+              {SITUACOES_EVENTO_SERVICO.map(([codigo, rotulo]) => (
+                <option key={codigo} value={codigo}>
+                  {rotulo}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm text-grafite/70">
+            Data (evento pontual)
+            <input
+              type="date"
+              name="data"
+              value={form.data}
+              onChange={(e) => setForm({ ...form, data: e.target.value, dia_semana: "" })}
+              className={`${CLASSE_CAMPO} mt-1`}
+            />
+          </label>
+          <label className="text-sm text-grafite/70">
+            Ou repete toda semana em
+            <select
+              name="dia_semana"
+              value={form.dia_semana}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  dia_semana: e.target.value as AtividadeForm["dia_semana"],
+                  data: "",
+                })
+              }
+              className={`${CLASSE_CAMPO} mt-1`}
+            >
+              <option value="">Sem dia fixo (sob agendamento)</option>
+              {DIAS_DA_SEMANA.map(([codigo, rotulo]) => (
+                <option key={codigo} value={codigo}>
+                  {rotulo}
+                </option>
+              ))}
             </select>
           </label>
           <label className="text-sm text-grafite/70">
@@ -333,7 +378,7 @@ export function GradeTela() {
               checked={form.visivel_na_grade}
               onChange={(e) => setForm({ ...form, visivel_na_grade: e.target.checked })}
             />{" "}
-            Mostrar na grade do site
+            Mostrar no site
           </label>
           {erro && (
             <p role="alert" className="lg:col-span-2 text-sm text-vermelho">

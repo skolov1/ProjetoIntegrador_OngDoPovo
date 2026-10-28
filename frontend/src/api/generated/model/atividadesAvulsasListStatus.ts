@@ -10,6 +10,7 @@ export type AtividadesAvulsasListStatus = typeof AtividadesAvulsasListStatus[key
 
 
 export const AtividadesAvulsasListStatus = {
+  ABERTO: 'ABERTO',
   AGENDADO: 'AGENDADO',
-  ATIVO: 'ATIVO',
+  ENCERRADO: 'ENCERRADO',
 } as const;

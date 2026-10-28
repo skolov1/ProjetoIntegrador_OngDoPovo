@@ -36,8 +36,9 @@ page_size?: number;
  */
 search?: string;
 /**
- * * `ATIVO` - Ativo
  * * `AGENDADO` - Agendado
+ * * `ABERTO` - Aberto
+ * * `ENCERRADO` - Encerrado
  */
 status?: AtividadesAvulsasListStatus;
 visivel_na_grade?: boolean;

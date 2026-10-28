@@ -107,11 +107,13 @@ describe('rotuloPublicoDoStatus', () => {
 describe('validarAtividadeAvulsa', () => {
   const base: AtividadeForm = {
     nome: 'Atendimento oftalmológico',
+    tipo: 'SERVICO',
+    data: '',
     dia_semana: 'QUI',
     horario_inicio: '',
     horario_fim: '',
     horario_texto: 'Sob agendamento',
-    status: 'ATIVO',
+    status: 'ABERTO',
     visivel_na_grade: true,
   }
 
@@ -122,6 +124,16 @@ describe('validarAtividadeAvulsa', () => {
   it('aceita faixa de horário completa e atividade "a combinar"', () => {
     expect(validarAtividadeAvulsa({ ...base, horario_inicio: '09:00', horario_fim: '11:00' })).toBeNull()
     expect(validarAtividadeAvulsa({ ...base, dia_semana: '', horario_texto: '' })).toBeNull()
+  })
+
+  it('aceita data específica sem dia da semana', () => {
+    expect(validarAtividadeAvulsa({ ...base, data: '2026-12-05', dia_semana: '' })).toBeNull()
+  })
+
+  it('recusa data junto com dia da semana', () => {
+    expect(validarAtividadeAvulsa({ ...base, data: '2026-12-05' })).toBe(
+      'Use a data ou o dia da semana, não os dois.',
+    )
   })
 
   it('exige o nome', () => {

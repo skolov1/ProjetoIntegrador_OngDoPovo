@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/Section";
 import { Reveal } from "@/components/ui/Reveal";
 import { ONG } from "@/features/home/data";
+import { EventosServicos } from "@/features/home/EventosServicos";
 import { useGrade } from "@/features/home/useGrade";
 import { estiloDoStatus } from "@/lib/grade";
 import { rotuloPublicoDoStatus } from "@/lib/horarios";
@@ -142,6 +143,7 @@ export function SpaceSection() {
           </div>
         </Reveal>
       </div>
+      <EventosServicos />
     </Section>
   );
 }

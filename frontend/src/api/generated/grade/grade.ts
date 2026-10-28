@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type {
+  EventoServicoPublico,
   GradeItem
 } from '../model';
 
@@ -14,14 +15,32 @@ import { api } from '../../../lib/api';
 
 
   /**
+ * GET /api/v1/eventos-servicos/ - bloco "Eventos e serviços" da landing.
+ *
+ * Público e só leitura. Entram os itens com `visivel_na_grade` ligado e situação
+ * Agendado ou Aberto; Encerrado some do site (continua no painel). Ordem: datas
+ * marcadas (da mais próxima), depois recorrentes (segunda a domingo), depois os
+ * "sob agendamento".
+ * @summary Eventos e serviços (público)
+ */
+export const eventosServicosList = (
+
+ ) => {
+      return api<EventoServicoPublico[]>(
+      {url: `/eventos-servicos/`, method: 'GET'
+    },
+      );
+    }
+  /**
  * GET /api/v1/grade/ - grade da semana para a landing.
  *
  * Público e só leitura. Não traz professor, aluno nem nada pessoal: só dia, nome,
  * horário e situação. Entram:
  *
  * * turmas ativas, com `visivel_na_grade` ligado e ainda não encerradas, uma linha por
- *   dia da semana em que acontecem (ver `grade.py` para a situação de cada uma);
- * * atividades avulsas (evento, serviço) com `visivel_na_grade` ligado.
+ *   dia da semana em que acontecem (ver `grade.py` para a situação de cada uma).
+ *
+ * Eventos e serviços ficam em `/eventos-servicos/`, fora da grade.
  *
  * A resposta pode ficar 60 s em cache no navegador e em proxies.
  * @summary Grade da semana (pública)
@@ -34,4 +53,5 @@ export const gradeList = (
     },
       );
     }
-  export type GradeListResult = NonNullable<Awaited<ReturnType<typeof gradeList>>>
+  export type EventosServicosListResult = NonNullable<Awaited<ReturnType<typeof eventosServicosList>>>
+export type GradeListResult = NonNullable<Awaited<ReturnType<typeof gradeList>>>

@@ -6,12 +6,16 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { AtividadeAvulsaDiaSemana } from './atividadeAvulsaDiaSemana';
-import type { AtividadeAvulsaStatusEnum } from './atividadeAvulsaStatusEnum';
+import type { Status79cEnum } from './status79cEnum';
+import type { TipoEnum } from './tipoEnum';
 
 export interface AtividadeAvulsa {
   readonly id: number;
   /** @maxLength 120 */
   nome: string;
+  tipo?: TipoEnum;
+  /** @nullable */
+  data?: string | null;
   dia_semana?: typeof AtividadeAvulsaDiaSemana[keyof typeof AtividadeAvulsaDiaSemana];
   /** @nullable */
   horario_inicio?: string | null;
@@ -23,7 +27,8 @@ export interface AtividadeAvulsa {
      */
   horario_texto?: string;
   readonly horario_exibido: string;
-  status?: AtividadeAvulsaStatusEnum;
+  readonly quando: string;
+  status?: Status79cEnum;
   visivel_na_grade?: boolean;
   readonly criado_em: string;
 }
