@@ -594,3 +594,4 @@ $RECYCLE.BIN/
 # São ~8 MB de PNG de origem. A identidade já está extraída em código:
 # tokens de cor em frontend/src/index.css e logo otimizada em frontend/public/.
 # refs/
+refs/originais-usadas/

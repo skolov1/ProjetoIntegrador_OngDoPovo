@@ -24,7 +24,7 @@ import {
   type DadosInscricao,
 } from '@/lib/inscricao'
 import { linkWhatsapp } from '@/lib/whatsapp'
-import fotoNossoEspaco from '@/assets/fotos/interbairros-011.webp'
+import fotoNossoEspaco from '@/assets/fotos/ballet-apres-162.webp'
 
 
 const CAMPO =
