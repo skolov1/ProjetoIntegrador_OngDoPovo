@@ -218,61 +218,11 @@ class TestVariosDias:
         assert {r["status"] for r in linhas} == {"ATIVO"}
 
 
-class TestAtividadesAvulsas:
-    def avulsa(self, **dados):
-        base = {
-            "nome": "Atendimento oftalmológico",
-            "dia_semana": "QUI",
-            "horario_texto": "Sob agendamento",
-        }
-        base.update(dados)
-        return AtividadeAvulsa.objects.create(**base)
-
-    def test_aparece_com_o_texto_do_horario(self):
-        self.avulsa()
-
-        linha = APIClient().get(URL).data[0]
-
-        assert linha["nome"] == "Atendimento oftalmológico"
-        assert linha["dia"] == "QUI"
-        assert linha["horario"] == "Sob agendamento"
-        assert linha["horario_inicio"] == ""
-        assert linha["status"] == "ATIVO"
-        assert linha["chave"].startswith("avulsa-")
-
-    def test_com_faixa_de_horario_mostra_a_faixa(self):
-        self.avulsa(horario_inicio=time(9, 0), horario_fim=time(11, 0), horario_texto="")
-
-        assert APIClient().get(URL).data[0]["horario"] == f"09:00{chr(0x2013)}11:00"
-
-    def test_sem_dia_vai_para_o_fim_como_a_combinar(self):
-        t = turma("Futsal", dia="DOM")
-        com_professor(t)
-        self.avulsa(nome="Evento", dia_semana="")
-
-        linhas = APIClient().get(URL).data
-
-        assert [r["nome"] for r in linhas] == ["Futsal", "Evento"]
-        assert linhas[-1]["dia_rotulo"] == "A combinar"
-
-    def test_agendada_mostra_a_situacao_agendado(self):
-        self.avulsa(status="AGENDADO")
-
-        assert APIClient().get(URL).data[0]["status_rotulo"] == "Agendado"
-
-    def test_oculta_nao_aparece(self):
-        self.avulsa(visivel_na_grade=False)
+class TestAvulsasForaDaGrade:
+    def test_evento_ou_servico_nao_entra_na_grade_das_turmas(self):
+        AtividadeAvulsa.objects.create(nome="Atendimento oftalmológico", dia_semana="QUI")
 
         assert APIClient().get(URL).data == []
-
-    def test_mistura_com_as_turmas_na_ordem_do_dia(self):
-        t = turma("Futsal", dia="SEX")
-        com_professor(t)
-        self.avulsa(nome="Reforço", dia_semana="SEG", horario_texto="")
-
-        nomes = [r["nome"] for r in APIClient().get(URL).data]
-
-        assert nomes == ["Reforço", "Futsal"]
 
 
 class TestCache:

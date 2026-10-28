@@ -14,7 +14,7 @@ from django.db import models
 from django.utils import timezone
 
 from .documentos import mascarar_cpf
-from .horarios import ORDEM_DIAS, faixa_horaria, formatar_horarios
+from .horarios import ORDEM_DIAS, ROTULOS_RECORRENCIA, faixa_horaria, formatar_horarios
 
 # Versão do termo de tratamento de dados que o responsável aceita no cadastro.
 # Ao mudar o texto do termo, aumente a versão: o consentimento guarda qual foi aceito.
@@ -254,18 +254,29 @@ class HorarioTurma(models.Model):
 
 
 class AtividadeAvulsa(models.Model):
-    """Atividade, evento ou serviço da sede que aparece na grade e não é uma turma.
+    """Evento, serviço ou campanha da sede que aparece no site e não é uma turma.
 
-    Ex.: atendimento oftalmológico (quinta, "sob agendamento") ou reforço escolar.
-    Não tem alunos nem chamada: existe só para a grade da landing.
+    Ex.: atendimento oftalmológico (toda quinta, "sob agendamento") ou uma campanha de
+    agasalho com data marcada. Não tem alunos nem chamada: existe só para o bloco
+    "Eventos e serviços" da landing. "Quando" é uma data específica, um dia da semana
+    (recorrência) ou, com os dois vazios, "sob agendamento".
     """
 
-    class Status(models.TextChoices):
-        ATIVO = "ATIVO", "Ativo"
-        AGENDADO = "AGENDADO", "Agendado"
+    class Tipo(models.TextChoices):
+        EVENTO = "EVENTO", "Evento"
+        SERVICO = "SERVICO", "Serviço"
+        CAMPANHA = "CAMPANHA", "Campanha"
 
-    nome = models.CharField("Nome", max_length=120)
-    # Vazio = "a combinar": vai para o fim da grade.
+    class Status(models.TextChoices):
+        AGENDADO = "AGENDADO", "Agendado"
+        ABERTO = "ABERTO", "Aberto"
+        ENCERRADO = "ENCERRADO", "Encerrado"
+
+    nome = models.CharField("Título", max_length=120)
+    tipo = models.CharField("Tipo", max_length=10, choices=Tipo.choices, default=Tipo.SERVICO)
+    # Data específica (evento pontual). Não combina com dia da semana.
+    data = models.DateField("Data", null=True, blank=True)
+    # Recorrência ("toda quinta"). Vazio e sem data = "sob agendamento".
     dia_semana = models.CharField(
         "Dia da semana", max_length=3, choices=DiaSemana.choices, blank=True
     )
@@ -278,14 +289,14 @@ class AtividadeAvulsa(models.Model):
         help_text='Usado quando não há faixa de horário. Ex.: "Sob agendamento".',
     )
     status = models.CharField(
-        "Situação", max_length=10, choices=Status.choices, default=Status.ATIVO
+        "Situação", max_length=10, choices=Status.choices, default=Status.ABERTO
     )
-    visivel_na_grade = models.BooleanField("Mostrar na grade da landing", default=True)
+    visivel_na_grade = models.BooleanField("Mostrar no site", default=True)
     criado_em = models.DateTimeField("Criado em", auto_now_add=True)
 
     class Meta:
-        verbose_name = "Atividade avulsa"
-        verbose_name_plural = "Atividades avulsas"
+        verbose_name = "Evento ou serviço"
+        verbose_name_plural = "Eventos e serviços"
         ordering = ["nome"]
         constraints = [
             models.CheckConstraint(
@@ -295,6 +306,10 @@ class AtividadeAvulsa(models.Model):
                     | models.Q(horario_fim__gt=models.F("horario_inicio"))
                 ),
                 name="atividade_avulsa_fim_depois_do_inicio",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(data__isnull=True) | models.Q(dia_semana=""),
+                name="atividade_avulsa_data_ou_dia",
             ),
         ]
 
@@ -306,6 +321,15 @@ class AtividadeAvulsa(models.Model):
         if self.horario_inicio and self.horario_fim:
             return faixa_horaria(self.horario_inicio, self.horario_fim)
         return self.horario_texto or "A combinar"
+
+    @property
+    def quando(self) -> str:
+        """Quando acontece, em texto para o visitante."""
+        if self.data:
+            return f"{self.data:%d/%m/%Y}"
+        if self.dia_semana:
+            return ROTULOS_RECORRENCIA[self.dia_semana]
+        return "Sob agendamento"
 
 
 class Aluno(models.Model):

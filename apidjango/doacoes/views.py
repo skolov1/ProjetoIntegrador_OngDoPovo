@@ -25,7 +25,7 @@ from rest_framework.views import APIView
 
 from .auditoria import AuditoriaMixin, anonimizar_registros
 from .faltas import eh_faltante, faltas_seguidas
-from .grade import StatusGrade, status_da_turma
+from .grade import status_da_turma
 from .horarios import ORDEM_DIAS, faixa_horaria
 from .models import (
     Aluno,
@@ -50,6 +50,7 @@ from .serializers import (
     DoacaoItemResumoSerializer,
     DoacaoItemSerializer,
     EmprestimoSerializer,
+    EventoServicoPublicoSerializer,
     GradeItemSerializer,
     PresencaCreateSerializer,
     PresencaLoteSerializer,
@@ -523,8 +524,9 @@ class GradeView(APIView):
     horário e situação. Entram:
 
     * turmas ativas, com `visivel_na_grade` ligado e ainda não encerradas, uma linha por
-      dia da semana em que acontecem (ver `grade.py` para a situação de cada uma);
-    * atividades avulsas (evento, serviço) com `visivel_na_grade` ligado.
+      dia da semana em que acontecem (ver `grade.py` para a situação de cada uma).
+
+    Eventos e serviços ficam em `/eventos-servicos/`, fora da grade.
 
     A resposta pode ficar 60 s em cache no navegador e em proxies.
     """
@@ -579,25 +581,59 @@ class GradeView(APIView):
                         ),
                     }
                 )
-        for a in AtividadeAvulsa.objects.filter(visivel_na_grade=True):
-            situacao = StatusGrade(a.status)
-            linhas.append(
-                {
-                    "chave": f"avulsa-{a.id}",
-                    "nome": a.nome,
-                    "dia": a.dia_semana,
-                    "dia_rotulo": a.get_dia_semana_display() or "A combinar",
-                    "horario_inicio": f"{a.horario_inicio:%H:%M}" if a.horario_inicio else "",
-                    "horario_fim": f"{a.horario_fim:%H:%M}" if a.horario_fim else "",
-                    "horario": a.horario_exibido,
-                    "status": situacao,
-                    "status_rotulo": situacao.label,
-                    "_ordem": (
-                        ORDEM_DIAS.index(a.dia_semana) if a.dia_semana else len(ORDEM_DIAS),
-                        a.horario_inicio or time.max,
-                        a.nome,
-                    ),
-                }
-            )
         linhas.sort(key=lambda linha: linha.pop("_ordem"))
         return Response(GradeItemSerializer(linhas, many=True).data)
+
+
+# =============================================================================
+# Eventos e serviços (público)
+# =============================================================================
+
+
+@method_decorator(cache_control(max_age=60, public=True), name="dispatch")
+class EventosServicosView(APIView):
+    """GET /api/v1/eventos-servicos/ - bloco "Eventos e serviços" da landing.
+
+    Público e só leitura. Entram os itens com `visivel_na_grade` ligado e situação
+    Agendado ou Aberto; Encerrado some do site (continua no painel). Ordem: datas
+    marcadas (da mais próxima), depois recorrentes (segunda a domingo), depois os
+    "sob agendamento".
+    """
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    throttle_scope = "publico"
+
+    @extend_schema(
+        summary="Eventos e serviços (público)",
+        tags=["grade"],
+        responses={200: EventoServicoPublicoSerializer(many=True)},
+    )
+    def get(self, request):
+        itens = AtividadeAvulsa.objects.filter(visivel_na_grade=True).exclude(
+            status=AtividadeAvulsa.Status.ENCERRADO
+        )
+
+        def ordem(a):
+            if a.data:
+                grupo, chave = 0, a.data.toordinal()
+            elif a.dia_semana:
+                grupo, chave = 1, ORDEM_DIAS.index(a.dia_semana)
+            else:
+                grupo, chave = 2, 0
+            return (grupo, chave, a.horario_inicio or time.max, a.nome)
+
+        dados = [
+            {
+                "chave": f"evento-servico-{a.id}",
+                "nome": a.nome,
+                "tipo": a.tipo,
+                "tipo_rotulo": a.get_tipo_display(),
+                "quando": a.quando,
+                "horario": a.horario_exibido if a.horario_inicio or a.horario_texto else "",
+                "status": a.status,
+                "status_rotulo": a.get_status_display(),
+            }
+            for a in sorted(itens, key=ordem)
+        ]
+        return Response(EventoServicoPublicoSerializer(dados, many=True).data)

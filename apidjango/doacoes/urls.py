@@ -27,6 +27,11 @@ app_name = "doacoes"
 urlpatterns = [
     # Grade da semana (pública, só leitura)
     path("grade/", views.GradeView.as_view(), name="grade"),
+    path(
+        "eventos-servicos/",
+        views.EventosServicosView.as_view(),
+        name="eventos-servicos",
+    ),
     # Router (admin)
     path("", include(router.urls)),
 ]

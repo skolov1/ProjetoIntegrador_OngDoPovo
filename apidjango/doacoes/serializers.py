@@ -166,27 +166,37 @@ class TurmaListSerializer(TurmaSerializer):
 
 class AtividadeAvulsaSerializer(serializers.ModelSerializer):
     horario_exibido = serializers.CharField(read_only=True)
+    quando = serializers.CharField(read_only=True)
 
     class Meta:
         model = AtividadeAvulsa
         fields = [
             "id",
             "nome",
+            "tipo",
+            "data",
             "dia_semana",
             "horario_inicio",
             "horario_fim",
             "horario_texto",
             "horario_exibido",
+            "quando",
             "status",
             "visivel_na_grade",
             "criado_em",
         ]
-        read_only_fields = ["criado_em", "horario_exibido"]
+        read_only_fields = ["criado_em", "horario_exibido", "quando"]
 
     def validate(self, attrs):
         atual = self.instance
         inicio = attrs.get("horario_inicio", getattr(atual, "horario_inicio", None))
         fim = attrs.get("horario_fim", getattr(atual, "horario_fim", None))
+        data = attrs.get("data", getattr(atual, "data", None))
+        dia = attrs.get("dia_semana", getattr(atual, "dia_semana", ""))
+        if data is not None and dia:
+            raise serializers.ValidationError(
+                {"dia_semana": "Use a data ou o dia da semana, não os dois."}
+            )
         if (inicio is None) != (fim is None):
             raise serializers.ValidationError(
                 {"horario_fim": "Informe o início e o fim, ou deixe os dois vazios."}
@@ -478,6 +488,22 @@ class AuditoriaSerializer(serializers.ModelSerializer):
 # =============================================================================
 # Grade da semana (pública, sem dado pessoal)
 # =============================================================================
+
+
+class EventoServicoPublicoSerializer(serializers.Serializer):
+    """Um evento, serviço ou campanha do bloco "Eventos e serviços" da landing.
+
+    Público: só o que o visitante precisa, sem ids internos nem dado pessoal.
+    """
+
+    chave = serializers.CharField()
+    nome = serializers.CharField()
+    tipo = serializers.ChoiceField(choices=AtividadeAvulsa.Tipo.choices)
+    tipo_rotulo = serializers.CharField()
+    quando = serializers.CharField()
+    horario = serializers.CharField(allow_blank=True)
+    status = serializers.ChoiceField(choices=AtividadeAvulsa.Status.choices)
+    status_rotulo = serializers.CharField()
 
 
 class GradeItemSerializer(serializers.Serializer):

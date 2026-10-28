@@ -22,6 +22,12 @@ DIAS = [
 ORDEM_DIAS = [codigo for codigo, _ in DIAS]
 ROTULO_DIA = dict(DIAS)
 
+# "Toda quinta", "Todo sábado": a recorrência de um evento ou serviço.
+ROTULOS_RECORRENCIA = {
+    codigo: ("Todo " if codigo in ("SAB", "DOM") else "Toda ") + rotulo.lower()
+    for codigo, rotulo in DIAS
+}
+
 
 # Travessão (U+2013) entre o início e o fim, e ponto médio entre grupos de horário.
 TRAVESSAO = chr(0x2013)

@@ -206,12 +206,13 @@ class EmprestimoAdmin(admin.ModelAdmin):
 class AtividadeAvulsaAdmin(admin.ModelAdmin):
     list_display = (
         "nome",
-        "dia_semana",
+        "tipo",
+        "quando",
         "horario_exibido",
         "status",
         "visivel_na_grade",
     )
-    list_filter = ("status", "visivel_na_grade", "dia_semana")
+    list_filter = ("tipo", "status", "visivel_na_grade", "dia_semana")
     search_fields = ("nome",)
 
     @admin.display(description="Horário")
