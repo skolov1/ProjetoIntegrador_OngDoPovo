@@ -72,6 +72,14 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
+Para ver o sistema com dados de exemplo (turmas, alunos, doações, eventos fictícios, todos com o prefixo `[Demo]`), rode também:
+
+```bash
+python manage.py seed_demo              # rodar de novo não duplica
+python manage.py seed_demo --com-admin  # e cria admin/admin (só com DEBUG, só no seu computador)
+python manage.py seed_demo --limpar     # apaga só o que o seed criou e recria
+```
+
 Inicie o servidor:
 
 ```bash

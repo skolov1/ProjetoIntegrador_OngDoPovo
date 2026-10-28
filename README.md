@@ -8,163 +8,142 @@
 
 ## 📌 Sobre o Projeto
 
-O **Sistema ONG do Povo** é uma solução full‑stack desenvolvida no âmbito do **Projeto Integrador (3º Semestre)** do curso de Desenvolvimento de Software Multiplataforma. O projeto visa atender às necessidades de gestão, divulgação e engajamento da **ONG do Povo**, promovendo o acesso da comunidade aos programas esportivos, de saúde, educacionais e eventos oferecidos pela organização.
+O **Sistema ONG do Povo** é uma solução full‑stack desenvolvida no **Projeto Integrador (3º Semestre)** do curso de Desenvolvimento de Software Multiplataforma. Atende a gestão, a divulgação e o engajamento da **ONG do Povo**, de Caieiras (Praia Grande/SP): um **site público** (landing page) e um **painel de administração** para a equipe.
 
-A arquitetura adotada é **Django + Django REST Framework** no backend (pasta `apidjango`) e **React + Vite + TypeScript** no frontend (pasta `frontend`). O gerenciador de pacotes é **pnpm**. A autenticação utiliza **JWT em cookies httpOnly** e o contrato da API é definido em **OpenAPI (drf‑spectacular)**, consumido pelo cliente Orval no frontend.
+- **Back-end:** Django 5.2 + Django REST Framework (`apidjango/`), PostgreSQL, JWT em cookie httpOnly e contrato OpenAPI (drf‑spectacular).
+- **Front-end:** React + Vite + TypeScript (`frontend/`), com o cliente da API gerado pelo Orval a partir do OpenAPI.
 
----
-
-## 🏅 Programas e Projetos da ONG
-
-A ONG do Povo oferece atividades e programas divididos nas seguintes áreas:
-
-* **Esportes:** Ballet, Basquete, Futsal, Muay Thai, Karatê, Capoeira, Kung Fu, Futebol de Campo, Funcional, Jazz
-* **Saúde:** Exames de vista e distribuição de óculos
-* **Capacitação:** Cursos professionalizantes (Barbearia, Tranças, Manicure, Sobrancelhas)
-* **Comunidade:** Eventos comunitários e festivais
+> **Guia completo, passo a passo, com problemas comuns:** [`tutorial avançado.md`](tutorial%20avançado.md).
 
 ---
 
-## 📋 Funcionalidades do Sistema
+## 📋 O que o sistema faz
 
-### 🗺️ Requisitos do Backlog Principal
+### Site público
 
-* **Apresentação da ONG:** Informações sobre a história, missão e atuação da ONG (seção "Quem Somos" na landing page).
-* **Catálogo de Programas / Modalidades:** Exibição das modalidades esportivas, cursos e ações de saúde. Possui duas abas: **"Modalidades"** (esportes, sem vagas) e **"Outros"** (exames de vista, cursos e capacitações, eventos).
-* **Cadastro de Alunos/Atletas:** Registro de alunos com campos diferenciados por idade (maior/de menor). Campos obrigatórios: RG, CPF, comprovante de residência; para maiores: título de eleitor; para menores: RG do responsável, certidão de nascimento, atestado médico. Cada aluno pode estar vinculado a uma Turma.
-* **Cadastro de Professores e Voluntários:** Registro da equipe de apoio e instrutores (nome, CPF, e-mail, telefone, turmas ministradas).
-* **Agenda de Aulas e Eventos:** Calendário de atividades e horários das aulas por turma.
-* **Fale Conosco / Contato:** Canal direto para dúvidas e atendimento (WhatsApp: (13) 98806-6437).
-* **Página de Doações:** Canal de apoio financeiro e arrecadação. Aceita pagamentos via PIX, dinheiro, cartão ou transferência. Também aceita doações de **alimentos não perecíveis, cadeiras de rodas, muletas e cadeiras de banho**. Possui QR Code para pagamento via PIX.
-* **Área de Impacto:** Exibição de resultados e métricas de alcance social da ONG (total de alunos, presenças, doações confirmadas).
-* **Login Administrativo:** Painel restrito para gestão de dados e conteúdos do sistema. Acesso apenas para o coordenador/administrador do sistema (autenticação via JWT em cookie httpOnly). O restante do contato com a ONG é via WhatsApp.
+* **Quem somos, Impacto, Programas, Doe, Contato** e **Voluntariado**, com carrossel de fotos.
+* **Grade da semana:** turmas marcadas para aparecer, com dia, horário e situação (Ativo, Agendado, "Procuramos professor").
+* **Eventos e serviços:** bloco abaixo da grade, para eventos, serviços e campanhas (ex.: atendimento oftalmológico), com botão "Como participar" por WhatsApp. Encerrados e ocultos não aparecem.
+* **Pré-inscrição por WhatsApp:** o formulário monta a mensagem e abre o WhatsApp da ONG. Nada é gravado no servidor.
+* **Doação:** só de itens (alimentos não perecíveis, cadeira de rodas, muletas, cadeira de banho). O site não recebe dinheiro.
+* **Acessibilidade:** VLibras e UserWay.
 
-### 🌟 Sugestões & Futuras Implementações
+### Painel de administração (acesso restrito)
 
-* [x] Sistema de gestão de presença nas aulas.
-* [x] Painel de administração com dashboard React (sidebar + telas de presença, alunos, doações, formulários).
-* [ ] Cadastro de patrocinadores e parceiros.
-* [ ] Seção/Página para agendamento e divulgação de mutirões de saúde (exames de vista).
-* [ ] Página detalhada para cursos professionalizantes.
-* [ ] Sistema de agendamento/inscrição para eventos.
-* [ ] Integração com WhatsAPI para envio de mensagens automáticas.
-* [ ] Aplicativo móvel para registro de presença pelo celular da recepção.
+* **Presenças:** lista de chamada por turma e data; quem não é marcado fica ausente. Regra de **faltante**: 3 faltas seguidas na mesma turma (falta justificada é ignorada).
+* **Alunos:** cadastro por idade (menor tem responsável), turmas, mensalidade (R$ 20 por modalidade) e **só a situação** dos documentos (pendente/entregue) e do exame de aptidão. O sistema **não guarda arquivo nem número de documento**.
+* **Turmas e professores:** turmas com um ou mais dias e horários, visibilidade na grade pública e nome público.
+* **Doações e empréstimos de itens:** registro do que a ONG recebe e de quem pegou emprestado (prazo de 3 meses, com aviso de atraso).
+* **Grade:** eventos, serviços e campanhas (tipo, data ou dia da semana, situação, "Mostrar no site") e prévia do que está no ar.
+* **Auditoria:** quem criou, alterou ou excluiu cada registro (dados pessoais são ocultados no log).
+* Privacidade e LGPD: página pública `privacidade.html` e [`docs/LGPD.md`](docs/LGPD.md).
 
 ---
 
-## 👥 Stakeholders & Equipe de Desenvolvimento
+## 🛠️ Tecnologias
 
-* **Equipe do Projeto:** Ryan de Andrade, Gabriel Rodrigues, Isabella Aparecida, Matheus Gonzaga, Pedro Brinkmann
-* **ONG Beneficiária:** ONG do Povo (Responsáveis e Coordenadores)
-* **Usuários Finais:** Professores, voluntários, alunos/atletas e comunidade atendida.
+**Back-end:** Django 5.2, DRF, drf‑spectacular, django‑filter, SimpleJWT, django‑cors‑headers, django‑auditlog, WhiteNoise, gunicorn, PostgreSQL 15, pytest + ruff.
 
----
-
-## 🛠️ Tecnologias Utilizadas
-
-### Backend (Django)
-
-* **Django 5.x** — framework Python
-* **DRF (Django REST Framework)** — API
-* **drf‑spectacular** — geração do schema OpenAPI
-* **djang‑filters** — filtros e busca na API
-* **SimpleJWT** — autenticação JWT em cookies httpOnly
-* **CORS headers** — compartilhamento entre frontend e backend
-* **PostgreSQL** — banco de dados
-* **Pillow** — processamento de imagens (comprovantes, certidões)
-
-### Frontend (React)
-
-* **React 18** + **TypeScript**
-* **Vite** — build tool e dev server
-* **pnpm** — gerenciador de pacotes
-* **TanStack Query** — busca, cache e gerenciamento de estado remoto
-* **Orval** — geração automática de cliente TypeScript a partir do OpenAPI
-* **Tailwind CSS** — estilização (design system da landing page)
-* **lucide-react** — ícones
-* **React Router DOM** — navegação entre páginas
+**Front-end:** React, TypeScript, Vite, Tailwind CSS, TanStack Query, Orval, React Hook Form, Embla Carousel, lucide-react, vitest, eslint. Gerenciador de pacotes: **pnpm**.
 
 ---
 
-## 📁 Estrutura de Pastas
+## 📁 Estrutura de pastas
 
 ```
 /
-├── apidjango/          # Backend Django + DRF
-│   └── doacoes/        # App que agora também contém: Aluno, Turma, Presenca, Professor
-├── frontend/           # Frontend React + Vite
+├── apidjango/            # Back-end Django + DRF
+│   ├── setup/            # settings, urls
+│   └── doacoes/          # app único: turmas, alunos, presenças, doações, grade, auditoria
+├── frontend/
 │   └── src/
-│       ├── features/home/    # Componentes da landing page
-│       ├── features/dashboard/ # Dashboard de administração
-│       ├── api/            # Clients Orval gerados
-│       ├── components/     # Componentes UI reutilizáveis
-│       └── lib/            # utilitários (useReveal, useAuth, api.ts)
-├── refs/               # Referências visuais e documentos de decisão
-└── docker-compose.yml  # Containers Django + PostgreSQL
+│       ├── features/     # home (landing), dashboard (painel), auth, privacy
+│       ├── assets/fotos/ # fotos do site, já otimizadas (WebP)
+│       ├── api/generated # cliente da API gerado pelo Orval (não editar à mão)
+│       ├── components/   # UI reutilizável
+│       └── lib/          # api.ts, regras puras (horarios, grade, whatsapp...)
+├── docs/                 # LGPD
+├── refs/                 # referências visuais e anotações de reunião
+└── docker-compose.yml    # PostgreSQL
 ```
 
 ---
 
-## 🚀 Como Rodar em Desenvolvimento
+## 🚀 Como rodar em desenvolvimento
 
-1. **Backend**
+Pré-requisitos: **Docker**, **Node 20+**, **pnpm 12.6.0** (ou `npx pnpm@12.6.0`) e **Python 3.12+**.
 
 ```bash
+# 1. Banco (PostgreSQL no Docker, porta 5432)
+docker compose up -d db
+
+# 2. Back-end (http://localhost:8000)
 cd apidjango
-python -m venv .venv        # ou usar o venv já existente
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env        # preencher as variáveis de ambiente (DB, SECRET_KEY, etc.)
+python -m venv venv
+source venv/bin/activate          # Windows: venv\Scripts\activate
+pip install -r requirements-dev.txt
+cp .env.example .env              # opcional: os padrões já batem com o docker-compose
 python manage.py migrate
-python manage.py runserver 0.0.0.0:8000
-```
+python manage.py seed_demo --com-admin   # dados de exemplo + usuário admin/admin (só dev)
+python manage.py runserver 8000
 
-2. **Frontend**
-
-```bash
+# 3. Front-end (http://localhost:5173), em outro terminal
 cd frontend
+cp .env.example .env.local        # define VITE_API_URL (obrigatório)
 pnpm install
-cp .env.example .env      # VITE_API_SCHEMA_URL=http://127.0.0.1:8000/api/schema/?format=json
-pnpm dev                  # roda em http://localhost:5173
+pnpm dev
 ```
 
-3. **Acessos**
+* **Site:** <http://localhost:5173>
+* **Painel:** <http://localhost:5173/login.html> (com o seed: `admin` / `admin`, **só no seu computador**)
+* **Swagger da API:** <http://localhost:8000/api/docs/>
 
-* Landing page: <http://localhost:5173>
-* API schema: <http://localhost:8000/api/schema/>
-* Swagger UI: <http://localhost:8000/api/docs/>
-* Dashboard admin: <http://localhost:5173/dashboard> (login com JWT cookie)
+### Dados de exemplo (`seed_demo`)
 
----
+`python manage.py seed_demo` cria turmas, alunos, professores, doações, empréstimos e eventos **fictícios**, todos com o prefixo `[Demo]`. Rodar de novo não duplica; `--limpar` apaga só o que o seed criou, sem tocar em dado real. `--com-admin` cria `admin`/`admin` e só funciona com `DJANGO_DEBUG` ligado.
 
-## 📦 Scripts Disponíveis (Frontend)
+### Testes e qualidade
 
-| Comando | Descrição |
-|---------|-----------|
-| `pnpm dev` | Inicia o servidor de desenvolvimento Vite (port 5173) |
-| `pnpm build` | Gera build de produção |
-| `pnpm api:generate` | Atualiza os clients TypeScript a partir do schema OpenAPI |
-| `pnpm lint` | Executa ESLint |
-| `pnpm typecheck` | Verifica tipos TypeScript |
-
----
-
-## 📜 Decisões Técnicas Importantes
-
-1. **Autenticação:** Acesso ao dashboard admin é feito via JWT em cookie httpOnly (`ong_refresh_token`). O access token viaja no header `Authorization: Bearer`. O refresh token é renovado automaticamente ao expirar (7 dias). O login, refresh e logout são fornecidos pelos endpoints `/api/v1/auth/token/`, `/api/v1/auth/token/refresh/` e `/api/v1/auth/logout/`.
-
-2. **CORS:** O frontend em `localhost:5173` está liberado em `CORS_ALLOWED_ORIGINS`. Requisições com credenciais (cookie) são feitas com `withCredentials: true` no axios do `src/lib/api.ts`.
-
-3. **API versãoada:** O prefixo `/api/v1/` está definido em `SCHEMA_PATH_PREFIX` e `SERVERS` do drf‑spectacular. O Orval gera clients com esse prefixo consistente.
-
-4. **Modelagem:** Os novos modelos (`Aluno`, `Turma`, `Presenca`, `Professor`) foram integrados ao app `doacoes` para manter tudo em um único app Django, simplificando migrações e instalação.
-
-5. **Documentação:** O schema OpenAPI em `/api/schema/` é a "fonte da verdade" que alimenta o cliente Orval no frontend. Qualquer mudança no backend (novos campos, serializers, endpoints) deve ser seguida de `pnpm api:generate` no frontend.
+| Onde | Comando |
+|---|---|
+| Back-end (testes) | `cd apidjango && python -m pytest` |
+| Back-end (estilo) | `cd apidjango && ruff check .` |
+| Front-end (testes) | `cd frontend && pnpm test` |
+| Front-end (lint e tipos) | `pnpm lint` e `pnpm build` |
+| Regenerar o cliente da API | `pnpm api:generate` (com o back-end no ar) |
 
 ---
 
-## 📸 Prints e Referências
+## 📜 Decisões técnicas importantes
 
-* Landing page redesign: [confira aqui](https://github.com/skolov1/ProjetoIntegrador_OngDoPovo/blob/voloki/refs/site_ongdopovo_print.png).
+1. **Autenticação:** JWT. O *access token* fica só em memória no navegador (header `Authorization`); o *refresh token* vai em cookie httpOnly (`/api/v1/auth/token/`, `.../refresh/`, `.../logout/`). Cada pessoa da equipe deve ter a **própria conta** (criada em `/admin/`), para a auditoria identificar o autor.
+2. **Contrato da API:** o schema OpenAPI em `/api/schema/` é a fonte da verdade. Mudou um serializer? Rode `pnpm api:generate` no front.
+3. **Sem upload de documentos (LGPD):** só a situação dos documentos é guardada, nunca o arquivo nem o número.
+4. **Rotas públicas** (`/api/v1/grade/` e `/api/v1/eventos-servicos/`) não expõem dado pessoal nem id interno e podem ficar 60 s em cache.
+5. **Fotos:** ficam em `frontend/src/assets/fotos/` em WebP (máx. 1920 px). Os originais pesados não vão para o Git.
+
+---
+
+## 👥 Equipe e stakeholders
+
+* **Equipe do Projeto:** Ryan de Andrade, Gabriel Rodrigues, Isabella Aparecida, Matheus Gonzaga, Pedro Brinkmann
+* **ONG beneficiária:** ONG do Povo (responsáveis e coordenadores)
+* **Usuários finais:** professores, voluntários, alunos/atletas e comunidade atendida
+
+---
+
+## 🗺️ Próximos passos
+
+* [ ] Dados reais da ONG (modalidades, instrutores, alunos, doações) e indicadores de Impacto reais.
+* [ ] Painel responsivo e estatísticas públicas (presenças, alunos, modalidades).
+* [ ] Endurecimento para produção (`DEBUG`/`SECRET_KEY`, WhiteNoise, ruff).
+* [ ] Decisão sobre o MongoDB (prova de conceito já feita).
+* [ ] Cadastro de patrocinadores e painel de evolução do aluno (sugestões).
+
+---
+
+## 📸 Referências
+
 * Decisões de arquitetura: `ALTERACOES_FASE0_E_LANDING.md` e `PLANO_REMODELAGEM.md`.
-* Documentação detalhada de anotações: `refs/AnotacoesFormatadas08-10.md`.
+* Anotações de reunião: `refs/AnotacoesFormatadas08-10.md`.
+* Landing page (print): [confira aqui](https://github.com/skolov1/ProjetoIntegrador_OngDoPovo/blob/voloki/refs/site_ongdopovo_print.png).
