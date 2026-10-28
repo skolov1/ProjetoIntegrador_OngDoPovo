@@ -39,7 +39,7 @@ export function HeroSection() {
   return (
     <section
       id="inicio"
-      className="relative overflow-hidden bg-linear-to-b from-mist-50 via-white to-mist-100 pt-24 pb-16 sm:pt-28 sm:pb-20 lg:pt-32 lg:pb-28 2xl:pb-96"
+      className="relative overflow-hidden bg-linear-to-b from-mist-50 via-white to-mist-100 pt-24 pb-16 sm:pt-28 sm:pb-20 lg:pt-32 lg:pb-28 2xl:pb-48"
     >
       {/* Padrão de raios — o elemento gráfico do manual, em marca d'água */}
       <Sunburst
