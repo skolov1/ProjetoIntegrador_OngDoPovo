@@ -21,10 +21,12 @@ from .models import (
     Presenca,
     Professor,
 )
+from .visao_geral import LIMITE_DETALHE
 
 pytestmark = pytest.mark.django_db
 
 URL = "/api/v1/visao-geral/"
+URL_DETALHES = "/api/v1/visao-geral/detalhes/"
 
 _cpfs = itertools.count(10)
 
@@ -317,3 +319,131 @@ class TestPrivacidade:
 
         assert "Ana Souza Lima" not in corpo
         assert "Mestre Carlos Andrade" not in corpo
+
+
+class TestDetalhes:
+    """Quem e onde: a lista por trás de cada alerta, para o painel não deixar a pessoa no escuro."""
+
+    def detalhes(self, staff):
+        resposta = staff.get(URL_DETALHES)
+        assert resposta.status_code == 200
+        return resposta.data
+
+    def test_sem_login_e_usuario_comum_sao_recusados(self):
+        assert APIClient().get(URL_DETALHES).status_code in (401, 403)
+        comum = User.objects.create_user(username="comum", password="SenhaForte@123")
+        cliente = APIClient()
+        cliente.force_authenticate(comum)
+        assert cliente.get(URL_DETALHES).status_code == 403
+
+    def test_sem_nada_a_resolver_todas_as_listas_vem_vazias(self, staff):
+        assert self.detalhes(staff) == {
+            "faltantes": [],
+            "emprestimos_atrasados": [],
+            "turmas_sem_professor": [],
+            "alunos_sem_turma": [],
+        }
+
+    def test_faltantes_trazem_aluno_turma_e_quantas_faltas(self, staff):
+        t = turma("Futsal sub 14")
+        a = aluno("Ana Souza Lima", t)
+        presencas(a, t, ["AUSENTE"] * 4)
+
+        assert self.detalhes(staff)["faltantes"] == [
+            {
+                "aluno_id": a.id,
+                "aluno_nome": "Ana Souza Lima",
+                "turma_id": t.id,
+                "turma_nome": "Futsal sub 14",
+                "faltas_seguidas": 4,
+            }
+        ]
+
+    def test_aluno_faltante_em_duas_turmas_aparece_uma_vez_por_turma(self, staff):
+        t1, t2 = turma("Futsal"), turma("Muay Thai")
+        a = aluno("Ana", t1)
+        a.turmas.add(t2)
+        presencas(a, t1, ["AUSENTE"] * 3)
+        presencas(a, t2, ["AUSENTE"] * 5)
+
+        linhas = self.detalhes(staff)["faltantes"]
+
+        # Mais faltas primeiro; cada linha leva à chamada da sua turma.
+        assert [(linha["turma_nome"], linha["faltas_seguidas"]) for linha in linhas] == [
+            ("Muay Thai", 5),
+            ("Futsal", 3),
+        ]
+
+    def test_so_entra_quem_e_faltante_de_verdade(self, staff):
+        t = turma()
+        presencas(aluno("Ana", t), t, ["AUSENTE", "AUSENTE", "PRESENTE"])
+        presencas(aluno("Bia", t, ativo=False), t, ["AUSENTE"] * 3)
+
+        assert self.detalhes(staff)["faltantes"] == []
+
+    def test_emprestimos_atrasados_trazem_item_pessoa_e_datas(self, staff):
+        doacao = DoacaoItem.objects.create(item="MULETAS", quantidade=5)
+        antigo = Emprestimo.limite_atraso() - timedelta(days=1)
+        atrasado = Emprestimo.objects.create(
+            doacao=doacao, quantidade=2, pessoa_nome="João da Silva", emprestado_em=antigo
+        )
+        Emprestimo.objects.create(doacao=doacao, pessoa_nome="Maria")  # em dia
+        Emprestimo.objects.create(
+            doacao=doacao, pessoa_nome="Zé", emprestado_em=antigo, devolvido_em=hoje()
+        )
+
+        assert self.detalhes(staff)["emprestimos_atrasados"] == [
+            {
+                "emprestimo_id": atrasado.id,
+                "item": doacao.item_exibido,
+                "quantidade": 2,
+                "pessoa_nome": "João da Silva",
+                "emprestado_em": antigo.isoformat(),
+                "devolver_ate": atrasado.devolver_ate.isoformat(),
+            }
+        ]
+
+    def test_turmas_sem_professor_trazem_id_e_nome(self, staff):
+        sem = turma("Sem professor")
+        professor(turma("Com professor"))
+        turma("Futura", data_inicio=hoje() + timedelta(days=10))
+
+        assert self.detalhes(staff)["turmas_sem_professor"] == [
+            {"turma_id": sem.id, "turma_nome": "Sem professor"}
+        ]
+
+    def test_alunos_sem_turma_em_ordem_alfabetica(self, staff):
+        t = turma()
+        bia = aluno("Bia")
+        ana = aluno("Ana")
+        aluno("Inativa", ativo=False)
+        aluno("Matriculada", t)
+
+        assert self.detalhes(staff)["alunos_sem_turma"] == [
+            {"aluno_id": ana.id, "aluno_nome": "Ana"},
+            {"aluno_id": bia.id, "aluno_nome": "Bia"},
+        ]
+
+    def test_cada_lista_tem_um_teto_e_o_alerta_continua_com_o_total(self, staff):
+        for i in range(LIMITE_DETALHE + 5):
+            aluno(f"Aluno {i:03d}")
+
+        detalhes = self.detalhes(staff)
+        total = staff.get(URL).data["alertas"]["alunos_sem_turma"]
+
+        assert len(detalhes["alunos_sem_turma"]) == LIMITE_DETALHE
+        assert total == LIMITE_DETALHE + 5
+
+    def test_a_lista_bate_com_a_contagem_do_alerta(self, staff):
+        t = turma()
+        presencas(aluno("Ana", t), t, ["AUSENTE"] * 3)
+        aluno("Sem turma")
+        sem = turma("Sem professor")
+        assert sem is not None
+
+        alertas = staff.get(URL).data["alertas"]
+        detalhes = self.detalhes(staff)
+
+        assert len(detalhes["faltantes"]) == alertas["faltantes"]
+        assert len(detalhes["alunos_sem_turma"]) == alertas["alunos_sem_turma"]
+        assert len(detalhes["turmas_sem_professor"]) == alertas["turmas_sem_professor"]

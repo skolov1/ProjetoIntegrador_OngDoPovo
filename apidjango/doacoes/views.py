@@ -59,9 +59,10 @@ from .serializers import (
     ProfessorSerializer,
     TurmaListSerializer,
     TurmaSerializer,
+    VisaoGeralDetalhesSerializer,
     VisaoGeralSerializer,
 )
-from .visao_geral import montar_visao_geral
+from .visao_geral import montar_detalhes, montar_visao_geral
 
 # =============================================================================
 # Doação de itens
@@ -665,3 +666,21 @@ class VisaoGeralView(APIView):
     )
     def get(self, request):
         return Response(VisaoGeralSerializer(montar_visao_geral(timezone.localdate())).data)
+
+
+class VisaoGeralDetalhesView(APIView):
+    """GET /api/v1/visao-geral/detalhes/ - quem está por trás de cada alerta.
+
+    Só para a equipe. Traz o nome do aluno (a equipe já o vê na chamada e no cadastro), mas
+    nunca CPF nem contato. A tela chama só quando a pessoa abre um alerta.
+    """
+
+    permission_classes = [IsAdminUser]
+
+    @extend_schema(
+        summary="Detalhes dos alertas da visão geral",
+        tags=["visao-geral"],
+        responses={200: VisaoGeralDetalhesSerializer},
+    )
+    def get(self, request):
+        return Response(VisaoGeralDetalhesSerializer(montar_detalhes(timezone.localdate())).data)

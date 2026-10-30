@@ -34,6 +34,11 @@ urlpatterns = [
     ),
     # Visão geral do painel (equipe)
     path("visao-geral/", views.VisaoGeralView.as_view(), name="visao-geral"),
+    path(
+        "visao-geral/detalhes/",
+        views.VisaoGeralDetalhesView.as_view(),
+        name="visao-geral-detalhes",
+    ),
     # Router (admin)
     path("", include(router.urls)),
 ]

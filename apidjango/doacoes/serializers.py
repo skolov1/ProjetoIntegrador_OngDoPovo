@@ -894,3 +894,40 @@ class VisaoGeralSerializer(serializers.Serializer):
     frequencia_por_turma = VisaoGeralFrequenciaTurmaSerializer(
         many=True, help_text="Turmas ativas com chamada no mês, da menor frequência para a maior."
     )
+
+
+class DetalheFaltanteSerializer(serializers.Serializer):
+    aluno_id = serializers.IntegerField()
+    aluno_nome = serializers.CharField()
+    turma_id = serializers.IntegerField()
+    turma_nome = serializers.CharField()
+    faltas_seguidas = serializers.IntegerField()
+
+
+class DetalheEmprestimoAtrasadoSerializer(serializers.Serializer):
+    emprestimo_id = serializers.IntegerField()
+    item = serializers.CharField()
+    quantidade = serializers.IntegerField()
+    pessoa_nome = serializers.CharField()
+    emprestado_em = serializers.DateField()
+    devolver_ate = serializers.DateField()
+
+
+class DetalheTurmaSemProfessorSerializer(serializers.Serializer):
+    turma_id = serializers.IntegerField()
+    turma_nome = serializers.CharField()
+
+
+class DetalheAlunoSemTurmaSerializer(serializers.Serializer):
+    aluno_id = serializers.IntegerField()
+    aluno_nome = serializers.CharField()
+
+
+class VisaoGeralDetalhesSerializer(serializers.Serializer):
+    """Quem está por trás de cada alerta. Cada lista traz no máximo 50 linhas; o total real
+    está na contagem do alerta. Só nome (nunca CPF nem contato)."""
+
+    faltantes = DetalheFaltanteSerializer(many=True)
+    emprestimos_atrasados = DetalheEmprestimoAtrasadoSerializer(many=True)
+    turmas_sem_professor = DetalheTurmaSemProfessorSerializer(many=True)
+    alunos_sem_turma = DetalheAlunoSemTurmaSerializer(many=True)
