@@ -9,6 +9,7 @@ from datetime import date, timedelta
 
 import pytest
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.utils import timezone
 from rest_framework.test import APIClient
 
@@ -29,6 +30,14 @@ URL = "/api/v1/visao-geral/"
 URL_DETALHES = "/api/v1/visao-geral/detalhes/"
 
 _cpfs = itertools.count(10)
+
+
+@pytest.fixture(autouse=True)
+def cache_limpo():
+    """A Visão geral guarda o resultado por alguns segundos; cada teste começa sem isso."""
+    cache.clear()
+    yield
+    cache.clear()
 
 
 @pytest.fixture
@@ -447,3 +456,58 @@ class TestDetalhes:
         assert len(detalhes["faltantes"]) == alertas["faltantes"]
         assert len(detalhes["alunos_sem_turma"]) == alertas["alunos_sem_turma"]
         assert len(detalhes["turmas_sem_professor"]) == alertas["turmas_sem_professor"]
+
+
+class TestResultadoGuardado:
+    """A tela inicial é a mais pedida e faz ~10 consultas ao banco (que fica longe da API):
+    o resultado vale por alguns segundos e é igual para toda a equipe."""
+
+    def test_a_segunda_chamada_nao_toca_no_banco(self, staff, django_assert_num_queries):
+        aluno("Ana")
+        staff.get(URL)
+
+        with django_assert_num_queries(0):
+            segunda = staff.get(URL)
+
+        assert segunda.status_code == 200
+        assert segunda.data["totais"]["alunos_ativos"] == 1
+
+    def test_o_resultado_guardado_nao_ve_mudanca_ate_vencer(self, staff):
+        aluno("Ana")
+        assert staff.get(URL).data["totais"]["alunos_ativos"] == 1
+
+        aluno("Bia")
+        assert staff.get(URL).data["totais"]["alunos_ativos"] == 1  # ainda o guardado
+
+        cache.clear()  # é o que o tempo faz ao vencer
+        assert staff.get(URL).data["totais"]["alunos_ativos"] == 2
+
+    def test_os_detalhes_tambem_sao_guardados(self, staff, django_assert_num_queries):
+        aluno("Sem turma")
+        staff.get(URL_DETALHES)
+
+        with django_assert_num_queries(0):
+            segunda = staff.get(URL_DETALHES)
+
+        assert [a["aluno_nome"] for a in segunda.data["alunos_sem_turma"]] == ["Sem turma"]
+
+    def test_totais_e_detalhes_nao_se_misturam(self, staff):
+        aluno("Sem turma")
+
+        totais = staff.get(URL).data
+        detalhes = staff.get(URL_DETALHES).data
+
+        assert "totais" in totais and "totais" not in detalhes
+        assert "alunos_sem_turma" in detalhes and isinstance(totais["alertas"], dict)
+
+    def test_o_guardado_e_so_de_hoje(self, staff, monkeypatch):
+        from . import views
+
+        aluno("Ana")
+        staff.get(URL)
+        amanha = hoje() + timedelta(days=1)
+        monkeypatch.setattr(views.timezone, "localdate", lambda: amanha)
+        aluno("Bia")
+
+        # Outro dia = outra chave: não reaproveita o resultado de ontem.
+        assert staff.get(URL).data["totais"]["alunos_ativos"] == 2

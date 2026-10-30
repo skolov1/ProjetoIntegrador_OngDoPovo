@@ -11,6 +11,7 @@ landing) e o "faltante" de `faltas.py` (3 faltas seguidas, justificadas ignorada
 from datetime import date
 from itertools import groupby
 
+from django.core.cache import cache
 from django.db.models import Count, F, Q, Sum
 from django.db.models.functions import Coalesce
 
@@ -140,26 +141,33 @@ def _emprestimos_atrasados(hoje: date):
 
 def montar_visao_geral(hoje: date) -> dict:
     turmas_ativas, turmas_sem_professor = _classificar_turmas(hoje)
-    emprestados = Emprestimo.objects.filter(devolvido_em__isnull=True)
+    # Uma consulta só para os dois números de alunos e uma para os dois de empréstimos: o
+    # banco fica longe da API, e cada ida e volta custa ~200 ms.
+    alunos = Aluno.objects.filter(ativo=True).aggregate(
+        ativos=Count("id", distinct=True),
+        sem_turma=Count("id", filter=Q(turmas__isnull=True), distinct=True),
+    )
+    emprestados = Emprestimo.objects.filter(devolvido_em__isnull=True).aggregate(
+        itens=Coalesce(Sum("quantidade"), 0),
+        atrasados=Count("id", filter=Q(emprestado_em__lt=Emprestimo.limite_atraso(hoje))),
+    )
 
     return {
         "totais": {
-            "alunos_ativos": Aluno.objects.filter(ativo=True).count(),
+            "alunos_ativos": alunos["ativos"],
             "turmas_ativas": len(turmas_ativas),
             "professores_ativos": Professor.objects.filter(ativo=True).count(),
             "eventos_servicos_ativos": AtividadeAvulsa.objects.exclude(
                 status=AtividadeAvulsa.Status.ENCERRADO
             ).count(),
             "frequencia_mes": _frequencia_do_mes(hoje),
-            "itens_emprestados": emprestados.aggregate(
-                total=Coalesce(Sum("quantidade"), 0)
-            )["total"],
+            "itens_emprestados": emprestados["itens"],
         },
         "alertas": {
             "faltantes": len({linha["aluno_id"] for linha in _faltantes(hoje)}),
-            "emprestimos_atrasados": _emprestimos_atrasados(hoje).count(),
+            "emprestimos_atrasados": emprestados["atrasados"],
             "turmas_sem_professor": len(turmas_sem_professor),
-            "alunos_sem_turma": Aluno.objects.filter(ativo=True, turmas__isnull=True).count(),
+            "alunos_sem_turma": alunos["sem_turma"],
         },
         "frequencia_por_turma": _frequencia_por_turma(hoje),
     }
@@ -191,3 +199,23 @@ def montar_detalhes(hoje: date) -> dict:
             {"aluno_id": a.id, "aluno_nome": a.nome} for a in sem_turma[:LIMITE_DETALHE]
         ],
     }
+
+
+# Por quanto tempo o resultado vale. É a tela inicial, aberta por toda a equipe, e o banco
+# fica longe da API: refazer ~8 consultas a cada abertura custava ~2 s. O preço é que um
+# número pode ficar até este tempo atrasado depois de uma alteração.
+CACHE_SEGUNDOS = 30
+
+
+def visao_geral_guardada(hoje: date) -> dict:
+    """`montar_visao_geral`, guardado por `CACHE_SEGUNDOS` (e só para o dia de `hoje`)."""
+    return cache.get_or_set(
+        f"visao-geral:totais:{hoje.isoformat()}", lambda: montar_visao_geral(hoje), CACHE_SEGUNDOS
+    )
+
+
+def detalhes_guardados(hoje: date) -> dict:
+    """`montar_detalhes`, guardado do mesmo jeito."""
+    return cache.get_or_set(
+        f"visao-geral:detalhes:{hoje.isoformat()}", lambda: montar_detalhes(hoje), CACHE_SEGUNDOS
+    )

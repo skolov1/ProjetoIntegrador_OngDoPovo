@@ -62,7 +62,7 @@ from .serializers import (
     VisaoGeralDetalhesSerializer,
     VisaoGeralSerializer,
 )
-from .visao_geral import montar_detalhes, montar_visao_geral
+from .visao_geral import detalhes_guardados, visao_geral_guardada
 
 # =============================================================================
 # Doação de itens
@@ -665,7 +665,7 @@ class VisaoGeralView(APIView):
         responses={200: VisaoGeralSerializer},
     )
     def get(self, request):
-        return Response(VisaoGeralSerializer(montar_visao_geral(timezone.localdate())).data)
+        return Response(VisaoGeralSerializer(visao_geral_guardada(timezone.localdate())).data)
 
 
 class VisaoGeralDetalhesView(APIView):
@@ -683,4 +683,4 @@ class VisaoGeralDetalhesView(APIView):
         responses={200: VisaoGeralDetalhesSerializer},
     )
     def get(self, request):
-        return Response(VisaoGeralDetalhesSerializer(montar_detalhes(timezone.localdate())).data)
+        return Response(VisaoGeralDetalhesSerializer(detalhes_guardados(timezone.localdate())).data)
