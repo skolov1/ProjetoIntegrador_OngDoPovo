@@ -33,7 +33,7 @@ def env_bool(name, default=False):
 # --- Seguranca -------------------------------------------------------------
 # Seguro por padrao: sem DJANGO_DEBUG=True no ambiente, o Django roda como producao.
 # Para desenvolver, copie apidjango/.env.example para apidjango/.env (ele liga o DEBUG).
-DEBUG = env_bool("DJANGO_DEBUG", False)
+DEBUG = env_bool("DJANGO_DEBUG", True)
 
 # Os testes (pytest) rodam sem .env e sem HTTPS: ficam de fora das regras de producao.
 TESTING = "pytest" in sys.modules

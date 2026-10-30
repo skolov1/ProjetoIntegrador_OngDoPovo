@@ -328,7 +328,10 @@ export function PreRegisterSection() {
               <img
                 src={fotoNossoEspaco}
                 alt="Crianças com bolas de basquete após o treino"
+                width={1280}
+                height={1920}
                 loading="lazy"
+                decoding="async"
                 className="h-full w-full object-cover"
               />
             </div>

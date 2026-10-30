@@ -190,7 +190,10 @@ export function ProgramsSection() {
                     <img
                       src={foto.src}
                       alt={foto.alt}
+                      width={1920}
+                      height={1080}
                       loading="lazy"
+                      decoding="async"
                       className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-verde/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

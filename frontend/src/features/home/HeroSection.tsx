@@ -17,19 +17,25 @@ import { ONG } from '@/features/home/data'
 const FOTOS = [
   {
     src: foto1,
-    alt: 'Crianças jogando basquete em uma quadra',
+    alt: 'Treino de Muay Thai',
+    width: 1280,
+    height: 1920,
     className: 'col-span-2 row-span-2',
     flutua: true,
   },
   {
     src: foto2,
-    alt: 'Jovens em treino de futebol',
+    alt: 'Apresentação de Ballet em um teatro',
+    width: 1920,
+    height: 1280,
     className: 'col-span-1 row-span-1',
     flutua: false,
   },
   {
     src: foto3,
-    alt: 'Criança sorrindo durante uma atividade',
+    alt: 'Criança em treino de futsal durante um chute',
+    width: 1280,
+    height: 1920,
     className: 'col-span-1 row-span-1',
     flutua: false,
   },
@@ -39,7 +45,7 @@ export function HeroSection() {
   return (
     <section
       id="inicio"
-      className="relative overflow-hidden bg-linear-to-b from-mist-50 via-white to-mist-100 pt-24 pb-16 sm:pt-28 sm:pb-20 lg:pt-32 lg:pb-28 2xl:pb-96"
+      className="relative overflow-hidden bg-linear-to-b from-mist-50 via-white to-mist-100 pt-24 pb-16 sm:pt-28 sm:pb-20 lg:pt-32 lg:pb-28 2xl:pb-48"
     >
       {/* Padrão de raios — o elemento gráfico do manual, em marca d'água */}
       <Sunburst
@@ -139,7 +145,10 @@ export function HeroSection() {
                   <img
                     src={foto.src}
                     alt={foto.alt}
+                    width={foto.width}
+                    height={foto.height}
                     loading={i === 0 ? 'eager' : 'lazy'}
+                    fetchPriority={i === 0 ? 'high' : 'auto'}
                     className="h-full w-full object-cover"
                   />
                 </div>

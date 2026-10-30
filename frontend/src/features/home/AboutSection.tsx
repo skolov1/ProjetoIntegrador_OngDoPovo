@@ -32,26 +32,38 @@ const FOTOS_HISTORIA = [
   {
     src: fotoHistoria1,
     alt: 'Início das atividades da ONG do Povo na garagem',
+    width: 345,
+    height: 463,
   },
   {
     src: fotoHistoria2,
     alt: 'Primeiros alunos participando das atividades',
+    width: 496,
+    height: 496,
   },
   {
     src: fotoHistoria3,
     alt: 'Esporte e inclusão na comunidade Caieiras',
+    width: 799,
+    height: 448,
   },
   {
     src: fotoHistoria4,
     alt: 'Consolidação da ONG em 2020',
+    width: 1200,
+    height: 598,
   },
   {
     src: fotoHistoria5,
     alt: 'Transformação social através do esporte',
+    width: 818,
+    height: 460,
   },
   {
     src: fotoHistoria6,
     alt: 'Gerações acolhidas pela ONG do Povo',
+    width: 1224,
+    height: 1632,
   },
 ]
 
@@ -116,7 +128,10 @@ export function AboutSection() {
                     <img
                       src={foto.src}
                       alt={foto.alt}
+                      width={foto.width}
+                      height={foto.height}
                       loading={i === 0 ? 'eager' : 'lazy'}
+                      fetchPriority={i === 0 ? 'high' : 'auto'}
                       decoding="async"
                       className="max-h-full max-w-full object-contain transition-transform duration-500 hover:scale-[1.02]"
                     />
