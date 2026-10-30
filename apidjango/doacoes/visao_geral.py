@@ -1,4 +1,6 @@
-"""Números da "Visão geral" do painel: totais e alertas, só contagens (nunca nomes).
+"""Números da "Visão geral" do painel: totais, alertas e frequência por turma.
+
+Só contagens e nomes de turma: nunca nome de aluno ou de professor.
 
 Tudo é calculado na hora, a partir dos dados já cadastrados (nada é gravado). As regras
 reaproveitam as que já existem: a situação da turma vem de `grade.py` (a mesma da
@@ -75,6 +77,36 @@ def _frequencia_do_mes(hoje: date) -> int | None:
     return round(100 * contagem["presentes"] / total)
 
 
+def _frequencia_por_turma(hoje: date) -> list[dict]:
+    """% de presentes de cada turma ativa no mês, da menor para a maior (empate: por nome).
+
+    Mesma regra do número geral (justificadas fora da conta). Turma sem nenhuma
+    presença ou ausência no mês não aparece, em vez de mostrar 0%.
+    """
+    linhas = (
+        Presenca.objects.filter(
+            data__year=hoje.year,
+            data__month=hoje.month,
+            turma__ativo=True,
+            situacao__in=[Presenca.Situacao.PRESENTE, Presenca.Situacao.AUSENTE],
+        )
+        .values("turma_id", "turma__nome")
+        .annotate(
+            registros=Count("id"),
+            presentes=Count("id", filter=Q(situacao=Presenca.Situacao.PRESENTE)),
+        )
+    )
+    por_turma = [
+        {
+            "turma": linha["turma__nome"],
+            "percentual": round(100 * linha["presentes"] / linha["registros"]),
+            "registros": linha["registros"],
+        }
+        for linha in linhas
+    ]
+    return sorted(por_turma, key=lambda t: (t["percentual"], t["turma"]))
+
+
 def montar_visao_geral(hoje: date) -> dict:
     turmas_ativas, turmas_sem_professor = _turmas_por_situacao(hoje)
     emprestados = Emprestimo.objects.filter(devolvido_em__isnull=True)
@@ -100,4 +132,5 @@ def montar_visao_geral(hoje: date) -> dict:
             "turmas_sem_professor": turmas_sem_professor,
             "alunos_sem_turma": Aluno.objects.filter(ativo=True, turmas__isnull=True).count(),
         },
+        "frequencia_por_turma": _frequencia_por_turma(hoje),
     }

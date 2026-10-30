@@ -879,8 +879,17 @@ class VisaoGeralAlertasSerializer(serializers.Serializer):
     alunos_sem_turma = serializers.IntegerField()
 
 
+class VisaoGeralFrequenciaTurmaSerializer(serializers.Serializer):
+    turma = serializers.CharField(help_text="Nome da turma.")
+    percentual = serializers.IntegerField(help_text="% de presentes no mês.")
+    registros = serializers.IntegerField(help_text="Presentes mais ausentes que entraram na conta.")
+
+
 class VisaoGeralSerializer(serializers.Serializer):
-    """Só números: nenhum nome de aluno, turma ou pessoa."""
+    """Totais, alertas e frequência por turma: nunca traz nome de aluno ou de professor."""
 
     totais = VisaoGeralTotaisSerializer()
     alertas = VisaoGeralAlertasSerializer()
+    frequencia_por_turma = VisaoGeralFrequenciaTurmaSerializer(
+        many=True, help_text="Turmas ativas com chamada no mês, da menor frequência para a maior."
+    )

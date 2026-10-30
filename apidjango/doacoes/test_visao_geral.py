@@ -100,6 +100,7 @@ class TestTotais:
             "turmas_sem_professor": 0,
             "alunos_sem_turma": 0,
         }
+        assert dados["frequencia_por_turma"] == []
 
     def test_conta_so_alunos_turmas_e_professores_ativos(self, staff):
         t = turma()
@@ -167,6 +168,56 @@ class TestFrequenciaDoMes:
         )
 
         assert staff.get(URL).data["totais"]["frequencia_mes"] is None
+
+
+def marcar(a, t, situacoes):
+    """Uma presença por dia, a partir do dia 1 do mês corrente (todas dentro do mês)."""
+    inicio = hoje().replace(day=1)
+    for i, situacao in enumerate(situacoes):
+        dia = inicio + timedelta(days=i)
+        Presenca.objects.create(aluno=a, turma=t, data=dia, situacao=situacao)
+
+
+class TestFrequenciaPorTurma:
+    def por_turma(self, staff):
+        return staff.get(URL).data["frequencia_por_turma"]
+
+    def test_percentual_de_cada_turma_da_menor_para_a_maior(self, staff):
+        boa, ruim = turma("Futsal"), turma("Muay Thai")
+        marcar(aluno("Ana", boa), boa, ["PRESENTE", "PRESENTE", "PRESENTE", "AUSENTE"])
+        marcar(aluno("Bia", ruim), ruim, ["PRESENTE", "AUSENTE"])
+
+        assert self.por_turma(staff) == [
+            {"turma": "Muay Thai", "percentual": 50, "registros": 2},
+            {"turma": "Futsal", "percentual": 75, "registros": 4},
+        ]
+
+    def test_empate_desempata_pelo_nome(self, staff):
+        b, a = turma("Balé"), turma("Artes")
+        marcar(aluno("Ana", b), b, ["PRESENTE"])
+        marcar(aluno("Bia", a), a, ["PRESENTE"])
+
+        assert [linha["turma"] for linha in self.por_turma(staff)] == ["Artes", "Balé"]
+
+    def test_justificada_fica_fora_da_conta_e_turma_so_com_justificadas_nao_aparece(self, staff):
+        t, so_justificadas = turma("Futsal"), turma("Judô")
+        marcar(aluno("Ana", t), t, ["PRESENTE", "JUSTIFICADO", "AUSENTE"])
+        marcar(aluno("Bia", so_justificadas), so_justificadas, ["JUSTIFICADO"])
+
+        assert self.por_turma(staff) == [{"turma": "Futsal", "percentual": 50, "registros": 2}]
+
+    def test_turma_inativa_e_chamada_de_outro_mes_nao_entram(self, staff):
+        parada = turma("Parada", ativo=False)
+        antiga = turma("Antiga")
+        marcar(aluno("Ana", parada), parada, ["AUSENTE"])
+        Presenca.objects.create(
+            aluno=aluno("Bia", antiga),
+            turma=antiga,
+            data=hoje().replace(day=1) - timedelta(days=1),
+            situacao="AUSENTE",
+        )
+
+        assert self.por_turma(staff) == []
 
 
 class TestAlertas:
@@ -242,13 +293,13 @@ class TestAlertas:
 
 
 class TestPrivacidade:
-    def test_a_resposta_so_tem_numeros_nunca_nomes(self, staff):
+    def test_a_resposta_nunca_traz_nome_de_aluno_nem_de_professor(self, staff):
         t = turma("Futsal Sub-10")
         a = aluno("Ana Souza Lima", t)
         presencas(a, t, ["AUSENTE"] * 3)
-        professor(t)
+        Professor.objects.create(nome="Mestre Carlos Andrade", cpf="52998224725").turmas.add(t)
 
         corpo = str(staff.get(URL).data)
 
         assert "Ana Souza Lima" not in corpo
-        assert "Futsal Sub-10" not in corpo
+        assert "Mestre Carlos Andrade" not in corpo
