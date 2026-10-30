@@ -8,6 +8,64 @@
  * Fonte: manual de identidade visual e referência de layout em `refs/`.
  */
 
+import anaPaula from '@/assets/patrocinadores/ana-paula.webp'
+import batidao from '@/assets/patrocinadores/batidao.webp'
+import litoral from '@/assets/patrocinadores/litoral.webp'
+import logoSDourado from '@/assets/patrocinadores/logo-s-dourado.webp'
+import marcioBiley from '@/assets/patrocinadores/marcio-biley.webp'
+import printCenter from '@/assets/patrocinadores/print-center.webp'
+import saraMoveis from '@/assets/patrocinadores/sara-moveis.webp'
+import ticoTico from '@/assets/patrocinadores/tico-tico.webp'
+import veraneio from '@/assets/patrocinadores/veraneio.webp'
+
+/* -------------------------------------------------------------------------- */
+/* Patrocinadores                                                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Logos da faixa de patrocinadores. Para incluir uma empresa: coloque a imagem em
+ * `src/assets/patrocinadores/` (fundo transparente, ~560 px de largura no máximo) e
+ * acrescente uma linha aqui. `nome` vira o texto alternativo. `fundo: 'escuro'` é para
+ * logos feitas para fundo escuro (texto branco ou bege), que sumiriam no cartão branco.
+ */
+export interface Patrocinador {
+  nome: string
+  logo: string
+  width: number
+  height: number
+  fundo?: 'escuro'
+}
+
+export const PATROCINADORES: readonly Patrocinador[] = [
+  { nome: 'Veraneio Grupo Imobiliário', logo: veraneio, width: 560, height: 113 },
+  {
+    nome: 'Batidão Som e Acessórios',
+    logo: batidao,
+    width: 308,
+    height: 200,
+    fundo: 'escuro',
+  },
+  { nome: 'Sara Móveis e Colchões', logo: saraMoveis, width: 552, height: 200 },
+  { nome: 'Print Center do Brasil', logo: printCenter, width: 200, height: 200 },
+  {
+    nome: 'Marcio Biley Investimentos Imobiliários',
+    logo: marcioBiley,
+    width: 311,
+    height: 200,
+  },
+  // TODO: trocar pelo nome da empresa (a logo é um "S" dourado dentro de um círculo).
+  { nome: 'Patrocinador da ONG do Povo', logo: logoSDourado, width: 200, height: 200 },
+  { nome: 'Litoral Alimentos e Bebidas', logo: litoral, width: 293, height: 200 },
+  {
+    nome: 'Ana Paula Panificadora',
+    logo: anaPaula,
+    width: 205,
+    height: 200,
+    fundo: 'escuro',
+  },
+  { nome: 'Tico Tico Pet Shop', logo: ticoTico, width: 560, height: 149 },
+]
+
 /* -------------------------------------------------------------------------- */
 /* Instituição                                                                 */
 /* -------------------------------------------------------------------------- */

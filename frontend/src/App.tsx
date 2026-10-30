@@ -14,6 +14,7 @@ import { ImpactSection } from '@/features/home/ImpactSection'
 import { PreRegisterSection } from '@/features/home/PreRegisterSection'
 import { ProgramsSection } from '@/features/home/ProgramsSection'
 import { SpaceSection } from '@/features/home/SpaceSection'
+import { SponsorsSection } from '@/features/home/SponsorsSection'
 import { ValuesStrip } from '@/features/home/ValuesStrip'
 import { VolunteerSection } from '@/features/home/VolunteerSection'
 
@@ -37,6 +38,7 @@ export function App() {
         <ValuesStrip />
         <VolunteerSection />
         <DonationSection />
+        <SponsorsSection />
         <ContactSection />
 
         <Footer />

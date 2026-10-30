@@ -166,6 +166,54 @@
 }
 
 /* =========================================================================
+   FAIXA DE PATROCINADORES
+   =========================================================================
+
+   O trilho tem a lista duas vezes; andar metade da largura (-50%) leva a segunda
+   cópia exatamente para onde a primeira estava, então o loop não tem emenda. Por isso
+   o espaço entre os cartões é `padding` de cada item, e não `gap`.
+   ========================================================================= */
+.faixa-patrocinadores {
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+}
+
+.faixa-trilho {
+  display: flex;
+  width: max-content;
+  animation: faixa-patrocinadores 45s linear infinite;
+}
+
+.faixa-patrocinadores:hover .faixa-trilho {
+  animation-play-state: paused;
+}
+
+@keyframes faixa-patrocinadores {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Sem animação: grade centralizada, só com a primeira cópia da lista. */
+@media (prefers-reduced-motion: reduce) {
+  .faixa-patrocinadores {
+    mask-image: none;
+  }
+
+  .faixa-trilho {
+    animation: none;
+    width: auto;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 1.25rem;
+  }
+
+  .faixa-trilho > [data-copia] {
+    display: none;
+  }
+}
+
+/* =========================================================================
    ACESSIBILIDADE — MOVIMENTO REDUZIDO
    =========================================================================
 
