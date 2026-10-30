@@ -25,13 +25,15 @@ import veraneio from '@/assets/patrocinadores/veraneio.webp'
 /**
  * Logos da faixa de patrocinadores. Para incluir uma empresa: coloque a imagem em
  * `src/assets/patrocinadores/` (fundo transparente, ~560 px de largura no máximo) e
- * acrescente uma linha aqui. `nome` vira o texto alternativo.
+ * acrescente uma linha aqui. `nome` vira o texto alternativo. `fundo: 'escuro'` é para
+ * logos feitas para fundo escuro (texto branco ou bege), que sumiriam no cartão branco.
  */
 export interface Patrocinador {
   nome: string
   logo: string
   width: number
   height: number
+  fundo?: 'escuro'
 }
 
 export const PATROCINADORES: readonly Patrocinador[] = [
@@ -41,6 +43,7 @@ export const PATROCINADORES: readonly Patrocinador[] = [
     logo: batidao,
     width: 308,
     height: 200,
+    fundo: 'escuro',
   },
   { nome: 'Sara Móveis e Colchões', logo: saraMoveis, width: 552, height: 200 },
   { nome: 'Print Center do Brasil', logo: printCenter, width: 200, height: 200 },
@@ -58,6 +61,7 @@ export const PATROCINADORES: readonly Patrocinador[] = [
     logo: anaPaula,
     width: 205,
     height: 200,
+    fundo: 'escuro',
   },
   { nome: 'Tico Tico Pet Shop', logo: ticoTico, width: 560, height: 149 },
 ]
