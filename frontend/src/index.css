@@ -194,6 +194,12 @@
   }
 }
 
+/* Fio preto em volta da silhueta da logo (4 sombras sem desfoque, uma por direção). */
+.logo-contorno {
+  filter: drop-shadow(0.75px 0 0 #000) drop-shadow(-0.75px 0 0 #000)
+    drop-shadow(0 0.75px 0 #000) drop-shadow(0 -0.75px 0 #000);
+}
+
 /* Sem animação: grade centralizada, só com a primeira cópia da lista. */
 @media (prefers-reduced-motion: reduce) {
   .faixa-patrocinadores {
