@@ -89,13 +89,19 @@ function BotoesSituacao({
   );
 }
 
-export function PresencasTela() {
-  const [turmaId, setTurmaId] = useState("");
+/** Vindo da Visão geral: já abre na turma do aluno, só com os faltantes. */
+export interface PresencasInicial {
+  turmaId: number;
+  soFaltantes: boolean;
+}
+
+export function PresencasTela({ inicial }: { inicial?: PresencasInicial | null }) {
+  const [turmaId, setTurmaId] = useState(inicial ? String(inicial.turmaId) : "");
   const [data, setData] = useState(hoje());
   // Só o que a secretaria mexeu nesta tela; o resto vem do servidor.
   const [edicoes, setEdicoes] = useState<Record<number, SituacaoEnum>>({});
   const [busca, setBusca] = useState("");
-  const [soFaltantes, setSoFaltantes] = useState(false);
+  const [soFaltantes, setSoFaltantes] = useState(inicial?.soFaltantes ?? false);
   const [aviso, setAviso] = useState("");
   // Como a última gravação desta tela terminou: primeira vez ou troca de uma chamada já salva.
   const [ultimaGravacao, setUltimaGravacao] = useState<"salva" | "atualizada">("salva");

@@ -6,7 +6,8 @@
  * OpenAPI spec version: 1.0.0
  */
 import type {
-  VisaoGeral
+  VisaoGeral,
+  VisaoGeralDetalhes
 } from '../model';
 
 import { api } from '../../../lib/api';
@@ -27,4 +28,20 @@ export const visaoGeralRetrieve = (
     },
       );
     }
+  /**
+ * GET /api/v1/visao-geral/detalhes/ - quem está por trás de cada alerta.
+ *
+ * Só para a equipe. Traz o nome do aluno (a equipe já o vê na chamada e no cadastro), mas
+ * nunca CPF nem contato. A tela chama só quando a pessoa abre um alerta.
+ * @summary Detalhes dos alertas da visão geral
+ */
+export const visaoGeralDetalhesRetrieve = (
+
+ ) => {
+      return api<VisaoGeralDetalhes>(
+      {url: `/visao-geral/detalhes/`, method: 'GET'
+    },
+      );
+    }
   export type VisaoGeralRetrieveResult = NonNullable<Awaited<ReturnType<typeof visaoGeralRetrieve>>>
+export type VisaoGeralDetalhesRetrieveResult = NonNullable<Awaited<ReturnType<typeof visaoGeralDetalhesRetrieve>>>

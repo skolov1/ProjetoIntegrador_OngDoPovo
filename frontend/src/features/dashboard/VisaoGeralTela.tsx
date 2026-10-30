@@ -3,14 +3,17 @@
  *
  * Seis totais em cartões, a frequência de cada turma no mês (da menor para a maior, para a
  * turma com mais faltas ficar no topo) e, abaixo, só o que precisa de atenção (alertas com
- * algo a resolver), cada um com um botão que leva à aba onde a pessoa resolve. A API devolve
- * só números e nomes de turma; quem quiser ver os alunos vai para a aba indicada.
+ * algo a resolver). Cada alerta abre e mostra quem é e onde (o nome do aluno, a turma, o
+ * empréstimo), para a pessoa não ficar no escuro; as faltas seguidas têm um botão que abre a
+ * chamada daquela turma, e os demais levam à aba onde se resolve. A tela inicial só carrega
+ * números; a lista de nomes vem numa chamada à parte, quando um alerta é aberto.
  */
 
 import { useState } from "react";
 import {
   ArrowRight,
   CalendarDays,
+  ChevronDown,
   CircleCheck,
   Clipboard,
   GraduationCap,
@@ -21,15 +24,19 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { useVisaoGeral } from "@/features/dashboard/api";
+import { useVisaoGeral, useVisaoGeralDetalhes } from "@/features/dashboard/api";
 import {
+  LIMITE_DETALHE,
+  ROTULO_TELA,
   TODAS_AS_TURMAS,
   formatarFrequencia,
   frequenciaBaixa,
   montarAlertas,
+  montarLinhas,
   opcoesDeTurma,
   rotuloRegistros,
   selecionarFrequencia,
+  type Alerta,
   type TelaDestino,
 } from "@/lib/visaoGeral";
 
@@ -53,8 +60,80 @@ function CartaoTotal({
   );
 }
 
-export function VisaoGeralTela({ onIr }: { onIr: (tela: TelaDestino) => void }) {
+function DetalheAlerta({
+  alerta,
+  onIr,
+  onAbrirChamada,
+}: {
+  alerta: Alerta;
+  onIr: (tela: TelaDestino) => void;
+  onAbrirChamada: (turmaId: number) => void;
+}) {
+  const { data, isLoading, error } = useVisaoGeralDetalhes(true);
+
+  if (isLoading) return <p className="px-1 py-3 text-sm text-grafite/70">Carregando...</p>;
+  if (error || !data) {
+    return <p className="px-1 py-3 text-sm text-vermelho">Erro ao carregar os detalhes.</p>;
+  }
+
+  const linhas = montarLinhas(alerta.chave, data);
+  return (
+    <div className="mt-3 border-t border-mist-200 pt-1">
+      {linhas.length === 0 ? (
+        <p className="py-3 text-sm text-grafite/70">Nada mais a resolver aqui.</p>
+      ) : (
+        <ul>
+          {linhas.map((l) => (
+            <li
+              key={l.chave}
+              className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-mist-100 py-2.5 last:border-b-0"
+            >
+              <div className="min-w-0 flex-1 basis-40">
+                <p className="break-words font-medium text-grafite">{l.principal}</p>
+                {l.secundario && <p className="text-sm text-grafite/60">{l.secundario}</p>}
+              </div>
+              {l.turmaId !== undefined && (
+                <button
+                  type="button"
+                  onClick={() => onAbrirChamada(l.turmaId!)}
+                  aria-label={`Abrir a chamada de ${l.principal}`}
+                  className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-verde px-4 text-sm font-bold text-verde transition-colors hover:bg-verde hover:text-white"
+                >
+                  Abrir chamada
+                  <ArrowRight className="size-4" aria-hidden="true" />
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {linhas.length >= LIMITE_DETALHE && (
+        <p className="pb-2 text-sm text-grafite/60">
+          Mostrando as {LIMITE_DETALHE} primeiras. O restante está na aba {ROTULO_TELA[alerta.tela]}.
+        </p>
+      )}
+      <button
+        type="button"
+        onClick={() => onIr(alerta.tela)}
+        className="mt-1 flex min-h-11 items-center gap-1.5 text-sm font-bold text-verde hover:underline"
+      >
+        Ir para {ROTULO_TELA[alerta.tela]}
+        <ArrowRight className="size-4" aria-hidden="true" />
+      </button>
+    </div>
+  );
+}
+
+export function VisaoGeralTela({
+  onIr,
+  onAbrirChamada,
+}: {
+  onIr: (tela: TelaDestino) => void;
+  onAbrirChamada: (turmaId: number) => void;
+}) {
   const { data, isLoading, error } = useVisaoGeral();
+  // Alerta aberto no momento (um por vez); a lista de nomes só é buscada quando abre.
+  const [alertaAberto, setAlertaAberto] = useState<string | null>(null);
   // "" = ainda não escolheu; "todas"; ou o id da turma escolhida para aparecer sozinha.
   const [turmaEscolhida, setTurmaEscolhida] = useState("");
 
@@ -191,28 +270,39 @@ export function VisaoGeralTela({ onIr }: { onIr: (tela: TelaDestino) => void }) 
           </p>
         ) : (
           <ul className="space-y-2">
-            {alertas.map((a) => (
-              <li
-                key={a.chave}
-                className="flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-white p-3 shadow-sm sm:p-4"
-              >
-                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-amarelo/20 text-amber-700">
-                  <TriangleAlert className="size-5" aria-hidden="true" />
-                </span>
-                <span className="min-w-0 flex-1 text-sm font-medium text-grafite sm:text-base">
-                  {a.texto}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => onIr(a.tela)}
-                  aria-label={`Ver: ${a.texto}`}
-                  className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-verde px-4 text-sm font-bold text-verde transition-colors hover:bg-verde hover:text-white"
+            {alertas.map((a) => {
+              const aberto = alertaAberto === a.chave;
+              return (
+                <li
+                  key={a.chave}
+                  className="rounded-2xl border border-slate-200/70 bg-white p-3 shadow-sm sm:p-4"
                 >
-                  Ver
-                  <ArrowRight className="size-4" aria-hidden="true" />
-                </button>
-              </li>
-            ))}
+                  <button
+                    type="button"
+                    onClick={() => setAlertaAberto(aberto ? null : a.chave)}
+                    aria-expanded={aberto}
+                    aria-controls={`detalhe-${a.chave}`}
+                    className="flex w-full items-center gap-3 text-left"
+                  >
+                    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-amarelo/20 text-amber-700">
+                      <TriangleAlert className="size-5" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0 flex-1 text-sm font-medium text-grafite sm:text-base">
+                      {a.texto}
+                    </span>
+                    <ChevronDown
+                      className={`size-5 shrink-0 text-verde transition-transform ${aberto ? "rotate-180" : ""}`}
+                      aria-hidden="true"
+                    />
+                  </button>
+                  {aberto && (
+                    <div id={`detalhe-${a.chave}`}>
+                      <DetalheAlerta alerta={a} onIr={onIr} onAbrirChamada={onAbrirChamada} />
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

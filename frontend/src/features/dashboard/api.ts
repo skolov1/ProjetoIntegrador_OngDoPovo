@@ -69,8 +69,12 @@ import type {
   PaginatedAtividadeAvulsaList,
   PatchedAtividadeAvulsaRequest,
   VisaoGeral,
+  VisaoGeralDetalhes,
 } from '@/api/generated/model'
-import { visaoGeralRetrieve } from '@/api/generated/visao-geral/visao-geral'
+import {
+  visaoGeralDetalhesRetrieve,
+  visaoGeralRetrieve,
+} from '@/api/generated/visao-geral/visao-geral'
 
 // Página que não existe mais (ex.: excluiu o último item da última página) volta 404.
 // Não adianta repetir: a tela recua uma página.
@@ -88,6 +92,16 @@ export function useVisaoGeral() {
   return useQuery<VisaoGeral>({
     queryKey: ['visao-geral'],
     queryFn: () => visaoGeralRetrieve().then(extractData),
+    staleTime: 30_000,
+  })
+}
+
+/** Quem está por trás dos alertas; só busca quando a pessoa abre um (`habilitado`). */
+export function useVisaoGeralDetalhes(habilitado: boolean) {
+  return useQuery<VisaoGeralDetalhes>({
+    queryKey: ['visao-geral', 'detalhes'],
+    queryFn: () => visaoGeralDetalhesRetrieve().then(extractData),
+    enabled: habilitado,
     staleTime: 30_000,
   })
 }

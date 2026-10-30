@@ -1,12 +1,18 @@
 import { describe, expect, it } from 'vitest'
 
-import type { VisaoGeralAlertas, VisaoGeralFrequenciaTurma } from '@/api/generated/model'
+import type {
+  VisaoGeralAlertas,
+  VisaoGeralDetalhes,
+  VisaoGeralFrequenciaTurma,
+} from '@/api/generated/model'
 
 import {
+  LIMITE_DETALHE,
   LIMITE_FREQUENCIA_BAIXA,
   formatarFrequencia,
   frequenciaBaixa,
   montarAlertas,
+  montarLinhas,
   opcoesDeTurma,
   rotuloRegistros,
   selecionarFrequencia,
@@ -152,5 +158,90 @@ describe('opcoesDeTurma', () => {
     ]).map((o) => o.nome)
 
     expect(nomes).toEqual(['água', 'Balé', 'Zumba'])
+  })
+})
+
+const DETALHES: VisaoGeralDetalhes = {
+  faltantes: [
+    {
+      aluno_id: 7,
+      aluno_nome: 'Ana Souza Lima',
+      turma_id: 3,
+      turma_nome: 'Futsal sub 14',
+      faltas_seguidas: 4,
+    },
+  ],
+  emprestimos_atrasados: [
+    {
+      emprestimo_id: 5,
+      item: 'Muletas',
+      quantidade: 2,
+      pessoa_nome: 'João da Silva',
+      emprestado_em: '2026-07-12',
+      devolver_ate: '2026-10-12',
+    },
+    {
+      emprestimo_id: 6,
+      item: 'Cadeira de rodas',
+      quantidade: 1,
+      pessoa_nome: 'Maria',
+      emprestado_em: '2026-06-01',
+      devolver_ate: '2026-09-01',
+    },
+  ],
+  turmas_sem_professor: [{ turma_id: 9, turma_nome: 'Ballet Infantil' }],
+  alunos_sem_turma: [{ aluno_id: 11, aluno_nome: 'Bia Menor Teste' }],
+}
+
+describe('montarLinhas', () => {
+  it('faltante: nome do aluno, turma com as faltas, e leva à chamada da turma', () => {
+    expect(montarLinhas('faltantes', DETALHES)).toEqual([
+      {
+        chave: 'faltante-7-3',
+        principal: 'Ana Souza Lima',
+        secundario: 'Futsal sub 14 · 4 faltas seguidas',
+        turmaId: 3,
+      },
+    ])
+  })
+
+  it('o texto das faltas concorda com a quantidade', () => {
+    const um = montarLinhas('faltantes', {
+      ...DETALHES,
+      faltantes: [{ ...DETALHES.faltantes[0], faltas_seguidas: 1 }],
+    })
+
+    expect(um[0].secundario).toBe('Futsal sub 14 · 1 falta seguida')
+  })
+
+  it('empréstimo atrasado: quem pegou, o item (com a quantidade se passar de 1) e a data', () => {
+    expect(montarLinhas('emprestimos_atrasados', DETALHES)).toEqual([
+      {
+        chave: 'emprestimo-5',
+        principal: 'João da Silva',
+        secundario: 'Muletas (2) · emprestado em 12/07/2026',
+      },
+      {
+        chave: 'emprestimo-6',
+        principal: 'Maria',
+        secundario: 'Cadeira de rodas · emprestado em 01/06/2026',
+      },
+    ])
+  })
+
+  it('turma sem professor: só o nome da turma', () => {
+    expect(montarLinhas('turmas_sem_professor', DETALHES)).toEqual([
+      { chave: 'turma-9', principal: 'Ballet Infantil' },
+    ])
+  })
+
+  it('aluno sem turma: só o nome do aluno', () => {
+    expect(montarLinhas('alunos_sem_turma', DETALHES)).toEqual([
+      { chave: 'aluno-11', principal: 'Bia Menor Teste' },
+    ])
+  })
+
+  it('o teto da lista é o mesmo da API (50)', () => {
+    expect(LIMITE_DETALHE).toBe(50)
   })
 })

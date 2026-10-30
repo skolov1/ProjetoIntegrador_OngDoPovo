@@ -2,10 +2,24 @@
  * Funções puras da "Visão geral" do painel: texto e destino de cada alerta.
  */
 
-import type { VisaoGeralAlertas, VisaoGeralFrequenciaTurma } from '@/api/generated/model'
+import type {
+  VisaoGeralAlertas,
+  VisaoGeralDetalhes,
+  VisaoGeralFrequenciaTurma,
+} from '@/api/generated/model'
+
+import { formatarDataBr } from '@/lib/emprestimo'
 
 /** Abas do painel para onde um alerta leva. */
 export type TelaDestino = 'presenca' | 'alunos' | 'doacoes' | 'turmas'
+
+/** Nome da aba de cada destino, para o botão "Ir para ...". */
+export const ROTULO_TELA: Record<TelaDestino, string> = {
+  presenca: 'Presenças',
+  alunos: 'Alunos',
+  doacoes: 'Doações',
+  turmas: 'Turmas',
+}
 
 export interface Alerta {
   chave: keyof VisaoGeralAlertas
@@ -92,4 +106,50 @@ export function opcoesDeTurma(lista: VisaoGeralFrequenciaTurma[]): { id: number;
   return lista
     .map((t) => ({ id: t.turma_id, nome: t.turma }))
     .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }))
+}
+
+/** Quantas linhas a API traz por alerta no máximo (o total real está na contagem do alerta). */
+export const LIMITE_DETALHE = 50
+
+/** Uma linha da lista que se abre sob um alerta. */
+export interface LinhaDetalhe {
+  chave: string
+  principal: string
+  secundario?: string
+  /** Só nas faltas seguidas: abre a chamada daquela turma. */
+  turmaId?: number
+}
+
+const faltas = (n: number) => `${n} ${n === 1 ? 'falta seguida' : 'faltas seguidas'}`
+
+/** As linhas que aparecem quando a pessoa abre um alerta: quem é e, quando cabe, onde. */
+export function montarLinhas(
+  alerta: keyof VisaoGeralAlertas,
+  detalhes: VisaoGeralDetalhes,
+): LinhaDetalhe[] {
+  switch (alerta) {
+    case 'faltantes':
+      return detalhes.faltantes.map((f) => ({
+        chave: `faltante-${f.aluno_id}-${f.turma_id}`,
+        principal: f.aluno_nome,
+        secundario: `${f.turma_nome} · ${faltas(f.faltas_seguidas)}`,
+        turmaId: f.turma_id,
+      }))
+    case 'emprestimos_atrasados':
+      return detalhes.emprestimos_atrasados.map((e) => ({
+        chave: `emprestimo-${e.emprestimo_id}`,
+        principal: e.pessoa_nome,
+        secundario: `${e.item}${e.quantidade > 1 ? ` (${e.quantidade})` : ''} · emprestado em ${formatarDataBr(e.emprestado_em)}`,
+      }))
+    case 'turmas_sem_professor':
+      return detalhes.turmas_sem_professor.map((t) => ({
+        chave: `turma-${t.turma_id}`,
+        principal: t.turma_nome,
+      }))
+    case 'alunos_sem_turma':
+      return detalhes.alunos_sem_turma.map((a) => ({
+        chave: `aluno-${a.aluno_id}`,
+        principal: a.aluno_nome,
+      }))
+  }
 }

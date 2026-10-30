@@ -44,7 +44,7 @@ import {
   useUpdateDoacaoItem,
   useDeleteDoacaoItem,
 } from "@/features/dashboard/api";
-import { PresencasTela } from "@/features/dashboard/PresencasTela";
+import { PresencasTela, type PresencasInicial } from "@/features/dashboard/PresencasTela";
 import { VisaoGeralTela } from "@/features/dashboard/VisaoGeralTela";
 import { AuditoriaTela } from "@/features/dashboard/AuditoriaTela";
 import { GradeTela } from "@/features/dashboard/GradeTela";
@@ -253,8 +253,18 @@ export function DashboardLayout() {
     };
   }, [menuAberto]);
 
+  // Quando a Visão geral manda abrir a chamada de uma turma, Presenças já vem nela.
+  const [presencaInicial, setPresencaInicial] = useState<PresencasInicial | null>(null);
+
   const irPara = (tela: Screen) => {
+    setPresencaInicial(null);
     setScreen(tela);
+    setMenuAberto(false);
+  };
+
+  const abrirChamada = (turmaId: number) => {
+    setPresencaInicial({ turmaId, soFaltantes: true });
+    setScreen("presenca");
     setMenuAberto(false);
   };
   const [paginaAlunos, setPaginaAlunos] = useState(1);
@@ -1214,10 +1224,10 @@ export function DashboardLayout() {
         </div>
 
         {/* VISÃO GERAL (tela inicial) */}
-        {screen === "visao" && <VisaoGeralTela onIr={irPara} />}
+        {screen === "visao" && <VisaoGeralTela onIr={irPara} onAbrirChamada={abrirChamada} />}
 
         {/* PRESENÇAS */}
-        {screen === "presenca" && <PresencasTela />}
+        {screen === "presenca" && <PresencasTela inicial={presencaInicial} />}
 
         {/* GRADE DA SEMANA (atividades avulsas e prévia do site) */}
         {screen === "grade" && <GradeTela />}
