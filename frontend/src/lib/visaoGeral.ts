@@ -71,14 +71,20 @@ export function rotuloRegistros(quantidade: number): string {
   return `${quantidade} ${quantidade === 1 ? 'registro' : 'registros'}`
 }
 
-/** Só a turma escolhida; sem escolha (ou se ela sumiu da lista) mostra todas. */
-export function filtrarFrequencia(
+/** Valor do seletor para ver todas as turmas de uma vez ("" = ainda não escolheu). */
+export const TODAS_AS_TURMAS = 'todas'
+
+/**
+ * O que a lista de frequência mostra, conforme a escolha no seletor: nada até a pessoa
+ * escolher, todas, ou só uma turma. Com uma única turma não há o que escolher, e ela aparece.
+ */
+export function selecionarFrequencia(
   lista: VisaoGeralFrequenciaTurma[],
-  turmaId: number | null,
+  escolha: string,
 ): VisaoGeralFrequenciaTurma[] {
-  if (turmaId === null) return lista
-  const escolhida = lista.filter((t) => t.turma_id === turmaId)
-  return escolhida.length > 0 ? escolhida : lista
+  if (lista.length <= 1) return lista
+  if (escolha === TODAS_AS_TURMAS) return lista
+  return lista.filter((t) => String(t.turma_id) === escolha)
 }
 
 /** Opções do seletor de turma, em ordem alfabética (sem diferenciar acento nem maiúscula). */

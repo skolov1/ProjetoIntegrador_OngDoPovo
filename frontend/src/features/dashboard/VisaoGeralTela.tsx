@@ -23,12 +23,13 @@ import {
 
 import { useVisaoGeral } from "@/features/dashboard/api";
 import {
-  filtrarFrequencia,
+  TODAS_AS_TURMAS,
   formatarFrequencia,
   frequenciaBaixa,
   montarAlertas,
   opcoesDeTurma,
   rotuloRegistros,
+  selecionarFrequencia,
   type TelaDestino,
 } from "@/lib/visaoGeral";
 
@@ -54,7 +55,7 @@ function CartaoTotal({
 
 export function VisaoGeralTela({ onIr }: { onIr: (tela: TelaDestino) => void }) {
   const { data, isLoading, error } = useVisaoGeral();
-  // "" = todas as turmas; senão, o id da turma escolhida para aparecer sozinha.
+  // "" = ainda não escolheu; "todas"; ou o id da turma escolhida para aparecer sozinha.
   const [turmaEscolhida, setTurmaEscolhida] = useState("");
 
   if (isLoading) return <p className="mt-6">Carregando...</p>;
@@ -64,10 +65,8 @@ export function VisaoGeralTela({ onIr }: { onIr: (tela: TelaDestino) => void }) 
 
   const { totais } = data;
   const alertas = montarAlertas(data.alertas);
-  const frequencias = filtrarFrequencia(
-    data.frequencia_por_turma,
-    turmaEscolhida === "" ? null : Number(turmaEscolhida),
-  );
+  const frequencias = selecionarFrequencia(data.frequencia_por_turma, turmaEscolhida);
+  const precisaEscolher = data.frequencia_por_turma.length > 1;
 
   return (
     <div className="mt-6 space-y-8">
@@ -106,7 +105,7 @@ export function VisaoGeralTela({ onIr }: { onIr: (tela: TelaDestino) => void }) 
           <h3 id="titulo-frequencia" className="text-xl font-extrabold text-verde-escuro">
             Frequência por turma
           </h3>
-          {data.frequencia_por_turma.length > 1 && (
+          {precisaEscolher && (
             <label className="flex items-center gap-2 text-sm text-grafite/70">
               Mostrar
               <select
@@ -115,7 +114,8 @@ export function VisaoGeralTela({ onIr }: { onIr: (tela: TelaDestino) => void }) 
                 onChange={(e) => setTurmaEscolhida(e.target.value)}
                 className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-grafite outline-none focus:border-verde focus:ring-4 focus:ring-verde/10"
               >
-                <option value="">Todas as turmas</option>
+                <option value="">Selecione uma turma</option>
+                <option value={TODAS_AS_TURMAS}>Todas as turmas</option>
                 {opcoesDeTurma(data.frequencia_por_turma).map((o) => (
                   <option key={o.id} value={o.id}>
                     {o.nome}
@@ -128,6 +128,10 @@ export function VisaoGeralTela({ onIr }: { onIr: (tela: TelaDestino) => void }) 
         {data.frequencia_por_turma.length === 0 ? (
           <p className="rounded-2xl border border-slate-200/70 bg-white p-4 text-grafite/70 shadow-sm">
             Ainda não há chamadas neste mês.
+          </p>
+        ) : frequencias.length === 0 ? (
+          <p className="rounded-2xl border border-slate-200/70 bg-white p-4 text-grafite/70 shadow-sm">
+            Selecione uma turma para ver a frequência no mês.
           </p>
         ) : (
           <ul className={`grid gap-2 ${frequencias.length > 1 ? "sm:grid-cols-2" : ""}`}>

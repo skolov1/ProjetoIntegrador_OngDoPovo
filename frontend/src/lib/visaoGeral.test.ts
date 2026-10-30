@@ -4,12 +4,12 @@ import type { VisaoGeralAlertas, VisaoGeralFrequenciaTurma } from '@/api/generat
 
 import {
   LIMITE_FREQUENCIA_BAIXA,
-  filtrarFrequencia,
   formatarFrequencia,
   frequenciaBaixa,
   montarAlertas,
   opcoesDeTurma,
   rotuloRegistros,
+  selecionarFrequencia,
 } from './visaoGeral'
 
 const ZERADOS: VisaoGeralAlertas = {
@@ -109,17 +109,29 @@ const TURMAS: VisaoGeralFrequenciaTurma[] = [
   { turma_id: 2, turma: 'Ballet', percentual: 95, registros: 4 },
 ]
 
-describe('filtrarFrequencia', () => {
-  it('sem turma escolhida mostra todas, na ordem que a API mandou', () => {
-    expect(filtrarFrequencia(TURMAS, null)).toEqual(TURMAS)
+describe('selecionarFrequencia', () => {
+  it('sem escolha não mostra nenhuma turma (a pessoa precisa selecionar)', () => {
+    expect(selecionarFrequencia(TURMAS, '')).toEqual([])
   })
 
-  it('com uma turma escolhida mostra só ela', () => {
-    expect(filtrarFrequencia(TURMAS, 1)).toEqual([TURMAS[1]])
+  it('"todas" mostra a lista inteira, na ordem que a API mandou', () => {
+    expect(selecionarFrequencia(TURMAS, 'todas')).toEqual(TURMAS)
   })
 
-  it('se a turma escolhida não está mais na lista, volta a mostrar todas', () => {
-    expect(filtrarFrequencia(TURMAS, 99)).toEqual(TURMAS)
+  it('com o id de uma turma mostra só ela', () => {
+    expect(selecionarFrequencia(TURMAS, '1')).toEqual([TURMAS[1]])
+  })
+
+  it('se a turma escolhida sumiu da lista, volta a pedir a seleção', () => {
+    expect(selecionarFrequencia(TURMAS, '99')).toEqual([])
+  })
+
+  it('com uma turma só não há o que escolher: ela aparece direto', () => {
+    expect(selecionarFrequencia([TURMAS[0]], '')).toEqual([TURMAS[0]])
+  })
+
+  it('sem turmas devolve lista vazia', () => {
+    expect(selecionarFrequencia([], 'todas')).toEqual([])
   })
 })
 
