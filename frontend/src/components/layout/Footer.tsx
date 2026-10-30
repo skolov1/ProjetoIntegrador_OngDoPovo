@@ -2,13 +2,14 @@
  * Footer — identidade, navegação, contato e créditos.
  * Inclui navegação por teclado ao topo e links legais.
  */
-import { ArrowUp, Mail, MessageCircle } from "lucide-react";
+import { ArrowUp, Download, Mail, MessageCircle } from "lucide-react";
 
 import { FacebookIcon, InstagramIcon } from "@/components/ui/BrandIcons";
 
 import { LinkBotao } from "@/components/ui/Button";
 import { Sunburst } from "@/components/ui/Sunburst";
 import { NAVEGACAO, ONG } from "@/features/home/data";
+import { useInstalarApp } from "@/lib/useInstalarApp";
 
 const REDES = [
   { Icon: InstagramIcon, rotulo: "Instagram", href: ONG.instagramUrl },
@@ -25,6 +26,7 @@ interface FooterProps {
 export function Footer({ onPrivacyPage = false }: FooterProps) {
   const ano = new Date().getFullYear();
   const homePrefix = onPrivacyPage ? "/" : "";
+  const { podeInstalar, instalar } = useInstalarApp();
 
   return (
     <footer className="relative overflow-hidden bg-verde-900 text-white">
@@ -151,6 +153,16 @@ export function Footer({ onPrivacyPage = false }: FooterProps) {
           </p>
 
           <div className="flex items-center gap-5">
+            {podeInstalar && (
+              <button
+                type="button"
+                onClick={() => void instalar()}
+                className="flex items-center gap-1.5 text-xs text-mist-200/70 transition-colors hover:text-white"
+              >
+                <Download className="size-3.5" aria-hidden="true" />
+                Instalar app
+              </button>
+            )}
             <a
               href="/privacidade.html"
               className="text-xs text-mist-200/70 transition-colors hover:text-white"
