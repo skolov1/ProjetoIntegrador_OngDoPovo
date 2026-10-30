@@ -32,6 +32,8 @@ urlpatterns = [
         views.EventosServicosView.as_view(),
         name="eventos-servicos",
     ),
+    # Visão geral do painel (equipe)
+    path("visao-geral/", views.VisaoGeralView.as_view(), name="visao-geral"),
     # Router (admin)
     path("", include(router.urls)),
 ]

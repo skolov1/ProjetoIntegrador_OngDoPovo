@@ -59,7 +59,9 @@ from .serializers import (
     ProfessorSerializer,
     TurmaListSerializer,
     TurmaSerializer,
+    VisaoGeralSerializer,
 )
+from .visao_geral import montar_visao_geral
 
 # =============================================================================
 # Doação de itens
@@ -638,3 +640,25 @@ class EventosServicosView(APIView):
             for a in sorted(itens, key=ordem)
         ]
         return Response(EventoServicoPublicoSerializer(dados, many=True).data)
+
+
+# =============================================================================
+# Visão geral (painel)
+# =============================================================================
+
+
+class VisaoGeralView(APIView):
+    """GET /api/v1/visao-geral/ - totais e alertas da tela inicial do painel.
+
+    Só para a equipe e só números (nada de nomes). Calculado na hora.
+    """
+
+    permission_classes = [IsAdminUser]
+
+    @extend_schema(
+        summary="Visão geral do painel",
+        tags=["visao-geral"],
+        responses={200: VisaoGeralSerializer},
+    )
+    def get(self, request):
+        return Response(VisaoGeralSerializer(montar_visao_geral(timezone.localdate())).data)

@@ -844,3 +844,29 @@ class ProfessorListSerializer(ProfessorSerializer):
 
     def get_cpf_mascarado(self, obj: Professor) -> str:
         return mascarar_cpf(obj.cpf)
+
+
+class VisaoGeralTotaisSerializer(serializers.Serializer):
+    alunos_ativos = serializers.IntegerField()
+    turmas_ativas = serializers.IntegerField(help_text="Em andamento ou agendadas.")
+    professores_ativos = serializers.IntegerField()
+    eventos_servicos_ativos = serializers.IntegerField(help_text="Agendados ou abertos.")
+    frequencia_mes = serializers.IntegerField(
+        allow_null=True,
+        help_text="% de presentes no mês (justificadas fora da conta); nulo sem chamadas.",
+    )
+    itens_emprestados = serializers.IntegerField(help_text="Quantidade ainda não devolvida.")
+
+
+class VisaoGeralAlertasSerializer(serializers.Serializer):
+    faltantes = serializers.IntegerField(help_text="Alunos com 3 faltas seguidas em alguma turma.")
+    emprestimos_atrasados = serializers.IntegerField()
+    turmas_sem_professor = serializers.IntegerField()
+    alunos_sem_turma = serializers.IntegerField()
+
+
+class VisaoGeralSerializer(serializers.Serializer):
+    """Só números: nenhum nome de aluno, turma ou pessoa."""
+
+    totais = VisaoGeralTotaisSerializer()
+    alertas = VisaoGeralAlertasSerializer()
