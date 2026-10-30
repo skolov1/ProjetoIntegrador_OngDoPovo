@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
-import type { VisaoGeralAlertas } from '@/api/generated/model'
+import type { VisaoGeralAlertas, VisaoGeralFrequenciaTurma } from '@/api/generated/model'
 
 import {
   LIMITE_FREQUENCIA_BAIXA,
+  filtrarFrequencia,
   formatarFrequencia,
   frequenciaBaixa,
   montarAlertas,
+  opcoesDeTurma,
   rotuloRegistros,
 } from './visaoGeral'
 
@@ -98,5 +100,45 @@ describe('rotuloRegistros', () => {
   it('concorda com a quantidade', () => {
     expect(rotuloRegistros(1)).toBe('1 registro')
     expect(rotuloRegistros(12)).toBe('12 registros')
+  })
+})
+
+const TURMAS: VisaoGeralFrequenciaTurma[] = [
+  { turma_id: 3, turma: 'Muay Thai', percentual: 50, registros: 10 },
+  { turma_id: 1, turma: 'Futsal', percentual: 80, registros: 8 },
+  { turma_id: 2, turma: 'Ballet', percentual: 95, registros: 4 },
+]
+
+describe('filtrarFrequencia', () => {
+  it('sem turma escolhida mostra todas, na ordem que a API mandou', () => {
+    expect(filtrarFrequencia(TURMAS, null)).toEqual(TURMAS)
+  })
+
+  it('com uma turma escolhida mostra só ela', () => {
+    expect(filtrarFrequencia(TURMAS, 1)).toEqual([TURMAS[1]])
+  })
+
+  it('se a turma escolhida não está mais na lista, volta a mostrar todas', () => {
+    expect(filtrarFrequencia(TURMAS, 99)).toEqual(TURMAS)
+  })
+})
+
+describe('opcoesDeTurma', () => {
+  it('lista as turmas em ordem alfabética, com id e nome', () => {
+    expect(opcoesDeTurma(TURMAS)).toEqual([
+      { id: 2, nome: 'Ballet' },
+      { id: 1, nome: 'Futsal' },
+      { id: 3, nome: 'Muay Thai' },
+    ])
+  })
+
+  it('ignora acento e maiúscula na ordem', () => {
+    const nomes = opcoesDeTurma([
+      { turma_id: 1, turma: 'Zumba', percentual: 1, registros: 1 },
+      { turma_id: 2, turma: 'água', percentual: 1, registros: 1 },
+      { turma_id: 3, turma: 'Balé', percentual: 1, registros: 1 },
+    ]).map((o) => o.nome)
+
+    expect(nomes).toEqual(['água', 'Balé', 'Zumba'])
   })
 })

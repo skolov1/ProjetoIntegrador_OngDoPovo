@@ -2,7 +2,7 @@
  * Funções puras da "Visão geral" do painel: texto e destino de cada alerta.
  */
 
-import type { VisaoGeralAlertas } from '@/api/generated/model'
+import type { VisaoGeralAlertas, VisaoGeralFrequenciaTurma } from '@/api/generated/model'
 
 /** Abas do painel para onde um alerta leva. */
 export type TelaDestino = 'presenca' | 'alunos' | 'doacoes' | 'turmas'
@@ -69,4 +69,21 @@ export function frequenciaBaixa(percentual: number): boolean {
 /** "1 registro", "12 registros": quantas marcações entraram no percentual. */
 export function rotuloRegistros(quantidade: number): string {
   return `${quantidade} ${quantidade === 1 ? 'registro' : 'registros'}`
+}
+
+/** Só a turma escolhida; sem escolha (ou se ela sumiu da lista) mostra todas. */
+export function filtrarFrequencia(
+  lista: VisaoGeralFrequenciaTurma[],
+  turmaId: number | null,
+): VisaoGeralFrequenciaTurma[] {
+  if (turmaId === null) return lista
+  const escolhida = lista.filter((t) => t.turma_id === turmaId)
+  return escolhida.length > 0 ? escolhida : lista
+}
+
+/** Opções do seletor de turma, em ordem alfabética (sem diferenciar acento nem maiúscula). */
+export function opcoesDeTurma(lista: VisaoGeralFrequenciaTurma[]): { id: number; nome: string }[] {
+  return lista
+    .map((t) => ({ id: t.turma_id, nome: t.turma }))
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }))
 }
