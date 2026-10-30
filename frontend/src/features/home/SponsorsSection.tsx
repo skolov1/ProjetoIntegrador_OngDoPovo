@@ -1,9 +1,10 @@
 /**
  * Patrocinadores — faixa contínua de logos entre "Doe" e "Contato".
  *
- * Cada logo fica num cartão de tamanho fixo, branco por padrão: as marcas têm cores escuras
- * que sumiriam direto no verde-escuro da seção. Logos feitas para fundo escuro (texto
- * branco) usam um cartão verde-escuro (`fundo: 'escuro'`). A lista vem de `PATROCINADORES`.
+ * Cada logo fica num cartão de tamanho fixo, todos num cinza médio: as marcas misturam
+ * texto branco (Batidão), bege (Ana Paula) e azul-marinho/preto (Veraneio, Tico Tico), e
+ * esse tom dá contraste razoável com os dois extremos. Direto no verde-escuro da seção
+ * várias sumiriam. A lista vem de `PATROCINADORES` (data.ts).
  * O movimento é CSS puro (ver `.faixa-patrocinadores` em index.css): pausa com o mouse e,
  * com "reduzir movimento" ligado, vira uma grade parada.
  */
@@ -37,13 +38,7 @@ export function SponsorsSection() {
                 data-copia={copia || undefined}
                 className="shrink-0 pr-5 sm:pr-6"
               >
-                <div
-                  className={`flex h-20 w-44 items-center justify-center rounded-2xl p-3 shadow-sm sm:h-24 sm:w-56 sm:p-4 ${
-                    p.fundo === 'escuro'
-                      ? 'bg-verde-900 ring-1 ring-white/25'
-                      : 'bg-white'
-                  }`}
-                >
+                <div className="flex h-20 w-44 items-center justify-center rounded-2xl bg-[#7f8895] p-3 shadow-sm sm:h-24 sm:w-56 sm:p-4">
                   <img
                     src={p.logo}
                     alt={copia ? '' : p.nome}
