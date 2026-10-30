@@ -25,7 +25,6 @@ import fotoHistoria1 from '@/assets/fotos/img20.webp'
 import fotoHistoria2 from '@/assets/fotos/img45.webp'
 import fotoHistoria3 from '@/assets/fotos/img47.webp'
 import fotoHistoria4 from '@/assets/fotos/img67.webp'
-import fotoHistoria5 from '@/assets/fotos/img69.webp'
 import fotoHistoria6 from '@/assets/fotos/img87.webp'
 
 const FOTOS_HISTORIA = [
@@ -52,12 +51,6 @@ const FOTOS_HISTORIA = [
     alt: 'Consolidação da ONG em 2020',
     width: 1200,
     height: 598,
-  },
-  {
-    src: fotoHistoria5,
-    alt: 'Transformação social através do esporte',
-    width: 818,
-    height: 460,
   },
   {
     src: fotoHistoria6,
