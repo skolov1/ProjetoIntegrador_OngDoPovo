@@ -98,6 +98,7 @@ def _frequencia_por_turma(hoje: date) -> list[dict]:
     )
     por_turma = [
         {
+            "turma_id": linha["turma_id"],
             "turma": linha["turma__nome"],
             "percentual": round(100 * linha["presentes"] / linha["registros"]),
             "registros": linha["registros"],

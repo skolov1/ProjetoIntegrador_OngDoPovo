@@ -880,6 +880,7 @@ class VisaoGeralAlertasSerializer(serializers.Serializer):
 
 
 class VisaoGeralFrequenciaTurmaSerializer(serializers.Serializer):
+    turma_id = serializers.IntegerField()
     turma = serializers.CharField(help_text="Nome da turma.")
     percentual = serializers.IntegerField(help_text="% de presentes no mês.")
     registros = serializers.IntegerField(help_text="Presentes mais ausentes que entraram na conta.")

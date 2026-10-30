@@ -188,8 +188,8 @@ class TestFrequenciaPorTurma:
         marcar(aluno("Bia", ruim), ruim, ["PRESENTE", "AUSENTE"])
 
         assert self.por_turma(staff) == [
-            {"turma": "Muay Thai", "percentual": 50, "registros": 2},
-            {"turma": "Futsal", "percentual": 75, "registros": 4},
+            {"turma_id": ruim.id, "turma": "Muay Thai", "percentual": 50, "registros": 2},
+            {"turma_id": boa.id, "turma": "Futsal", "percentual": 75, "registros": 4},
         ]
 
     def test_empate_desempata_pelo_nome(self, staff):
@@ -204,7 +204,21 @@ class TestFrequenciaPorTurma:
         marcar(aluno("Ana", t), t, ["PRESENTE", "JUSTIFICADO", "AUSENTE"])
         marcar(aluno("Bia", so_justificadas), so_justificadas, ["JUSTIFICADO"])
 
-        assert self.por_turma(staff) == [{"turma": "Futsal", "percentual": 50, "registros": 2}]
+        assert self.por_turma(staff) == [
+            {"turma_id": t.id, "turma": "Futsal", "percentual": 50, "registros": 2}
+        ]
+
+    def test_turmas_com_o_mesmo_nome_ficam_separadas_pelo_id(self, staff):
+        primeira, segunda = turma("Futsal"), turma("Futsal")
+        marcar(aluno("Ana", primeira), primeira, ["PRESENTE"])
+        marcar(aluno("Bia", segunda), segunda, ["AUSENTE"])
+
+        linhas = self.por_turma(staff)
+
+        assert {(linha["turma_id"], linha["percentual"]) for linha in linhas} == {
+            (primeira.id, 100),
+            (segunda.id, 0),
+        }
 
     def test_turma_inativa_e_chamada_de_outro_mes_nao_entram(self, staff):
         parada = turma("Parada", ativo=False)
