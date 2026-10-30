@@ -11,6 +11,8 @@
  *
  * `total_alunos` (só ativos) e `total_presencas` vêm contados na consulta. O
  * segundo avisa, antes de excluir a turma, quantas presenças seriam apagadas junto.
+ * `sem_professor` é a mesma regra da grade do site: turma ativa, já iniciada e sem
+ * nenhum professor ativo (ver `grade.py`).
  */
 export interface TurmaList {
   readonly id: number;
@@ -22,4 +24,5 @@ export interface TurmaList {
   visivel_na_grade?: boolean;
   readonly total_alunos: number;
   readonly total_presencas: number;
+  readonly sem_professor: boolean;
 }

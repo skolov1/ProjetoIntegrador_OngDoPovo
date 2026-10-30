@@ -5,10 +5,11 @@ nome, contadores no card da turma e tamanho de página.
 Rodar: pytest
 """
 
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 from django.contrib.auth.models import User
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from .fabricas import criar_turma
@@ -97,6 +98,58 @@ class TestTurmas:
         nova_turma("Muay Thai")
 
         assert staff.get(self.URL, {"search": "muay"}).data["count"] == 1
+
+
+class TestTurmaSemProfessor:
+    """O card da turma avisa quando ela já começou e não tem professor ativo.
+
+    É a mesma regra da grade do site e do alerta da Visão geral (ver `grade.py`).
+    """
+
+    URL = "/api/v1/turmas/"
+
+    @staticmethod
+    def hoje() -> date:
+        return timezone.localdate()
+
+    def sem_professor(self, staff, turma) -> bool:
+        linhas = staff.get(self.URL, {"page_size": 100}).data["results"]
+        return next(linha for linha in linhas if linha["id"] == turma.id)["sem_professor"]
+
+    def test_turma_em_andamento_sem_professor_e_sinalizada(self, staff):
+        turma = nova_turma("Futsal", data_inicio=self.hoje() - timedelta(days=5))
+
+        assert self.sem_professor(staff, turma) is True
+
+    def test_com_professor_ativo_nao_e_sinalizada(self, staff):
+        turma = nova_turma("Futsal", data_inicio=self.hoje() - timedelta(days=5))
+        Professor.objects.create(nome="Mestre", cpf=CPF_PROFESSOR).turmas.add(turma)
+
+        assert self.sem_professor(staff, turma) is False
+
+    def test_professor_inativo_nao_conta(self, staff):
+        turma = nova_turma("Futsal", data_inicio=self.hoje() - timedelta(days=5))
+        inativo = Professor.objects.create(nome="Mestre", cpf=CPF_PROFESSOR, ativo=False)
+        inativo.turmas.add(turma)
+
+        assert self.sem_professor(staff, turma) is True
+
+    def test_turma_inativa_ou_que_ainda_nao_comecou_nao_e_sinalizada(self, staff):
+        inativa = nova_turma("Parada", ativo=False, data_inicio=self.hoje() - timedelta(days=5))
+        futura = nova_turma("Futura", data_inicio=self.hoje() + timedelta(days=5))
+
+        assert self.sem_professor(staff, inativa) is False
+        assert self.sem_professor(staff, futura) is False
+
+    def test_lista_de_turmas_nao_faz_consulta_por_turma(
+        self, staff, django_assert_max_num_queries
+    ):
+        for i in range(6):
+            nova_turma(f"Turma {i}", data_inicio=self.hoje() - timedelta(days=5))
+
+        # Número de consultas fixo, não cresce com a quantidade de turmas (sem N+1).
+        with django_assert_max_num_queries(8):
+            staff.get(self.URL, {"page_size": 100})
 
 
 class TestTamanhoDePagina:

@@ -13,7 +13,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from .documentos import cpf_valido, mascarar_cpf, so_digitos, telefone_valido
-from .grade import StatusGrade
+from .grade import StatusGrade, status_da_turma
 from .horarios import ORDEM_DIAS
 from .models import (
     VERSAO_TERMO,
@@ -139,9 +139,12 @@ class TurmaListSerializer(TurmaSerializer):
 
     `total_alunos` (só ativos) e `total_presencas` vêm contados na consulta. O
     segundo avisa, antes de excluir a turma, quantas presenças seriam apagadas junto.
+    `sem_professor` é a mesma regra da grade do site: turma ativa, já iniciada e sem
+    nenhum professor ativo (ver `grade.py`).
     """
 
     total_presencas = serializers.IntegerField(read_only=True)
+    sem_professor = serializers.SerializerMethodField()
 
     class Meta(TurmaSerializer.Meta):
         fields = [
@@ -152,7 +155,18 @@ class TurmaListSerializer(TurmaSerializer):
             "visivel_na_grade",
             "total_alunos",
             "total_presencas",
+            "sem_professor",
         ]
+
+    def get_sem_professor(self, obj: Turma) -> bool:
+        situacao = status_da_turma(
+            ativo=obj.ativo,
+            data_inicio=obj.data_inicio,
+            data_fim=obj.data_fim,
+            professores_ativos=obj.total_professores_ativos,
+            hoje=timezone.localdate(),
+        )
+        return situacao == StatusGrade.FALTA_PROFESSOR
 
     def to_representation(self, instance):
         # A lista não traz os horários um a um, só o texto pronto.

@@ -214,6 +214,9 @@ class TurmaViewSet(
     queryset = Turma.objects.prefetch_related("horarios").annotate(
         total_alunos=Count("alunos", filter=Q(alunos__ativo=True), distinct=True),
         total_presencas=Count("presencas", distinct=True),
+        total_professores_ativos=Count(
+            "professores", filter=Q(professores__ativo=True), distinct=True
+        ),
     )
     permission_classes = [IsAdminUser]
     filterset_class = TurmaFilter
