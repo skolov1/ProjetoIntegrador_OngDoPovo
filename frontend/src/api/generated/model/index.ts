@@ -110,3 +110,6 @@ export * from './turmaList';
 export * from './turmaRequest';
 export * from './turmasListDiaSemana';
 export * from './turmasListParams';
+export * from './visaoGeral';
+export * from './visaoGeralAlertas';
+export * from './visaoGeralTotais';

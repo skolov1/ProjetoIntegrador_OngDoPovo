@@ -8,3 +8,4 @@ export * from './presencas/presencas';
 export * from './professores/professores';
 export * from './sistema/sistema';
 export * from './turmas/turmas';
+export * from './visao-geral/visao-geral';

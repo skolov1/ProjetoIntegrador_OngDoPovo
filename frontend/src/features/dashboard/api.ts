@@ -68,7 +68,9 @@ import type {
   GradeItem,
   PaginatedAtividadeAvulsaList,
   PatchedAtividadeAvulsaRequest,
+  VisaoGeral,
 } from '@/api/generated/model'
+import { visaoGeralRetrieve } from '@/api/generated/visao-geral/visao-geral'
 
 // Página que não existe mais (ex.: excluiu o último item da última página) volta 404.
 // Não adianta repetir: a tela recua uma página.
@@ -77,6 +79,18 @@ const semRepetirNo404 = (tentativas: number, erro: unknown) =>
 
 // Helper para extrair data da resposta do axios
 const extractData = <T,>(response: { data: T }) => response.data
+
+// ============================================================================
+// VISÃO GERAL
+// ============================================================================
+
+export function useVisaoGeral() {
+  return useQuery<VisaoGeral>({
+    queryKey: ['visao-geral'],
+    queryFn: () => visaoGeralRetrieve().then(extractData),
+    staleTime: 30_000,
+  })
+}
 
 // ============================================================================
 // TURMAS

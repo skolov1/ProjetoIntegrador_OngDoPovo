@@ -116,7 +116,8 @@ export const presencasChamadaList = (
       );
     }
   /**
- * Recebe: { turma: 1, data: "2026-10-20", presencas: [{aluno_id: 1, situacao: "PRESENTE"}, ...] }
+ * Recebe: { turma: 1, data: "2026-10-20",
+ *           presencas: [{aluno_id: 1, situacao: "PRESENTE"}, ...] }
  * Cria/atualiza presenças em bulk.
  * @summary Marca presença em lote para uma turma/data
  */

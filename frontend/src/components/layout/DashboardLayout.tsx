@@ -8,6 +8,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
+  LayoutDashboard,
   Menu,
   X,
   Shield,
@@ -44,6 +45,7 @@ import {
   useDeleteDoacaoItem,
 } from "@/features/dashboard/api";
 import { PresencasTela } from "@/features/dashboard/PresencasTela";
+import { VisaoGeralTela } from "@/features/dashboard/VisaoGeralTela";
 import { AuditoriaTela } from "@/features/dashboard/AuditoriaTela";
 import { GradeTela } from "@/features/dashboard/GradeTela";
 import { UsuarioLogado } from "@/features/dashboard/UsuarioLogado";
@@ -83,6 +85,7 @@ import {
 // import types removed as they're not directly used
 
 type Screen =
+  | "visao"
   | "presenca"
   | "alunos"
   | "doacoes"
@@ -93,6 +96,7 @@ type Screen =
 type TipoCadastro = "turma" | "aluno" | "professor";
 
 const ITENS_MENU: { id: Screen; label: string; Icon: LucideIcon }[] = [
+  { id: "visao", label: "Visão geral", Icon: LayoutDashboard },
   { id: "presenca", label: "Presenças", Icon: Users },
   { id: "alunos", label: "Alunos", Icon: Shield },
   { id: "turmas", label: "Turmas", Icon: Clipboard },
@@ -219,7 +223,7 @@ function erroDoAluno(f: FormAluno, menor: boolean): string {
 }
 
 export function DashboardLayout() {
-  const [screen, setScreen] = useState<Screen>("presenca");
+  const [screen, setScreen] = useState<Screen>("visao");
   // No celular (< md) o menu lateral vira uma gaveta que abre pelo botão da barra de cima.
   const [menuAberto, setMenuAberto] = useState(false);
   const botaoMenuRef = useRef<HTMLButtonElement>(null);
@@ -1208,6 +1212,9 @@ export function DashboardLayout() {
             <p className="mt-2 text-white/70">Gerencie as operações da ONG do Povo.</p>
           </div>
         </div>
+
+        {/* VISÃO GERAL (tela inicial) */}
+        {screen === "visao" && <VisaoGeralTela onIr={irPara} />}
 
         {/* PRESENÇAS */}
         {screen === "presenca" && <PresencasTela />}
