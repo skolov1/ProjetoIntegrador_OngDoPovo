@@ -1,10 +1,11 @@
 /**
  * Card de uma turma: nome, situação, horário, quantos alunos e as ações.
  * Excluir fica em vermelho e separado da ação segura (Inativar), porque excluir
- * apaga também as presenças da turma.
+ * apaga também as presenças da turma. Turma em andamento sem professor ativo ganha
+ * borda âmbar e a linha "Sem professor", para a secretaria achar logo o que falta.
  */
 
-import { Clock, Edit, Globe, Power, Trash2, Users } from "lucide-react";
+import { CircleAlert, Clock, Edit, Globe, Power, Trash2, Users } from "lucide-react";
 
 import type { TurmaList } from "@/api/generated/model";
 import { BotaoIcone, SeloAtivo } from "@/features/dashboard/pecas";
@@ -22,18 +23,26 @@ export function TurmaCard({
   onExcluir: () => void;
 }) {
   const ativa = turma.ativo !== false;
+  const fundo = !ativa
+    ? "border-slate-200/70 bg-mist-50 opacity-80"
+    : turma.sem_professor
+      ? "border-amber-300 bg-amber-50/60"
+      : "border-slate-200/70 bg-white";
   return (
-    <article
-      className={`flex flex-col rounded-2xl border border-slate-200/70 p-4 shadow-sm ${
-        ativa ? "bg-white" : "bg-mist-50 opacity-80"
-      }`}
-    >
+    <article className={`flex flex-col rounded-2xl border p-4 shadow-sm ${fundo}`}>
       <div className="flex items-start justify-between gap-2">
         <h4 className="text-base font-extrabold leading-tight text-verde-escuro">{turma.nome}</h4>
         <SeloAtivo ativo={ativa} rotuloAtivo="Ativa" rotuloInativo="Inativa" />
       </div>
 
-      <p className="mt-3 flex items-center gap-2 text-sm text-grafite/80">
+      {turma.sem_professor && (
+        <p className="mt-3 flex items-center gap-2 text-sm font-bold text-amber-800">
+          <CircleAlert className="size-4 shrink-0" aria-hidden="true" />
+          Sem professor
+        </p>
+      )}
+
+      <p className={`${turma.sem_professor ? "mt-1.5" : "mt-3"} flex items-center gap-2 text-sm text-grafite/80`}>
         <Clock className="size-4 shrink-0 text-verde" aria-hidden="true" />
         {turma.horario_formatado}
       </p>
