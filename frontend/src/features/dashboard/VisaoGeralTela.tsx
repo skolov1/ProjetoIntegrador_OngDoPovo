@@ -1,9 +1,10 @@
 /**
  * Visão geral: tela inicial do painel.
  *
- * Seis totais em cartões e, abaixo, só o que precisa de atenção (alertas com algo a
- * resolver), cada um com um botão que leva à aba onde a pessoa resolve. A API devolve só
- * números, sem nomes; quem quiser ver quem são vai para a aba indicada.
+ * Seis totais em cartões, a frequência de cada turma no mês (da menor para a maior, para a
+ * turma com mais faltas ficar no topo) e, abaixo, só o que precisa de atenção (alertas com
+ * algo a resolver), cada um com um botão que leva à aba onde a pessoa resolve. A API devolve
+ * só números e nomes de turma; quem quiser ver os alunos vai para a aba indicada.
  */
 
 import {
@@ -22,7 +23,9 @@ import {
 import { useVisaoGeral } from "@/features/dashboard/api";
 import {
   formatarFrequencia,
+  frequenciaBaixa,
   montarAlertas,
+  rotuloRegistros,
   type TelaDestino,
 } from "@/lib/visaoGeral";
 
@@ -87,6 +90,58 @@ export function VisaoGeralTela({ onIr }: { onIr: (tela: TelaDestino) => void }) 
             rotulo="Itens emprestados"
           />
         </div>
+      </section>
+
+      <section aria-labelledby="titulo-frequencia" className="space-y-3">
+        <h3 id="titulo-frequencia" className="text-xl font-extrabold text-verde-escuro">
+          Frequência por turma
+        </h3>
+        {data.frequencia_por_turma.length === 0 ? (
+          <p className="rounded-2xl border border-slate-200/70 bg-white p-4 text-grafite/70 shadow-sm">
+            Ainda não há chamadas neste mês.
+          </p>
+        ) : (
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {data.frequencia_por_turma.map((t) => {
+              const baixa = frequenciaBaixa(t.percentual);
+              return (
+                <li
+                  key={t.turma}
+                  className={`rounded-2xl border p-3 shadow-sm sm:p-4 ${
+                    baixa ? "border-amber-300 bg-amber-50/60" : "border-slate-200/70 bg-white"
+                  }`}
+                >
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="min-w-0 truncate font-medium text-grafite">{t.turma}</span>
+                    <span
+                      className={`shrink-0 text-lg font-extrabold ${
+                        baixa ? "text-amber-800" : "text-verde-escuro"
+                      }`}
+                    >
+                      {t.percentual}%
+                    </span>
+                  </div>
+                  <div
+                    role="progressbar"
+                    aria-label={`Frequência de ${t.turma}`}
+                    aria-valuenow={t.percentual}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    className="mt-2 h-2 overflow-hidden rounded-full bg-mist-100"
+                  >
+                    <div
+                      className={`h-full rounded-full ${baixa ? "bg-amber-500" : "bg-verde"}`}
+                      style={{ width: `${t.percentual}%` }}
+                    />
+                  </div>
+                  <p className="mt-1.5 text-xs text-grafite/60">
+                    {rotuloRegistros(t.registros)} no mês
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
 
       <section aria-labelledby="titulo-atencao" className="space-y-3">

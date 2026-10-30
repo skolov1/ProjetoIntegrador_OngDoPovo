@@ -112,4 +112,5 @@ export * from './turmasListDiaSemana';
 export * from './turmasListParams';
 export * from './visaoGeral';
 export * from './visaoGeralAlertas';
+export * from './visaoGeralFrequenciaTurma';
 export * from './visaoGeralTotais';

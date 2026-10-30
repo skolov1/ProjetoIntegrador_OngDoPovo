@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest'
 
 import type { VisaoGeralAlertas } from '@/api/generated/model'
 
-import { formatarFrequencia, montarAlertas } from './visaoGeral'
+import {
+  LIMITE_FREQUENCIA_BAIXA,
+  formatarFrequencia,
+  frequenciaBaixa,
+  montarAlertas,
+  rotuloRegistros,
+} from './visaoGeral'
 
 const ZERADOS: VisaoGeralAlertas = {
   faltantes: 0,
@@ -75,5 +81,22 @@ describe('formatarFrequencia', () => {
 
   it('sem chamadas no mês mostra um traço', () => {
     expect(formatarFrequencia(null)).toBe('—')
+  })
+})
+
+describe('frequenciaBaixa', () => {
+  it('o limite é 70%: abaixo dele é baixa, a partir dele não', () => {
+    expect(LIMITE_FREQUENCIA_BAIXA).toBe(70)
+    expect(frequenciaBaixa(69)).toBe(true)
+    expect(frequenciaBaixa(70)).toBe(false)
+    expect(frequenciaBaixa(100)).toBe(false)
+    expect(frequenciaBaixa(0)).toBe(true)
+  })
+})
+
+describe('rotuloRegistros', () => {
+  it('concorda com a quantidade', () => {
+    expect(rotuloRegistros(1)).toBe('1 registro')
+    expect(rotuloRegistros(12)).toBe('12 registros')
   })
 })

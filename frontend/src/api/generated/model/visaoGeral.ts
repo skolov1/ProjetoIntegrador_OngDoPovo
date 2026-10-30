@@ -6,12 +6,15 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { VisaoGeralAlertas } from './visaoGeralAlertas';
+import type { VisaoGeralFrequenciaTurma } from './visaoGeralFrequenciaTurma';
 import type { VisaoGeralTotais } from './visaoGeralTotais';
 
 /**
- * Só números: nenhum nome de aluno, turma ou pessoa.
+ * Totais, alertas e frequência por turma: nunca traz nome de aluno ou de professor.
  */
 export interface VisaoGeral {
   totais: VisaoGeralTotais;
   alertas: VisaoGeralAlertas;
+  /** Turmas ativas com chamada no mês, da menor frequência para a maior. */
+  frequencia_por_turma: VisaoGeralFrequenciaTurma[];
 }

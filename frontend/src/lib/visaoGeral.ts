@@ -58,3 +58,15 @@ export function montarAlertas(alertas: VisaoGeralAlertas): Alerta[] {
 export function formatarFrequencia(valor: number | null): string {
   return valor === null ? '—' : `${valor}%`
 }
+
+/** Abaixo deste percentual a frequência da turma aparece em alerta (âmbar). */
+export const LIMITE_FREQUENCIA_BAIXA = 70
+
+export function frequenciaBaixa(percentual: number): boolean {
+  return percentual < LIMITE_FREQUENCIA_BAIXA
+}
+
+/** "1 registro", "12 registros": quantas marcações entraram no percentual. */
+export function rotuloRegistros(quantidade: number): string {
+  return `${quantidade} ${quantidade === 1 ? 'registro' : 'registros'}`
+}
