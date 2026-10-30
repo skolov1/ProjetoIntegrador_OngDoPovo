@@ -33,6 +33,62 @@ const CLASSE_CAMPO =
 
 const hoje = () => new Date().toISOString().split("T")[0];
 
+type ItemChamada = NonNullable<ReturnType<typeof usePresencaChamada>["data"]>[number];
+
+/** Aviso de faltas seguidas ao lado do nome (tabela e cartão mostram o mesmo texto). */
+function AvisoFaltas({ item }: { item: ItemChamada }) {
+  if (item.faltante) {
+    return (
+      <span
+        title="3 faltas seguidas (justificadas não contam)"
+        className="ml-2 px-3 py-1 rounded-full text-xs font-bold bg-vermelho/10 text-vermelho"
+      >
+        Faltante · {item.faltas_seguidas} seguidas
+      </span>
+    );
+  }
+  if (item.faltas_seguidas > 0) {
+    return (
+      <span className="ml-2 text-xs text-grafite/50">
+        {item.faltas_seguidas} falta{item.faltas_seguidas > 1 ? "s" : ""} seguida
+        {item.faltas_seguidas > 1 ? "s" : ""}
+      </span>
+    );
+  }
+  return null;
+}
+
+/** Os três botões de situação de um aluno; no celular ficam maiores para o toque. */
+function BotoesSituacao({
+  item,
+  atual,
+  onMarcar,
+}: {
+  item: ItemChamada;
+  atual: SituacaoEnum;
+  onMarcar: (situacao: SituacaoEnum) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2" role="group" aria-label={`Situação de ${item.aluno_nome}`}>
+      {OPCOES.map((o) => (
+        <button
+          key={o.valor}
+          type="button"
+          aria-pressed={atual === o.valor}
+          onClick={() => onMarcar(o.valor)}
+          className={`min-h-11 px-4 py-2 sm:min-h-0 sm:px-3 sm:py-1.5 rounded-full border text-sm font-semibold transition-colors ${
+            atual === o.valor
+              ? o.ativo
+              : "border-slate-200 bg-white text-grafite/70 hover:border-verde"
+          }`}
+        >
+          {o.rotulo}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function PresencasTela() {
   const [turmaId, setTurmaId] = useState("");
   const [data, setData] = useState(hoje());
@@ -191,7 +247,38 @@ export function PresencasTela() {
             </Button>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-slate-200/70 bg-white shadow-sm">
+          {/* Celular: um cartão por aluno, com botões grandes para o toque */}
+          <ul className="space-y-3 sm:hidden">
+            {visiveis.map((i) => (
+              <li
+                key={i.aluno_id}
+                className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm"
+              >
+                <p className="font-medium text-grafite">
+                  {i.aluno_nome}
+                  <span className="ml-2 text-sm text-grafite/60">{i.idade} anos</span>
+                </p>
+                <p className="mt-1 empty:hidden">
+                  <AvisoFaltas item={i} />
+                </p>
+                <div className="mt-3">
+                  <BotoesSituacao
+                    item={i}
+                    atual={situacaoDe(i.aluno_id, i.situacao)}
+                    onMarcar={(situacao) => marcar(i.aluno_id, situacao)}
+                  />
+                </div>
+              </li>
+            ))}
+            {visiveis.length === 0 && (
+              <li className="rounded-2xl border border-slate-200/70 bg-white p-6 text-center text-grafite/50">
+                Nenhum aluno encontrado com esse filtro.
+              </li>
+            )}
+          </ul>
+
+          {/* Tela média ou maior: a tabela de sempre */}
+          <div className="hidden overflow-x-auto rounded-2xl border border-slate-200/70 bg-white shadow-sm sm:block">
             <table className="w-full">
               <thead className="bg-mist-100/70">
                 <tr className="text-left text-xs font-bold uppercase tracking-wider text-verde-escuro/70">
@@ -201,52 +288,22 @@ export function PresencasTela() {
                 </tr>
               </thead>
               <tbody>
-                {visiveis.map((i) => {
-                  const atual = situacaoDe(i.aluno_id, i.situacao);
-                  return (
-                    <tr key={i.aluno_id} className="border-t border-mist-200 transition-colors hover:bg-mist-50">
-                      <td className="p-3 font-medium text-grafite">
-                        {i.aluno_nome}
-                        {i.faltante ? (
-                          <span
-                            title="3 faltas seguidas (justificadas não contam)"
-                            className="ml-2 px-3 py-1 rounded-full text-xs font-bold bg-vermelho/10 text-vermelho"
-                          >
-                            Faltante · {i.faltas_seguidas} seguidas
-                          </span>
-                        ) : (
-                          i.faltas_seguidas > 0 && (
-                            <span className="ml-2 text-xs text-grafite/50">
-                              {i.faltas_seguidas} falta
-                              {i.faltas_seguidas > 1 ? "s" : ""} seguida
-                              {i.faltas_seguidas > 1 ? "s" : ""}
-                            </span>
-                          )
-                        )}
-                      </td>
-                      <td className="p-3 text-grafite/60 text-sm">{i.idade}</td>
-                      <td className="p-3">
-                        <div className="flex flex-wrap gap-2" role="group" aria-label={`Situação de ${i.aluno_nome}`}>
-                          {OPCOES.map((o) => (
-                            <button
-                              key={o.valor}
-                              type="button"
-                              aria-pressed={atual === o.valor}
-                              onClick={() => marcar(i.aluno_id, o.valor)}
-                              className={`px-3 py-1.5 rounded-full border text-sm font-semibold transition-colors ${
-                                atual === o.valor
-                                  ? o.ativo
-                                  : "border-slate-200 bg-white text-grafite/70 hover:border-verde"
-                              }`}
-                            >
-                              {o.rotulo}
-                            </button>
-                          ))}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {visiveis.map((i) => (
+                  <tr key={i.aluno_id} className="border-t border-mist-200 transition-colors hover:bg-mist-50">
+                    <td className="p-3 font-medium text-grafite">
+                      {i.aluno_nome}
+                      <AvisoFaltas item={i} />
+                    </td>
+                    <td className="p-3 text-grafite/60 text-sm">{i.idade}</td>
+                    <td className="p-3">
+                      <BotoesSituacao
+                        item={i}
+                        atual={situacaoDe(i.aluno_id, i.situacao)}
+                        onMarcar={(situacao) => marcar(i.aluno_id, situacao)}
+                      />
+                    </td>
+                  </tr>
+                ))}
                 {visiveis.length === 0 && (
                   <tr>
                     <td colSpan={3} className="p-6 text-center text-grafite/50">

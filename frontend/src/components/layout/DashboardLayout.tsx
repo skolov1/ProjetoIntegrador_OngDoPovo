@@ -6,8 +6,10 @@
  * Todas as operações CRUD funcionam via hooks em src/features/dashboard/api.ts
  */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  Menu,
+  X,
   Shield,
   Users,
   Clipboard,
@@ -218,6 +220,39 @@ function erroDoAluno(f: FormAluno, menor: boolean): string {
 
 export function DashboardLayout() {
   const [screen, setScreen] = useState<Screen>("presenca");
+  // No celular (< md) o menu lateral vira uma gaveta que abre pelo botão da barra de cima.
+  const [menuAberto, setMenuAberto] = useState(false);
+  const botaoMenuRef = useRef<HTMLButtonElement>(null);
+  const primeiroItemRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!menuAberto) return;
+    const aoTeclar = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMenuAberto(false);
+        botaoMenuRef.current?.focus();
+      }
+    };
+    // Ao ganhar a tela larga, a barra fixa volta e a gaveta não precisa mais ficar aberta.
+    const larga = window.matchMedia("(min-width: 768px)");
+    const aoMudarTela = () => larga.matches && setMenuAberto(false);
+    document.addEventListener("keydown", aoTeclar);
+    larga.addEventListener("change", aoMudarTela);
+    // Trava a rolagem da página por trás da gaveta.
+    const overflowAnterior = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    primeiroItemRef.current?.focus();
+    return () => {
+      document.removeEventListener("keydown", aoTeclar);
+      larga.removeEventListener("change", aoMudarTela);
+      document.body.style.overflow = overflowAnterior;
+    };
+  }, [menuAberto]);
+
+  const irPara = (tela: Screen) => {
+    setScreen(tela);
+    setMenuAberto(false);
+  };
   const [paginaAlunos, setPaginaAlunos] = useState(1);
   const [paginaDoacoes, setPaginaDoacoes] = useState(1);
   const [showForm, setShowForm] = useState<
@@ -1072,8 +1107,39 @@ export function DashboardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-mist-50 flex flex-row">
-      <aside className="relative sticky top-0 flex h-screen w-64 shrink-0 flex-col overflow-hidden bg-linear-to-b from-verde-900 via-verde-escuro to-verde-escuro">
+    <div className="min-h-screen bg-mist-50 md:flex md:flex-row">
+      {/* Barra do celular: só aparece abaixo de md, onde o menu lateral vira gaveta */}
+      <header className="sticky top-0 z-30 flex h-14 items-center gap-3 bg-verde-900 px-4 text-white shadow-md md:hidden">
+        <button
+          ref={botaoMenuRef}
+          type="button"
+          onClick={() => setMenuAberto(true)}
+          aria-label="Abrir menu"
+          aria-expanded={menuAberto}
+          aria-controls="menu-lateral"
+          className="-ml-2 flex size-11 items-center justify-center rounded-xl hover:bg-white/10"
+        >
+          <Menu className="size-6" aria-hidden="true" />
+        </button>
+        <span className="font-extrabold tracking-tight">ONG do Povo</span>
+        <span className="ml-auto truncate text-sm font-bold text-white/70">
+          {ITENS_MENU.find((i) => i.id === screen)?.label}
+        </span>
+      </header>
+
+      {/* Fundo escuro atrás da gaveta; tocar nele fecha o menu */}
+      {menuAberto && (
+        <div
+          aria-hidden="true"
+          onClick={() => setMenuAberto(false)}
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+        />
+      )}
+
+      <aside
+        id="menu-lateral"
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col overflow-hidden bg-linear-to-b from-verde-900 via-verde-escuro to-verde-escuro transition-[transform,visibility] duration-300 md:sticky md:top-0 md:z-auto md:h-screen md:translate-x-0 md:visible ${menuAberto ? "translate-x-0" : "invisible -translate-x-full"}`}
+      >
         <Sunburst
           tone="white"
           size={420}
@@ -1082,7 +1148,7 @@ export function DashboardLayout() {
           spin={false}
           className="pointer-events-none absolute -left-40 bottom-16 text-white opacity-15"
         />
-        <div className="relative flex h-16 items-center gap-3 px-6 border-b border-white/10">
+        <div className="relative flex h-16 items-center gap-3 px-4 md:px-6 border-b border-white/10">
           <picture>
             <source srcSet="/logo-icone.webp" type="image/webp" />
             <img
@@ -1093,14 +1159,26 @@ export function DashboardLayout() {
               className="size-9 object-contain"
             />
           </picture>
-          <h2 className="text-lg font-extrabold tracking-tight text-white">ONG do Povo</h2>
+          <h2 className="whitespace-nowrap text-lg font-extrabold tracking-tight text-white">ONG do Povo</h2>
+          <button
+            type="button"
+            onClick={() => {
+              setMenuAberto(false);
+              botaoMenuRef.current?.focus();
+            }}
+            aria-label="Fechar menu"
+            className="-mr-3 ml-auto flex size-11 items-center justify-center rounded-xl text-white/80 hover:bg-white/10 md:hidden"
+          >
+            <X className="size-5" aria-hidden="true" />
+          </button>
         </div>
 
         <nav className="relative flex flex-col gap-1.5 px-4 py-6">
-          {ITENS_MENU.map(({ id, label, Icon }) => (
+          {ITENS_MENU.map(({ id, label, Icon }, indice) => (
             <button
               key={id}
-              onClick={() => setScreen(id)}
+              ref={indice === 0 ? primeiroItemRef : undefined}
+              onClick={() => irPara(id)}
               className={`flex items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-bold transition-all duration-300 ${screen === id ? "bg-verde text-white shadow-lg shadow-verde/25" : "text-white/75 hover:bg-white/10 hover:text-white"}`}
             >
               <Icon className="size-4" />
@@ -1112,8 +1190,8 @@ export function DashboardLayout() {
         <UsuarioLogado />
       </aside>
 
-      <main className="min-w-0 flex-1 bg-linear-to-b from-mist-50 via-white to-mist-50 p-6 lg:p-10">
-        <div className="relative mb-8 overflow-hidden rounded-3xl bg-linear-to-br from-verde-900 to-verde-escuro p-6 text-white shadow-lg sm:p-8">
+      <main className="min-w-0 flex-1 bg-linear-to-b from-mist-50 via-white to-mist-50 p-4 sm:p-6 lg:p-10">
+        <div className="relative mb-6 overflow-hidden rounded-3xl bg-linear-to-br from-verde-900 to-verde-escuro p-5 text-white shadow-lg sm:mb-8 sm:p-8">
           <Sunburst
             tone="white"
             size={360}
@@ -1126,7 +1204,7 @@ export function DashboardLayout() {
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-amarelo">
               Dashboard
             </p>
-            <h1 className="mt-2 text-3xl font-extrabold">Painel de Administração</h1>
+            <h1 className="mt-2 text-2xl font-extrabold sm:text-3xl">Painel de Administração</h1>
             <p className="mt-2 text-white/70">Gerencie as operações da ONG do Povo.</p>
           </div>
         </div>
