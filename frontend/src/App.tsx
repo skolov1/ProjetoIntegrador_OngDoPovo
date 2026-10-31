@@ -5,10 +5,13 @@
  * independente, com o conteúdo vindo de `features/home/data.ts` — na Fase 3 os
  * mesmos arrays passam a vir de `useQuery` sobre a API do Django.
  */
+import { useState } from 'react'
+
 import { Footer } from '@/components/layout/Footer'
 import { AboutSection } from '@/features/home/AboutSection'
 import { ContactSection } from '@/features/home/ContactSection'
 import { DonationSection } from '@/features/home/DonationSection'
+import { ASSUNTO_DOACOES, ASSUNTOS_CONTATO } from '@/features/home/data'
 import { HeroSection } from '@/features/home/HeroSection'
 import { ImpactSection } from '@/features/home/ImpactSection'
 import { PreRegisterSection } from '@/features/home/PreRegisterSection'
@@ -19,6 +22,9 @@ import { ValuesStrip } from '@/features/home/ValuesStrip'
 import { VolunteerSection } from '@/features/home/VolunteerSection'
 
 export function App() {
+  // O assunto do formulário de contato fica aqui para a seção Doe poder escolhê-lo.
+  const [assunto, setAssunto] = useState<string>(ASSUNTOS_CONTATO[0])
+
   return (
     <>
       <a
@@ -37,9 +43,9 @@ export function App() {
         <PreRegisterSection />
         <ValuesStrip />
         <VolunteerSection />
-        <DonationSection />
+        <DonationSection onCombinarDoacao={() => setAssunto(ASSUNTO_DOACOES)} />
         <SponsorsSection />
-        <ContactSection />
+        <ContactSection assunto={assunto} onMudarAssunto={setAssunto} />
 
         <Footer />
       </div>

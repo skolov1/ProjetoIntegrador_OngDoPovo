@@ -10,10 +10,8 @@ import { InstagramIcon } from '@/components/ui/BrandIcons'
 
 import { Eyebrow, Section, SectionLead, SectionTitle } from '@/components/ui/Section'
 import { Reveal } from '@/components/ui/Reveal'
-import { ONG } from '@/features/home/data'
+import { ASSUNTOS_CONTATO, ONG } from '@/features/home/data'
 import { linkWhatsapp, topicoEmNegrito } from '@/lib/whatsapp'
-
-const ASSUNTOS = ['Dúvida geral', 'Voluntariado', 'Doações', 'Parceria', 'Imprensa'] as const
 
 const CANAIS = [
   { Icon: MessageCircle, rotulo: 'WhatsApp', valor: ONG.telefone, href: ONG.whatsapp },
@@ -29,7 +27,13 @@ const CANAIS = [
   { Icon: Clock, rotulo: 'Horário de funcionamento', valor: ONG.horarioFuncionamento, href: undefined },
 ] as const
 
-export function ContactSection() {
+interface ContactSectionProps {
+  /** Assunto escolhido no formulário (controlado pelo `App`, para a seção Doe poder escolher). */
+  assunto: string
+  onMudarAssunto: (assunto: string) => void
+}
+
+export function ContactSection({ assunto, onMudarAssunto }: ContactSectionProps) {
   function abrirWhatsapp(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const dados = new FormData(e.currentTarget)
@@ -117,12 +121,13 @@ export function ContactSection() {
                   Assunto
                   <select
                     name="assunto"
-                    defaultValue={ASSUNTOS[0]}
+                    value={assunto}
+                    onChange={(e) => onMudarAssunto(e.target.value)}
                     className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 font-normal outline-none transition focus:border-verde focus:ring-4 focus:ring-verde/10"
                   >
-                    {ASSUNTOS.map((assunto) => (
-                      <option key={assunto} value={assunto}>
-                        {assunto}
+                    {ASSUNTOS_CONTATO.map((opcao) => (
+                      <option key={opcao} value={opcao}>
+                        {opcao}
                       </option>
                     ))}
                   </select>

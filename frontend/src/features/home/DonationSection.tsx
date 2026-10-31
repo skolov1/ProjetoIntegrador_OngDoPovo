@@ -4,7 +4,7 @@
  * Decisão da reunião: sem QR Code, CNPJ ou chave PIX na página.
  */
 
-import { Wheat, Accessibility } from 'lucide-react'
+import { Wheat, Accessibility, ArrowRight } from 'lucide-react'
 
 import { CadeiraBanhoIcon, MuletasIcon } from '@/components/ui/IconesDoacao'
 import { Eyebrow, Section, SectionLead, SectionTitle } from '@/components/ui/Section'
@@ -18,7 +18,12 @@ const ITENS_ACEITOS = [
   { rotulo: 'Cadeiras de banho', Icon: CadeiraBanhoIcon },
 ] as const
 
-export function DonationSection() {
+interface DonationSectionProps {
+  /** Chamado ao clicar em "Combinar uma doação": o `App` escolhe o assunto "Doações" no formulário. */
+  onCombinarDoacao: () => void
+}
+
+export function DonationSection({ onCombinarDoacao }: DonationSectionProps) {
   return (
     <Section id="doe" tom="escuro" className="relative overflow-hidden">
       <Sunburst
@@ -56,6 +61,19 @@ export function DonationSection() {
               </li>
             ))}
           </ul>
+
+          {/* Leva ao formulário de contato, já com o assunto "Doações" escolhido */}
+          <a
+            href="#contato"
+            onClick={onCombinarDoacao}
+            className="group mt-6 inline-flex items-center gap-2 text-sm font-bold text-amarelo hover:underline"
+          >
+            Combinar uma doação
+            <ArrowRight
+              className="size-4 transition-transform duration-300 group-hover:translate-x-1"
+              aria-hidden="true"
+            />
+          </a>
         </Reveal>
       </div>
     </Section>

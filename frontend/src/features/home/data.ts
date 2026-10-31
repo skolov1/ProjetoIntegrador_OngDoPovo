@@ -103,6 +103,18 @@ export const ONG = {
 /* Navegação                                                                   */
 /* -------------------------------------------------------------------------- */
 
+/** Assuntos do formulário de contato. O primeiro é o padrão. */
+export const ASSUNTOS_CONTATO = [
+  'Dúvida geral',
+  'Voluntariado',
+  'Doações',
+  'Parceria',
+  'Imprensa',
+] as const
+
+/** Assunto que a seção Doe escolhe ao levar a pessoa para o formulário. */
+export const ASSUNTO_DOACOES: (typeof ASSUNTOS_CONTATO)[number] = 'Doações'
+
 export const NAVEGACAO = [
   { label: 'Quem somos', href: '#quem-somos' },
   { label: 'Impacto', href: '#impacto' },
