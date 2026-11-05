@@ -15,7 +15,7 @@ export function ValuesStrip() {
 
   return (
     <section aria-label="Nossa essência" className="overflow-hidden bg-verde py-8">
-      <div className="flex w-max animate-marquee items-center gap-10 hover:[animation-play-state:paused]">
+      <div className="flex w-max faixa-trilho items-center gap-10 hover:[animation-play-state:paused]">
         {sequencia.map((valor, i) => {
           const Icone = icone(valor.icon)
           const duplicado = i >= VALORES.length

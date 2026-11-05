@@ -16,9 +16,9 @@ export function SponsorsSection() {
   return (
     <Section
       id="patrocinadores"
-      tom="verde"
+      tom="escuro"
       tamanho="compacto"
-      className="border-t border-white/10"
+      className="relative z-0 bg-linear-to-b from-verde-900 to-verde-escuro via-verde-900"
     >
       <Reveal>
         <div className="text-center">

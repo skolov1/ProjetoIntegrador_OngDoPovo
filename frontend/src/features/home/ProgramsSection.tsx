@@ -127,7 +127,7 @@ export function ProgramsSection() {
         rays={24}
         fill={0.05}
         spin={false}
-        className="pointer-events-none absolute -right-36 bottom-0 text-verde opacity-40 select-none"
+        className="pointer-events-none absolute -right-36 bottom-0 text-verde opacity-40 select-none z-10 overflow-visible"
       />
 
       <div className="relative">

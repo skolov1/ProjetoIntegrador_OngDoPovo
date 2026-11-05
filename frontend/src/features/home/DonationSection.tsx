@@ -25,14 +25,14 @@ interface DonationSectionProps {
 
 export function DonationSection({ onCombinarDoacao }: DonationSectionProps) {
   return (
-    <Section id="doe" tom="escuro" className="relative overflow-hidden">
+    <Section id="doe" tom="escuro" className="relative z-10 overflow-x-visible overflow-y-visible">
       <Sunburst
         tone="white"
-        size={620}
+        size={520}
         rays={30}
         fill={0.05}
         spin={false}
-        className="pointer-events-none absolute -right-44 -bottom-48 text-white opacity-25 select-none"
+        className="pointer-events-none absolute right-0 -bottom-32 z-20 text-white opacity-25 select-none"
       />
 
       <div className="relative mx-auto items-center gap-10">

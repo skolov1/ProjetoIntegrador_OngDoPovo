@@ -12,7 +12,7 @@ type Tom = 'claro' | 'mint' | 'escuro' | 'verde'
 const FUNDOS: Record<Tom, string> = {
   claro: 'bg-white text-grafite',
   mint: 'bg-mist-50 text-grafite',
-  escuro: 'from-verde-900 to-green-800 via-green-900 bg-linear-to-br text-white',
+  escuro: 'bg-verde-900 text-white',
   // Verde-escuro liso da paleta, para separar de uma seção `escuro` (degradê) vizinha.
   verde: 'bg-verde-escuro text-white',
 }
