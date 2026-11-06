@@ -42,18 +42,34 @@ function CartaoTotal({
   Icone,
   valor,
   rotulo,
+  destaque = false,
 }: {
   Icone: LucideIcon;
   valor: string | number;
   rotulo: string;
+  destaque?: boolean;
 }) {
   return (
-    <article className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm sm:p-5">
-      <span className="grid size-10 place-items-center rounded-xl bg-verde/10 text-verde">
-        <Icone className="size-5" aria-hidden="true" />
+    <article
+      className={`rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm sm:p-5 ${
+        destaque ? "col-span-2" : ""
+      }`}
+    >
+      <span
+        className={`grid place-items-center rounded-xl bg-verde/10 text-verde ${
+          destaque ? "size-12" : "size-10"
+        }`}
+      >
+        <Icone className={destaque ? "size-6" : "size-5"} aria-hidden="true" />
       </span>
-      <p className="mt-3 text-3xl font-extrabold leading-none text-verde-escuro">{valor}</p>
-      <p className="mt-1.5 text-sm text-grafite/70">{rotulo}</p>
+      <p
+        className={`mt-3 font-extrabold leading-none text-verde-escuro ${
+          destaque ? "text-5xl" : "text-3xl"
+        }`}
+      >
+        {valor}
+      </p>
+      <p className={`mt-1.5 text-grafite/70 ${destaque ? "text-base" : "text-sm"}`}>{rotulo}</p>
     </article>
   );
 }
@@ -152,7 +168,12 @@ export function VisaoGeralTela({
           Visão geral
         </h3>
         <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
-          <CartaoTotal Icone={Users} valor={totais.alunos_ativos} rotulo="Alunos ativos" />
+          <CartaoTotal
+            Icone={Users}
+            valor={totais.alunos_ativos}
+            rotulo="Alunos ativos"
+            destaque
+          />
           <CartaoTotal Icone={Clipboard} valor={totais.turmas_ativas} rotulo="Turmas ativas" />
           <CartaoTotal
             Icone={GraduationCap}
