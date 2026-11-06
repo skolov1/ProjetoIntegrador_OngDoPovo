@@ -9,6 +9,7 @@ import foto2 from '@/assets/fotos/ballet-apres-082.webp'
 import foto1 from '@/assets/fotos/img-7655.webp'
 import foto3 from '@/assets/fotos/jogox1-45.webp'
 import { Header } from '@/components/layout/Header'
+import { WhatsappIcon } from '@/components/ui/BrandIcons'
 import { LinkBotao } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
 import { Sunburst } from '@/components/ui/Sunburst'
@@ -114,8 +115,14 @@ export function HeroSection() {
           <Reveal delay={320}>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <LinkBotao href="#participar">Quero me cadastrar</LinkBotao>
-              <LinkBotao href="#doe" variante="contorno-claro">
-                Como ajudar
+              <LinkBotao
+                href={ONG.whatsapp}
+                variante="contorno-claro"
+                seta={false}
+                externa
+              >
+                <WhatsappIcon className="size-5" />
+                Contato
               </LinkBotao>
             </div>
           </Reveal>
