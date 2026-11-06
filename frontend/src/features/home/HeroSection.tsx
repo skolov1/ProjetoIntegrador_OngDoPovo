@@ -4,12 +4,11 @@
  * Fundo CLARO (a referência é clara; a versão anterior era verde escura) com o
  * padrão de raios da marca girando ao fundo e um mosaico de fotos à direita.
  */
-import { MapPin } from 'lucide-react'
+import { MapPin, MessageCircle } from 'lucide-react'
 import foto2 from '@/assets/fotos/ballet-apres-082.webp'
 import foto1 from '@/assets/fotos/img-7655.webp'
 import foto3 from '@/assets/fotos/jogox1-45.webp'
 import { Header } from '@/components/layout/Header'
-import { WhatsappIcon } from '@/components/ui/BrandIcons'
 import { LinkBotao } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
 import { Sunburst } from '@/components/ui/Sunburst'
@@ -115,13 +114,8 @@ export function HeroSection() {
           <Reveal delay={320}>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <LinkBotao href="#participar">Quero me cadastrar</LinkBotao>
-              <LinkBotao
-                href={ONG.whatsapp}
-                variante="contorno-claro"
-                seta={false}
-                externa
-              >
-                <WhatsappIcon className="size-5" />
+              <LinkBotao href="#contato" variante="contorno-claro">
+                <MessageCircle className="size-5" aria-hidden="true" />
                 Contato
               </LinkBotao>
             </div>
