@@ -98,9 +98,9 @@ type TipoCadastro = "turma" | "aluno" | "professor";
 const ITENS_MENU: { id: Screen; label: string; Icon: LucideIcon }[] = [
   { id: "visao", label: "Visão geral", Icon: LayoutDashboard },
   { id: "presenca", label: "Presenças", Icon: Users },
-  { id: "alunos", label: "Alunos", Icon: Shield },
   { id: "turmas", label: "Turmas", Icon: Clipboard },
   { id: "professores", label: "Professores", Icon: MessageCircle },
+  { id: "alunos", label: "Alunos", Icon: Shield },
   { id: "doacoes", label: "Doações", Icon: Clipboard },
   { id: "grade", label: "Grade", Icon: CalendarDays },
   { id: "auditoria", label: "Auditoria", Icon: History },
