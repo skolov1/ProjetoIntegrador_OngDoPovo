@@ -113,7 +113,7 @@ export function HeroSection() {
 
           <Reveal delay={320}>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <LinkBotao href="#participar">Quero me cadastrar</LinkBotao>
+              <LinkBotao href="#participar">Quero me inscrever</LinkBotao>
               <LinkBotao href="#contato" variante="contorno-claro">
                 <MessageCircle className="size-5" aria-hidden="true" />
                 Contato
