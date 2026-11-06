@@ -17,7 +17,7 @@ export function EventosServicos() {
 
   return (
     <Reveal delay={100}>
-      <div className="mt-12 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm">
+      <div id="eventos-e-servicos" className="mt-12 scroll-mt-24 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm">
         <div className="border-b border-slate-100 bg-mist-50 px-5 py-4 sm:px-6">
           <h3 className="font-extrabold text-verde-escuro">Eventos e serviços</h3>
           <p className="text-sm text-grafite/60">

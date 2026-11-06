@@ -114,6 +114,9 @@ const FOTOS_ESPORTE = [
   { src: fotoEsporte7, alt: 'Movimento e bem-estar na ONG' },
 ]
 
+/** Programas cujo "Saiba mais" leva ao bloco "Eventos e serviços" (e não à inscrição). */
+const LEVAM_A_EVENTOS_E_SERVICOS = ['saude-visual', 'eventos']
+
 type Tab = 'modalidades' | 'outros' | 'galeria'
 
 export function ProgramsSection() {
@@ -240,7 +243,11 @@ export function ProgramsSection() {
 
                         <div className="relative mt-5 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
                           <a
-                            href="#participar"
+                            href={
+                              LEVAM_A_EVENTOS_E_SERVICOS.includes(programa.slug)
+                                ? '#eventos-e-servicos'
+                                : '#participar'
+                            }
                             className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-verde transition-colors hover:text-verde-escuro"
                           >
                             Saiba mais
