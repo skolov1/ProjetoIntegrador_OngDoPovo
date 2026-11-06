@@ -170,7 +170,7 @@ export const PRINCIPIOS = [
 
 export const INDICADORES = [
   { valor: 450, sufixo: '+', rotulo: 'Alunos Ativos' },
-  { valor: 1200, sufixo: '+', rotulo: 'Eventos de Vida' },
+  { valor: 75, sufixo: '+', rotulo: 'Eventos de Vida' },
   { valor: 15, sufixo: '+', rotulo: 'Programas e Modalidades' },
 ] as const
 
