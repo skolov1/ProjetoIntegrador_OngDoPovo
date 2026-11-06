@@ -155,9 +155,9 @@ export function AboutSection() {
 
             return (
               <Reveal key={principio.titulo} delay={i * 110} as="article">
-                <div className="group flex flex-col gap-3 rounded-2xl border border-slate-200/70 bg-white p-5 sm:p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-verde/25 hover:shadow-lg">
+                <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/70 bg-white p-5 sm:p-6">
                   <span
-                    className={`grid size-11 sm:size-12 shrink-0 place-items-center rounded-xl ${paleta.bg} text-white transition-transform duration-300 group-hover:scale-110`}
+                    className={`grid size-11 sm:size-12 shrink-0 place-items-center rounded-xl ${paleta.bg} text-white`}
                   >
                     <Icone className="size-5 sm:size-6" aria-hidden="true" />
                   </span>
