@@ -1,7 +1,7 @@
 /**
  * Visão geral: tela inicial do painel.
  *
- * Seis totais em cartões, a frequência de cada turma no mês (da menor para a maior, para a
+ * Cinco totais em cartões, a frequência de cada turma no mês (da menor para a maior, para a
  * turma com mais faltas ficar no topo) e, abaixo, só o que precisa de atenção (alertas com
  * algo a resolver). Cada alerta abre e mostra quem é e onde (o nome do aluno, a turma, o
  * empréstimo), para a pessoa não ficar no escuro; as faltas seguidas têm um botão que abre a
@@ -18,7 +18,6 @@ import {
   Clipboard,
   GraduationCap,
   Package,
-  Percent,
   TriangleAlert,
   Users,
   type LucideIcon,
@@ -29,7 +28,6 @@ import {
   LIMITE_DETALHE,
   ROTULO_TELA,
   TODAS_AS_TURMAS,
-  formatarFrequencia,
   frequenciaBaixa,
   montarAlertas,
   montarLinhas,
@@ -165,11 +163,6 @@ export function VisaoGeralTela({
             Icone={CalendarDays}
             valor={totais.eventos_servicos_ativos}
             rotulo="Eventos e serviços"
-          />
-          <CartaoTotal
-            Icone={Percent}
-            valor={formatarFrequencia(totais.frequencia_mes)}
-            rotulo="Frequência no mês"
           />
           <CartaoTotal
             Icone={Package}
