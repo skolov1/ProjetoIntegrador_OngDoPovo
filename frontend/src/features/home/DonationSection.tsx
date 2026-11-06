@@ -46,7 +46,7 @@ export function DonationSection({ onCombinarDoacao }: DonationSectionProps) {
           </SectionLead>
 
           <p className="mt-8 text-sm font-bold uppercase tracking-[0.18em] text-mist-200">
-            Também aceitamos
+            Aceitamos
           </p>
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
             {ITENS_ACEITOS.map(({ rotulo, Icon }) => (
