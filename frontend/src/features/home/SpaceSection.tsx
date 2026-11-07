@@ -30,7 +30,7 @@ export function SpaceSection() {
           <Eyebrow>Nosso espaço</Eyebrow>
           <SectionTitle>Nossas portas estão sempre abertas</SectionTitle>
           <SectionLead>
-            estabelecido na comunidade de Caieiras, somos um espaço de
+            Estabelecidos na comunidade de Caieiras, somos um espaço de
             convivência onde toda a família é bem-vinda.
           </SectionLead>
 
