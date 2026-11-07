@@ -6,6 +6,9 @@ class DoacoesConfig(AppConfig):
     name = 'doacoes'
 
     def ready(self):
+        # Registra a extensao do OpenAPI que descreve ids do Mongo como texto.
+        import setup.schema  # noqa: F401
+
         from .auditoria import registrar_modelos
 
         registrar_modelos()
