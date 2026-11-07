@@ -261,9 +261,9 @@ class MeView(APIView):
 @permission_classes([AllowAny])
 def ping(request):
     try:
-        with connection.cursor() as cursor:
-            cursor.execute('SELECT 1')
-            cursor.fetchone()
+        # MongoDB: o "ping" do servidor (nao ha SQL; ver setup/mongo.py).
+        connection.ensure_connection()
+        connection.connection.admin.command('ping')
         db_status = 'ok'
     except Exception:
         db_status = 'erro'

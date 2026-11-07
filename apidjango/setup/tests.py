@@ -172,6 +172,7 @@ class TestPing:
         assert response.status_code == 200
         assert response.data["servico"] == "django"
         assert response.data["status"] == "ok"
+        assert response.data["banco"] == "ok"
 
     def test_aceita_head_para_monitores_de_disponibilidade(self, client):
         assert client.head("/api/v1/ping/").status_code == 200
