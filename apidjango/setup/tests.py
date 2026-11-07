@@ -173,6 +173,10 @@ class TestPing:
         assert response.data["servico"] == "django"
         assert response.data["status"] == "ok"
 
+    def test_aceita_head_para_monitores_de_disponibilidade(self, client):
+        assert client.head("/api/v1/ping/").status_code == 200
+
+
 class TestContratoDaAPI:
     """Guarda contra o erro de prefixo duplicado.
 

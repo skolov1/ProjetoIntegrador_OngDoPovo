@@ -253,7 +253,9 @@ class MeView(APIView):
     ),
     responses={200: PingSerializer},
 )
-@api_view(['GET'])
+# HEAD tambem: monitores de disponibilidade gratuitos (UptimeRobot) checam com HEAD,
+# e sem ele a API gratuita do Render dormiria por receber 405.
+@api_view(['GET', 'HEAD'])
 @authentication_classes([])
 @permission_classes([AllowAny])
 def ping(request):
