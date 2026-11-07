@@ -23,15 +23,15 @@ Navegador ──► Vercel (site React)
 
 ## 1. Banco de dados
 
-O código **ainda usa PostgreSQL** (a migração para MongoDB Atlas é o Bloco 3, depende da decisão do time). Enquanto isso, use um PostgreSQL gratuito na nuvem (por exemplo Neon ou Supabase) e copie a **string de conexão**:
+O banco é o **MongoDB**. Em produção, use o **MongoDB Atlas** (plano gratuito M0) e copie a **string de conexão** (Atlas ▸ Connect ▸ Drivers ▸ Django MongoDB Backend):
 
 ```
-postgres://usuario:senha@host:5432/banco?sslmode=require
+mongodb+srv://usuario:senha@cluster.xxxxx.mongodb.net/ongdb?retryWrites=true&w=majority
 ```
 
-> O Postgres gratuito do próprio Render expira depois de um tempo; prefira outro provedor.
-
-**Quando migrar para o Atlas:** o bloco `DATABASES` de `apidjango/setup/settings.py` e a variável `DATABASE_URL` mudam para `MONGO_URI`. Libere no Atlas o acesso de rede `0.0.0.0/0` (o Render gratuito não tem IP fixo) e use senha forte. Ver a prova de conceito nas anotações do projeto.
+- Em **Database & Network Access**, libere `0.0.0.0/0` (o Render gratuito não tem IP fixo) e use senha forte no usuário do banco.
+- Se a senha tiver caracteres especiais (`@`, `/`, `:`), codifique-os na URL (por exemplo `@` vira `%40`).
+- Em desenvolvimento local, o `docker-compose.yml` sobe um Mongo (`mongodb://localhost:27017/ongdb`), que é o padrão do `settings.py`. Para apontar para o Atlas na sua máquina, ponha `MONGO_URI` no `apidjango/.env` (o arquivo não vai para o Git).
 
 ## 2. API no Render
 
@@ -40,7 +40,7 @@ postgres://usuario:senha@host:5432/banco?sslmode=require
 
 | Variável | Valor |
 |---|---|
-| `DATABASE_URL` | a string de conexão do passo 1 |
+| `MONGO_URI` | a string de conexão do passo 1 |
 | `DJANGO_CSRF_TRUSTED_ORIGINS` | endereço do site na Vercel, com `https://` e sem barra no fim (preencha depois do passo 3) |
 | `CORS_ALLOWED_ORIGINS` | o mesmo endereço |
 | `DJANGO_SUPERUSER_USERNAME` / `_EMAIL` / `_PASSWORD` | a primeira conta de administrador (o plano gratuito não tem terminal) |
@@ -89,4 +89,4 @@ Na Vercel, **Settings ▸ Domains** liga o domínio ao site. Depois, atualize `D
 | Login funciona e some ao recarregar | o site está chamando a API direto, sem passar pelo `/api` da Vercel |
 | Render não sobe: `Defina DJANGO_SECRET_KEY` | `DJANGO_DEBUG` não é `False`, ou a chave sumiu das variáveis |
 | `/admin/` sem visual | `collectstatic` não rodou: veja o *build command* no Render |
-| `ping` responde `"banco":"erro"` | `DATABASE_URL` errada, ou o banco bloqueia o IP do Render |
+| `ping` responde `"banco":"erro"` | `MONGO_URI` errada (senha, usuário ou nome do banco), ou o Atlas bloqueia o IP do Render |
