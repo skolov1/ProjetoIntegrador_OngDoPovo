@@ -19,3 +19,9 @@ def test_senha_ja_codificada_continua_igual():
     uri = "mongodb+srv://ong:p%40ss@cluster.mongodb.net/ongdb?retryWrites=true"
 
     assert _uri_com_senha_codificada(uri) == uri
+
+
+def test_espaco_e_quebra_de_linha_no_fim_sao_ignorados():
+    uri = _uri_com_senha_codificada("mongodb+srv://ong:senha@cluster.mongodb.net/ongdb?w=majority\n")
+
+    assert uri == "mongodb+srv://ong:senha@cluster.mongodb.net/ongdb?w=majority"

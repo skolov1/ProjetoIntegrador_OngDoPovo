@@ -239,6 +239,7 @@ def _uri_com_senha_codificada(uri):
     Quem cola a senha do Atlas com `@`, `/`, `:` ou `%` nao precisa codifica-la a mao.
     Aceita tambem a senha ja codificada (decodifica e codifica de novo, sem mudar nada).
     """
+    uri = uri.strip()  # ao colar no painel do Render, costuma entrar uma quebra de linha no fim
     inicio = uri.find("://")
     arroba = uri.rfind("@")
     if inicio == -1 or arroba == -1:
