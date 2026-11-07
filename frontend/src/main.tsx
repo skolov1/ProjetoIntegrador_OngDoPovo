@@ -3,6 +3,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import App from './App.tsx'
+import { acordarApi } from './lib/acordarApi.ts'
 import { queryClient } from './lib/queryClient.ts'
 import './index.css'
 
@@ -27,6 +28,8 @@ const comportamentoAnterior = raiz.style.scrollBehavior
 raiz.style.scrollBehavior = 'auto'
 window.scrollTo(0, 0)
 raiz.style.scrollBehavior = comportamentoAnterior
+
+acordarApi()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

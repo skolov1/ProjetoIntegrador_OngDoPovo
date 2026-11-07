@@ -91,7 +91,7 @@ export function SpaceSection() {
             <ul className="divide-y divide-slate-100" aria-live="polite">
               {isLoading && (
                 <li className="px-5 py-6 text-sm text-grafite/60 sm:px-6">
-                  Carregando a grade...
+                  Carregando a grade... na primeira visita do dia pode levar alguns segundos.
                 </li>
               )}
               {isError && (

@@ -38,7 +38,7 @@ if (!BASE_URL) {
 export const api = axios.create({
   baseURL: BASE_URL,
   withCredentials: true,
-  timeout: 15000,
+  timeout: 30000, // a API gratuita pode levar até ~1 min para acordar; as consultas repetem
 })
 
 /** Access token em memoria. Some ao recarregar a pagina — de proposito. */
