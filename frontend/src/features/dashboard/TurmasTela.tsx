@@ -29,7 +29,7 @@ export function TurmasTela({
   onEditar,
 }: {
   onNova: () => void;
-  onEditar: (id: number) => void;
+  onEditar: (id: string) => void;
 }) {
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState<FiltroAtivo>("");

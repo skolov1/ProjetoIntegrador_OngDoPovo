@@ -33,5 +33,5 @@ page_size?: number;
  */
 search?: string;
 tipo?: string;
-usuario?: number;
+usuario?: string;
 };

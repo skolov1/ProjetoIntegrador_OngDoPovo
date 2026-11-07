@@ -11,7 +11,7 @@ import type { DiaSemanaEnum } from './diaSemanaEnum';
  * Um dia da semana e a faixa de horário em que a turma acontece.
  */
 export interface HorarioTurma {
-  readonly id: number;
+  readonly id: string;
   dia_semana: DiaSemanaEnum;
   horario_inicio: string;
   horario_fim: string;

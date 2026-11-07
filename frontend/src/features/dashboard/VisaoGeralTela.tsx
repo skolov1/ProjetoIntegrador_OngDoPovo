@@ -81,7 +81,7 @@ function DetalheAlerta({
 }: {
   alerta: Alerta;
   onIr: (tela: TelaDestino) => void;
-  onAbrirChamada: (turmaId: number) => void;
+  onAbrirChamada: (turmaId: string) => void;
 }) {
   const { data, isLoading, error } = useVisaoGeralDetalhes(true);
 
@@ -143,7 +143,7 @@ export function VisaoGeralTela({
   onAbrirChamada,
 }: {
   onIr: (tela: TelaDestino) => void;
-  onAbrirChamada: (turmaId: number) => void;
+  onAbrirChamada: (turmaId: string) => void;
 }) {
   const { data, isLoading, error } = useVisaoGeral();
   // Alerta aberto no momento (um por vez); a lista de nomes só é buscada quando abre.

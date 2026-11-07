@@ -7,12 +7,13 @@
  */
 
 export interface Emprestimo {
-  readonly id: number;
-  doacao: number;
+  readonly id: string;
+  /** Id (24 caracteres hexadecimais). */
+  doacao: string;
   readonly item_rotulo: string;
   /**
      * @minimum 1
-     * @maximum 2147483647
+     * @maximum 9223372036854776000
      */
   quantidade?: number;
   /** @maxLength 150 */

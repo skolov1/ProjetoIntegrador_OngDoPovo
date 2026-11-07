@@ -46,7 +46,7 @@ export const turmasCreate = (
  * CRUD de turmas (admin).
  */
 export const turmasRetrieve = (
-    id: number,
+    id: string,
  ) => {
       return api<Turma>(
       {url: `/turmas/${id}/`, method: 'GET'
@@ -57,7 +57,7 @@ export const turmasRetrieve = (
  * CRUD de turmas (admin).
  */
 export const turmasUpdate = (
-    id: number,
+    id: string,
     turmaRequest: TurmaRequest,
  ) => {
       return api<Turma>(
@@ -71,7 +71,7 @@ export const turmasUpdate = (
  * CRUD de turmas (admin).
  */
 export const turmasPartialUpdate = (
-    id: number,
+    id: string,
     patchedTurmaRequest?: PatchedTurmaRequest,
  ) => {
       return api<Turma>(
@@ -85,7 +85,7 @@ export const turmasPartialUpdate = (
  * CRUD de turmas (admin).
  */
 export const turmasDestroy = (
-    id: number,
+    id: string,
  ) => {
       return api<void>(
       {url: `/turmas/${id}/`, method: 'DELETE'

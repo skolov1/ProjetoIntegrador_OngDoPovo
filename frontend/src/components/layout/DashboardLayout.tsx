@@ -141,7 +141,7 @@ type FormAluno = {
   exame_aptidao: ExameAptidaoEnum;
   exame_validade: string;
   consentimento_responsavel: boolean;
-  turmas: number[];
+  turmas: string[];
   // Vazio = usa o cálculo (R$ 20 por turma).
   mensalidade_personalizada: string;
   ativo: boolean;
@@ -200,7 +200,7 @@ type FormProfessor = {
   cpf: string;
   email: string;
   telefone: string;
-  turmas: number[];
+  turmas: string[];
   ativo: boolean;
 };
 
@@ -262,7 +262,7 @@ export function DashboardLayout() {
     setMenuAberto(false);
   };
 
-  const abrirChamada = (turmaId: number) => {
+  const abrirChamada = (turmaId: string) => {
     setPresencaInicial({ turmaId, soFaltantes: true });
     setScreen("presenca");
     setMenuAberto(false);
@@ -272,7 +272,7 @@ export function DashboardLayout() {
   const [showForm, setShowForm] = useState<
     "turma" | "aluno" | "professor" | "doacao" | null
   >(null);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formTurma, setFormTurma] = useState<FormTurma>(TURMA_VAZIA());
   const [formAluno, setFormAluno] = useState<FormAluno>(ALUNO_VAZIO);
   const [formDoacao, setFormDoacao] = useState<FormDoacao>(DOACAO_VAZIA());
@@ -430,7 +430,7 @@ export function DashboardLayout() {
 
   // A lista traz só um resumo de cada cadastro; para editar, carregamos o
   // cadastro completo do servidor (o formulário precisa de todos os campos).
-  const handleEdit = async (tipo: TipoCadastro, id: number) => {
+  const handleEdit = async (tipo: TipoCadastro, id: string) => {
     try {
       if (tipo === "turma") {
         const t = (await turmasRetrieve(id)).data;
@@ -489,7 +489,7 @@ export function DashboardLayout() {
   };
 
   const handleDelete = (
-    id: number,
+    id: string,
     type: "aluno" | "doacao",
   ) => {
     const definitiva =
@@ -521,7 +521,7 @@ export function DashboardLayout() {
     });
   };
 
-  const handleAlterarAtivo = (id: number, nome: string, ativo: boolean) => {
+  const handleAlterarAtivo = (id: string, nome: string, ativo: boolean) => {
     setConfirmacao({
       titulo: ativo ? "Reativar aluno?" : "Inativar aluno?",
       texto: ativo

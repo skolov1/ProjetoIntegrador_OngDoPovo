@@ -11,8 +11,10 @@ import type { SituacaoEnum } from './situacaoEnum';
  * Serializer completo da presença.
  */
 export interface PatchedPresencaRequest {
-  aluno?: number;
-  turma?: number;
+  /** Id (24 caracteres hexadecimais). */
+  aluno?: string;
+  /** Id (24 caracteres hexadecimais). */
+  turma?: string;
   data?: string;
   situacao?: SituacaoEnum;
   /** @maxLength 255 */

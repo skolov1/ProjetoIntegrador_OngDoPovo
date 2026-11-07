@@ -32,5 +32,5 @@ search?: string;
  * * `N` - Prefiro não informar
  */
 sexo?: AlunosListSexo;
-turmas?: number[];
+turmas?: string[];
 };

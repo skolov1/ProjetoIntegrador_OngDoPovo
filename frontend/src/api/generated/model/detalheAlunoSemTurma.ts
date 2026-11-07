@@ -7,6 +7,6 @@
  */
 
 export interface DetalheAlunoSemTurma {
-  aluno_id: number;
+  aluno_id: string;
   aluno_nome: string;
 }

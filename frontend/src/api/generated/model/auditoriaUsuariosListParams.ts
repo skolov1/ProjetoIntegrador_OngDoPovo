@@ -25,5 +25,5 @@ ordering?: string;
  */
 search?: string;
 tipo?: string;
-usuario?: number;
+usuario?: string;
 };

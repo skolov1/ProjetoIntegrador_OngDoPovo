@@ -7,7 +7,7 @@
  */
 
 export interface VisaoGeralFrequenciaTurma {
-  turma_id: number;
+  turma_id: string;
   /** Nome da turma. */
   turma: string;
   /** % de presentes no mês. */

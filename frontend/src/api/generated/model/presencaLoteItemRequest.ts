@@ -8,7 +8,8 @@
 import type { SituacaoEnum } from './situacaoEnum';
 
 export interface PresencaLoteItemRequest {
-  aluno_id: number;
+  /** @minLength 1 */
+  aluno_id: string;
   situacao: SituacaoEnum;
   /** @maxLength 255 */
   observacao?: string;

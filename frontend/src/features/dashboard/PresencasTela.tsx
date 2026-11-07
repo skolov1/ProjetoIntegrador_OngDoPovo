@@ -91,7 +91,7 @@ function BotoesSituacao({
 
 /** Vindo da Visão geral: já abre na turma do aluno, só com os faltantes. */
 export interface PresencasInicial {
-  turmaId: number;
+  turmaId: string;
   soFaltantes: boolean;
 }
 
@@ -99,7 +99,7 @@ export function PresencasTela({ inicial }: { inicial?: PresencasInicial | null }
   const [turmaId, setTurmaId] = useState(inicial ? String(inicial.turmaId) : "");
   const [data, setData] = useState(hoje());
   // Só o que a secretaria mexeu nesta tela; o resto vem do servidor.
-  const [edicoes, setEdicoes] = useState<Record<number, SituacaoEnum>>({});
+  const [edicoes, setEdicoes] = useState<Record<string, SituacaoEnum>>({});
   const [busca, setBusca] = useState("");
   const [soFaltantes, setSoFaltantes] = useState(inicial?.soFaltantes ?? false);
   const [aviso, setAviso] = useState("");
@@ -108,12 +108,12 @@ export function PresencasTela({ inicial }: { inicial?: PresencasInicial | null }
 
   const { data: turmasData } = useTurmas();
   const turmas = (turmasData?.results ?? []).filter((t) => t.ativo !== false);
-  const chamada = usePresencaChamada(turmaId ? Number(turmaId) : undefined, data);
+  const chamada = usePresencaChamada(turmaId || undefined, data);
   const salvar = useSalvarChamada();
 
   const itens = chamada.data ?? [];
   // Padrão: ausente. Vale o que a secretaria marcou, senão o que já foi salvo.
-  const situacaoDe = (id: number, doServidor: unknown): SituacaoEnum =>
+  const situacaoDe = (id: string, doServidor: unknown): SituacaoEnum =>
     edicoes[id] ?? ((doServidor as SituacaoEnum | null) || "AUSENTE");
 
   const visiveis = itens.filter(
@@ -137,7 +137,7 @@ export function PresencasTela({ inicial }: { inicial?: PresencasInicial | null }
     setUltimaGravacao("salva");
   };
 
-  const marcar = (id: number, situacao: SituacaoEnum) => {
+  const marcar = (id: string, situacao: SituacaoEnum) => {
     setEdicoes({ ...edicoes, [id]: situacao });
     setAviso("");
   };
@@ -157,7 +157,7 @@ export function PresencasTela({ inicial }: { inicial?: PresencasInicial | null }
     // Se o servidor já tinha chamada neste dia, esta gravação é uma atualização.
     const eraAtualizacao = itens.some((i) => i.situacao);
     salvar.mutate(
-      { turma: Number(turmaId), data, presencas },
+      { turma: turmaId, data, presencas },
       {
         onSuccess: () => {
           setUltimaGravacao(eraAtualizacao ? "atualizada" : "salva");

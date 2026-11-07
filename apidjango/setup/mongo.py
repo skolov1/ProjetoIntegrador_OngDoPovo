@@ -66,3 +66,7 @@ class ObjectIdEncoder(encoders.JSONEncoder):
 
 class JSONRenderer(renderers.JSONRenderer):
     encoder_class = ObjectIdEncoder
+
+
+# Registra a extensao do OpenAPI que descreve `IdRelatedField` como texto (ver schema.py).
+from . import schema  # noqa: E402, F401

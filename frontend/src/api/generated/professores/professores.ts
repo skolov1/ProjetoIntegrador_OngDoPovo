@@ -46,7 +46,7 @@ export const professoresCreate = (
  * CRUD de professores (admin).
  */
 export const professoresRetrieve = (
-    id: number,
+    id: string,
  ) => {
       return api<Professor>(
       {url: `/professores/${id}/`, method: 'GET'
@@ -57,7 +57,7 @@ export const professoresRetrieve = (
  * CRUD de professores (admin).
  */
 export const professoresUpdate = (
-    id: number,
+    id: string,
     professorRequest: ProfessorRequest,
  ) => {
       return api<Professor>(
@@ -71,7 +71,7 @@ export const professoresUpdate = (
  * CRUD de professores (admin).
  */
 export const professoresPartialUpdate = (
-    id: number,
+    id: string,
     patchedProfessorRequest?: PatchedProfessorRequest,
  ) => {
       return api<Professor>(
@@ -85,7 +85,7 @@ export const professoresPartialUpdate = (
  * CRUD de professores (admin).
  */
 export const professoresDestroy = (
-    id: number,
+    id: string,
  ) => {
       return api<void>(
       {url: `/professores/${id}/`, method: 'DELETE'

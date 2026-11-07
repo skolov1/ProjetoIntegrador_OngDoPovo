@@ -8,14 +8,14 @@
 import type { ItemEnum } from './itemEnum';
 
 export interface DoacaoItem {
-  readonly id: number;
+  readonly id: string;
   item: ItemEnum;
   /** @maxLength 100 */
   item_descricao?: string;
   readonly item_rotulo: string;
   /**
      * @minimum 1
-     * @maximum 2147483647
+     * @maximum 9223372036854776000
      */
   quantidade?: number;
   /** @maxLength 150 */

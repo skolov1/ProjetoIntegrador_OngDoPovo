@@ -46,7 +46,7 @@ export const alunosCreate = (
  * CRUD de alunos (admin).
  */
 export const alunosRetrieve = (
-    id: number,
+    id: string,
  ) => {
       return api<Aluno>(
       {url: `/alunos/${id}/`, method: 'GET'
@@ -57,7 +57,7 @@ export const alunosRetrieve = (
  * CRUD de alunos (admin).
  */
 export const alunosUpdate = (
-    id: number,
+    id: string,
     alunoRequest: AlunoRequest,
  ) => {
       return api<Aluno>(
@@ -71,7 +71,7 @@ export const alunosUpdate = (
  * CRUD de alunos (admin).
  */
 export const alunosPartialUpdate = (
-    id: number,
+    id: string,
     patchedAlunoRequest?: PatchedAlunoRequest,
  ) => {
       return api<Aluno>(
@@ -85,7 +85,7 @@ export const alunosPartialUpdate = (
  * CRUD de alunos (admin).
  */
 export const alunosDestroy = (
-    id: number,
+    id: string,
  ) => {
       return api<void>(
       {url: `/alunos/${id}/`, method: 'DELETE'

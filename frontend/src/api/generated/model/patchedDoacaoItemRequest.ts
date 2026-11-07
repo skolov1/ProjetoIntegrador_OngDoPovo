@@ -13,7 +13,7 @@ export interface PatchedDoacaoItemRequest {
   item_descricao?: string;
   /**
      * @minimum 1
-     * @maximum 2147483647
+     * @maximum 9223372036854776000
      */
   quantidade?: number;
   /** @maxLength 150 */

@@ -33,7 +33,7 @@ export const auditoriaList = (
  * Histórico de quem criou, alterou ou excluiu registros do painel (só leitura).
  */
 export const auditoriaRetrieve = (
-    id: number,
+    id: string,
  ) => {
       return api<Auditoria>(
       {url: `/auditoria/${id}/`, method: 'GET'

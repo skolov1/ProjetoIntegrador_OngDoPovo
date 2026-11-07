@@ -13,7 +13,7 @@
  * responsável: o cadastro completo aparece ao abrir a edição.
  */
 export interface AlunoList {
-  readonly id: number;
+  readonly id: string;
   /** @maxLength 150 */
   nome: string;
   /** @nullable */

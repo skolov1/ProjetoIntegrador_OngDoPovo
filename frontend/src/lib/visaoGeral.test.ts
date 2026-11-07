@@ -110,9 +110,9 @@ describe('rotuloRegistros', () => {
 })
 
 const TURMAS: VisaoGeralFrequenciaTurma[] = [
-  { turma_id: 3, turma: 'Muay Thai', percentual: 50, registros: 10 },
-  { turma_id: 1, turma: 'Futsal', percentual: 80, registros: 8 },
-  { turma_id: 2, turma: 'Ballet', percentual: 95, registros: 4 },
+  { turma_id: '3', turma: 'Muay Thai', percentual: 50, registros: 10 },
+  { turma_id: '1', turma: 'Futsal', percentual: 80, registros: 8 },
+  { turma_id: '2', turma: 'Ballet', percentual: 95, registros: 4 },
 ]
 
 describe('selecionarFrequencia', () => {
@@ -144,17 +144,17 @@ describe('selecionarFrequencia', () => {
 describe('opcoesDeTurma', () => {
   it('lista as turmas em ordem alfabética, com id e nome', () => {
     expect(opcoesDeTurma(TURMAS)).toEqual([
-      { id: 2, nome: 'Ballet' },
-      { id: 1, nome: 'Futsal' },
-      { id: 3, nome: 'Muay Thai' },
+      { id: '2', nome: 'Ballet' },
+      { id: '1', nome: 'Futsal' },
+      { id: '3', nome: 'Muay Thai' },
     ])
   })
 
   it('ignora acento e maiúscula na ordem', () => {
     const nomes = opcoesDeTurma([
-      { turma_id: 1, turma: 'Zumba', percentual: 1, registros: 1 },
-      { turma_id: 2, turma: 'água', percentual: 1, registros: 1 },
-      { turma_id: 3, turma: 'Balé', percentual: 1, registros: 1 },
+      { turma_id: '1', turma: 'Zumba', percentual: 1, registros: 1 },
+      { turma_id: '2', turma: 'água', percentual: 1, registros: 1 },
+      { turma_id: '3', turma: 'Balé', percentual: 1, registros: 1 },
     ]).map((o) => o.nome)
 
     expect(nomes).toEqual(['água', 'Balé', 'Zumba'])
@@ -164,16 +164,16 @@ describe('opcoesDeTurma', () => {
 const DETALHES: VisaoGeralDetalhes = {
   faltantes: [
     {
-      aluno_id: 7,
+      aluno_id: '7',
       aluno_nome: 'Ana Souza Lima',
-      turma_id: 3,
+      turma_id: '3',
       turma_nome: 'Futsal sub 14',
       faltas_seguidas: 4,
     },
   ],
   emprestimos_atrasados: [
     {
-      emprestimo_id: 5,
+      emprestimo_id: '5',
       item: 'Muletas',
       quantidade: 2,
       pessoa_nome: 'João da Silva',
@@ -181,7 +181,7 @@ const DETALHES: VisaoGeralDetalhes = {
       devolver_ate: '2026-10-12',
     },
     {
-      emprestimo_id: 6,
+      emprestimo_id: '6',
       item: 'Cadeira de rodas',
       quantidade: 1,
       pessoa_nome: 'Maria',
@@ -189,8 +189,8 @@ const DETALHES: VisaoGeralDetalhes = {
       devolver_ate: '2026-09-01',
     },
   ],
-  turmas_sem_professor: [{ turma_id: 9, turma_nome: 'Ballet Infantil' }],
-  alunos_sem_turma: [{ aluno_id: 11, aluno_nome: 'Bia Menor Teste' }],
+  turmas_sem_professor: [{ turma_id: '9', turma_nome: 'Ballet Infantil' }],
+  alunos_sem_turma: [{ aluno_id: '11', aluno_nome: 'Bia Menor Teste' }],
 }
 
 describe('montarLinhas', () => {
@@ -200,7 +200,7 @@ describe('montarLinhas', () => {
         chave: 'faltante-7-3',
         principal: 'Ana Souza Lima',
         secundario: 'Futsal sub 14 · 4 faltas seguidas',
-        turmaId: 3,
+        turmaId: '3',
       },
     ])
   })

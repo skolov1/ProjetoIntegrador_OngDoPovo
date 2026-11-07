@@ -11,7 +11,8 @@ import type { PresencaLoteItemRequest } from './presencaLoteItemRequest';
  * Marcação em lote: lista de presenças para uma turma/data.
  */
 export interface PresencaLoteRequest {
-  turma: number;
+  /** Id (24 caracteres hexadecimais). */
+  turma: string;
   data: string;
   presencas: PresencaLoteItemRequest[];
 }

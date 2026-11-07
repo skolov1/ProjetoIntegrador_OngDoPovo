@@ -10,11 +10,12 @@
  * Listagem dos cards: só o CPF mascarado. O completo aparece ao abrir a edição.
  */
 export interface ProfessorList {
-  readonly id: number;
+  readonly id: string;
   /** @maxLength 150 */
   nome: string;
   readonly cpf_mascarado: string;
   readonly turmas_nomes: readonly string[];
   ativo?: boolean;
+  /** Alunos ativos (sem repetir) das turmas do professor. */
   readonly total_alunos: number;
 }

@@ -7,6 +7,6 @@
  */
 
 export interface DetalheTurmaSemProfessor {
-  turma_id: number;
+  turma_id: string;
   turma_nome: string;
 }

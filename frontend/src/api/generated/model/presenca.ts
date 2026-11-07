@@ -11,10 +11,12 @@ import type { SituacaoEnum } from './situacaoEnum';
  * Serializer completo da presença.
  */
 export interface Presenca {
-  readonly id: number;
-  aluno: number;
+  readonly id: string;
+  /** Id (24 caracteres hexadecimais). */
+  aluno: string;
   readonly aluno_nome: string;
-  turma: number;
+  /** Id (24 caracteres hexadecimais). */
+  turma: string;
   readonly turma_nome: string;
   data: string;
   situacao?: SituacaoEnum;

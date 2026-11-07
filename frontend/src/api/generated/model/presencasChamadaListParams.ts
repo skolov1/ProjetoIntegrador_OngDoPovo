@@ -27,5 +27,5 @@ search?: string;
  * * `JUSTIFICADO` - Justificado
  */
 situacao?: PresencasChamadaListSituacao;
-turma: number;
+turma: string;
 };

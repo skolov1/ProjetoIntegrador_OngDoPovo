@@ -55,7 +55,7 @@ export const doacoesEmprestimosCreate = (
  * Empréstimos de itens doados. A devolução é um PATCH de `devolvido_em`.
  */
 export const doacoesEmprestimosRetrieve = (
-    id: number,
+    id: string,
  ) => {
       return api<Emprestimo>(
       {url: `/doacoes/emprestimos/${id}/`, method: 'GET'
@@ -66,7 +66,7 @@ export const doacoesEmprestimosRetrieve = (
  * Empréstimos de itens doados. A devolução é um PATCH de `devolvido_em`.
  */
 export const doacoesEmprestimosUpdate = (
-    id: number,
+    id: string,
     emprestimoRequest: EmprestimoRequest,
  ) => {
       return api<Emprestimo>(
@@ -80,7 +80,7 @@ export const doacoesEmprestimosUpdate = (
  * Empréstimos de itens doados. A devolução é um PATCH de `devolvido_em`.
  */
 export const doacoesEmprestimosPartialUpdate = (
-    id: number,
+    id: string,
     patchedEmprestimoRequest?: PatchedEmprestimoRequest,
  ) => {
       return api<Emprestimo>(
@@ -94,7 +94,7 @@ export const doacoesEmprestimosPartialUpdate = (
  * Empréstimos de itens doados. A devolução é um PATCH de `devolvido_em`.
  */
 export const doacoesEmprestimosDestroy = (
-    id: number,
+    id: string,
  ) => {
       return api<void>(
       {url: `/doacoes/emprestimos/${id}/`, method: 'DELETE'
@@ -130,7 +130,7 @@ export const doacoesItensCreate = (
  * Registro de doações de itens (alimentos, cadeiras, muletas), só da equipe.
  */
 export const doacoesItensRetrieve = (
-    id: number,
+    id: string,
  ) => {
       return api<DoacaoItem>(
       {url: `/doacoes/itens/${id}/`, method: 'GET'
@@ -141,7 +141,7 @@ export const doacoesItensRetrieve = (
  * Registro de doações de itens (alimentos, cadeiras, muletas), só da equipe.
  */
 export const doacoesItensUpdate = (
-    id: number,
+    id: string,
     doacaoItemRequest: DoacaoItemRequest,
  ) => {
       return api<DoacaoItem>(
@@ -155,7 +155,7 @@ export const doacoesItensUpdate = (
  * Registro de doações de itens (alimentos, cadeiras, muletas), só da equipe.
  */
 export const doacoesItensPartialUpdate = (
-    id: number,
+    id: string,
     patchedDoacaoItemRequest?: PatchedDoacaoItemRequest,
  ) => {
       return api<DoacaoItem>(
@@ -169,7 +169,7 @@ export const doacoesItensPartialUpdate = (
  * Registro de doações de itens (alimentos, cadeiras, muletas), só da equipe.
  */
 export const doacoesItensDestroy = (
-    id: number,
+    id: string,
  ) => {
       return api<void>(
       {url: `/doacoes/itens/${id}/`, method: 'DELETE'

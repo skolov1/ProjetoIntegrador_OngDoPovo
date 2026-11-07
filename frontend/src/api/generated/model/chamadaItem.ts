@@ -12,7 +12,7 @@ import type { SituacaoEnum } from './situacaoEnum';
  * Um aluno na lista de chamada de uma turma em uma data.
  */
 export interface ChamadaItem {
-  aluno_id: number;
+  aluno_id: string;
   aluno_nome: string;
   idade: number;
   situacao: SituacaoEnum | NullEnum | null;

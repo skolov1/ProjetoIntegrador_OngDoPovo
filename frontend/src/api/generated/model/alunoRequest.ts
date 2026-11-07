@@ -48,7 +48,7 @@ export interface AlunoRequest {
   /** @nullable */
   exame_validade?: string | null;
   consentimento_responsavel?: boolean;
-  turmas?: number[];
+  turmas?: string[];
   /**
      * @nullable
      * @pattern ^-?\d{0,8}(?:\.\d{0,2})?$

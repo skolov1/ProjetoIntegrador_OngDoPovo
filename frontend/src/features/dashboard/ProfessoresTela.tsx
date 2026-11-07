@@ -26,7 +26,7 @@ export function ProfessoresTela({
   onEditar,
 }: {
   onNovo: () => void;
-  onEditar: (id: number) => void;
+  onEditar: (id: string) => void;
 }) {
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState<FiltroAtivo>("");

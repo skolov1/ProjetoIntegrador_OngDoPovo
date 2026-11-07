@@ -130,7 +130,7 @@ export function useCreateTurma() {
 export function useUpdateTurma() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: import('@/api/generated/model').TurmaRequest }) => turmasUpdate(id, data).then(extractData),
+    mutationFn: ({ id, data }: { id: string; data: import('@/api/generated/model').TurmaRequest }) => turmasUpdate(id, data).then(extractData),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['turmas'] }),
   })
 }
@@ -139,7 +139,7 @@ export function useUpdateTurma() {
 export function useAlterarAtivoTurma() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ativo }: { id: number; ativo: boolean }) =>
+    mutationFn: ({ id, ativo }: { id: string; ativo: boolean }) =>
       turmasPartialUpdate(id, { ativo }).then(extractData),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['turmas'] }),
   })
@@ -148,7 +148,7 @@ export function useAlterarAtivoTurma() {
 export function useDeleteTurma() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: number) => turmasDestroy(id).then(extractData),
+    mutationFn: (id: string) => turmasDestroy(id).then(extractData),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['turmas'] }),
   })
 }
@@ -177,7 +177,7 @@ export function useCreateAluno() {
 export function useUpdateAluno() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: import('@/api/generated/model').AlunoRequest }) => alunosUpdate(id, data).then(extractData),
+    mutationFn: ({ id, data }: { id: string; data: import('@/api/generated/model').AlunoRequest }) => alunosUpdate(id, data).then(extractData),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['alunos'] }),
   })
 }
@@ -186,7 +186,7 @@ export function useUpdateAluno() {
 export function useAlterarAtivoAluno() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ativo }: { id: number; ativo: boolean }) =>
+    mutationFn: ({ id, ativo }: { id: string; ativo: boolean }) =>
       alunosPartialUpdate(id, { ativo }).then(extractData),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['alunos'] }),
   })
@@ -195,7 +195,7 @@ export function useAlterarAtivoAluno() {
 export function useDeleteAluno() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: number) => alunosDestroy(id).then(extractData),
+    mutationFn: (id: string) => alunosDestroy(id).then(extractData),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['alunos'] }),
   })
 }
@@ -224,7 +224,7 @@ export function useCreateProfessor() {
 export function useUpdateProfessor() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: import('@/api/generated/model').ProfessorRequest }) => professoresUpdate(id, data).then(extractData),
+    mutationFn: ({ id, data }: { id: string; data: import('@/api/generated/model').ProfessorRequest }) => professoresUpdate(id, data).then(extractData),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['professores'] }),
   })
 }
@@ -232,7 +232,7 @@ export function useUpdateProfessor() {
 export function useAlterarAtivoProfessor() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ativo }: { id: number; ativo: boolean }) =>
+    mutationFn: ({ id, ativo }: { id: string; ativo: boolean }) =>
       professoresPartialUpdate(id, { ativo }).then(extractData),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['professores'] }),
   })
@@ -241,7 +241,7 @@ export function useAlterarAtivoProfessor() {
 export function useDeleteProfessor() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: number) => professoresDestroy(id).then(extractData),
+    mutationFn: (id: string) => professoresDestroy(id).then(extractData),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['professores'] }),
   })
 }
@@ -278,7 +278,7 @@ export function useCreateDoacaoItem() {
 export function useUpdateDoacaoItem() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: DoacaoItemRequest }) =>
+    mutationFn: ({ id, data }: { id: string; data: DoacaoItemRequest }) =>
       doacoesItensUpdate(id, data).then(extractData),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['doacoes-itens'] }),
   })
@@ -287,7 +287,7 @@ export function useUpdateDoacaoItem() {
 export function useDeleteDoacaoItem() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: number) => doacoesItensDestroy(id).then(extractData),
+    mutationFn: (id: string) => doacoesItensDestroy(id).then(extractData),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['doacoes-itens'] }),
   })
 }
@@ -335,7 +335,7 @@ export function useCreateEmprestimo() {
 export function useUpdateEmprestimo() {
   const invalidar = useInvalidarEmprestimos()
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: PatchedEmprestimoRequest }) =>
+    mutationFn: ({ id, data }: { id: string; data: PatchedEmprestimoRequest }) =>
       doacoesEmprestimosPartialUpdate(id, data).then(extractData),
     onSuccess: invalidar,
   })
@@ -344,7 +344,7 @@ export function useUpdateEmprestimo() {
 export function useDeleteEmprestimo() {
   const invalidar = useInvalidarEmprestimos()
   return useMutation({
-    mutationFn: (id: number) => doacoesEmprestimosDestroy(id).then(extractData),
+    mutationFn: (id: string) => doacoesEmprestimosDestroy(id).then(extractData),
     onSuccess: invalidar,
   })
 }
@@ -353,10 +353,10 @@ export function useDeleteEmprestimo() {
 // PRESENÇAS (lista de chamada)
 // ============================================================================
 
-export function usePresencaChamada(turma: number | undefined, data: string) {
+export function usePresencaChamada(turma: string | undefined, data: string) {
   return useQuery<ChamadaItem[]>({
     queryKey: ['presencas', 'chamada', turma, data],
-    queryFn: () => presencasChamadaList({ turma: turma as number, data }).then(extractData),
+    queryFn: () => presencasChamadaList({ turma: turma as string, data }).then(extractData),
     enabled: turma !== undefined && Boolean(data),
   })
 }
@@ -446,7 +446,7 @@ export function useCreateAtividadeAvulsa() {
 export function useUpdateAtividadeAvulsa() {
   const invalidar = useInvalidarGrade()
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: PatchedAtividadeAvulsaRequest }) =>
+    mutationFn: ({ id, data }: { id: string; data: PatchedAtividadeAvulsaRequest }) =>
       atividadesAvulsasPartialUpdate(id, data).then(extractData),
     onSuccess: invalidar,
   })
@@ -455,7 +455,7 @@ export function useUpdateAtividadeAvulsa() {
 export function useDeleteAtividadeAvulsa() {
   const invalidar = useInvalidarGrade()
   return useMutation({
-    mutationFn: (id: number) => atividadesAvulsasDestroy(id).then(extractData),
+    mutationFn: (id: string) => atividadesAvulsasDestroy(id).then(extractData),
     onSuccess: invalidar,
   })
 }

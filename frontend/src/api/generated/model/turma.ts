@@ -11,7 +11,7 @@ import type { HorarioTurma } from './horarioTurma';
  * Turma com seus dias e horários (um ou mais) e a visibilidade na grade pública.
  */
 export interface Turma {
-  readonly id: number;
+  readonly id: string;
   /** @maxLength 100 */
   nome: string;
   /** @maxLength 255 */
@@ -29,6 +29,7 @@ export interface Turma {
      * @maxLength 100
      */
   nome_publico?: string;
+  /** Alunos ativos da turma. */
   readonly total_alunos: number;
   readonly criado_em: string;
 }

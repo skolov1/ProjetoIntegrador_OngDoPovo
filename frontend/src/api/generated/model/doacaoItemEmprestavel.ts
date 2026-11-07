@@ -10,7 +10,7 @@
  * Doação que ainda tem unidades para emprestar (usada no seletor do painel).
  */
 export interface DoacaoItemEmprestavel {
-  id: number;
+  id: string;
   item_rotulo: string;
   quantidade: number;
   disponivel: number;

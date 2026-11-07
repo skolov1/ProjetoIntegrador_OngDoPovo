@@ -130,7 +130,7 @@ export function EmprestimosSecao() {
         setErro("Escolha o item que foi emprestado.");
         return;
       }
-      criar.mutate({ ...dados, doacao: Number(form.doacao) }, opcoes);
+      criar.mutate({ ...dados, doacao: form.doacao }, opcoes);
     }
   };
 

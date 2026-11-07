@@ -7,7 +7,7 @@
  */
 
 export interface Professor {
-  readonly id: number;
+  readonly id: string;
   /** @maxLength 150 */
   nome: string;
   /** @maxLength 14 */
@@ -15,9 +15,10 @@ export interface Professor {
   email?: string;
   /** @maxLength 20 */
   telefone?: string;
-  turmas?: number[];
+  turmas?: string[];
   readonly turmas_nomes: readonly string[];
   ativo?: boolean;
+  /** Alunos ativos (sem repetir) das turmas do professor. */
   readonly total_alunos: number;
   readonly criado_em: string;
 }

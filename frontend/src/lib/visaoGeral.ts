@@ -102,7 +102,7 @@ export function selecionarFrequencia(
 }
 
 /** Opções do seletor de turma, em ordem alfabética (sem diferenciar acento nem maiúscula). */
-export function opcoesDeTurma(lista: VisaoGeralFrequenciaTurma[]): { id: number; nome: string }[] {
+export function opcoesDeTurma(lista: VisaoGeralFrequenciaTurma[]): { id: string; nome: string }[] {
   return lista
     .map((t) => ({ id: t.turma_id, nome: t.turma }))
     .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }))
@@ -117,7 +117,7 @@ export interface LinhaDetalhe {
   principal: string
   secundario?: string
   /** Só nas faltas seguidas: abre a chamada daquela turma. */
-  turmaId?: number
+  turmaId?: string
 }
 
 const faltas = (n: number) => `${n} ${n === 1 ? 'falta seguida' : 'faltas seguidas'}`

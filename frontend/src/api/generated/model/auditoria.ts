@@ -8,10 +8,10 @@
 import type { AuditoriaMudancas } from './auditoriaMudancas';
 
 export interface Auditoria {
-  readonly id: number;
+  readonly id: string;
   readonly quando: string;
   /** @nullable */
-  readonly usuario_id: number | null;
+  readonly usuario_id: string | null;
   readonly usuario_nome: string;
   readonly acao: string;
   readonly acao_rotulo: string;

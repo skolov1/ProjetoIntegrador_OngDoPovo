@@ -10,6 +10,6 @@
  * Pessoa da equipe, para o filtro "quem fez" da tela de auditoria.
  */
 export interface AuditoriaUsuario {
-  id: number;
+  id: string;
   nome: string;
 }

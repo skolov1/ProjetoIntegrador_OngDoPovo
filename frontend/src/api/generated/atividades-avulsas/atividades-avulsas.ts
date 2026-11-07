@@ -46,7 +46,7 @@ export const atividadesAvulsasCreate = (
  * Atividades, eventos e serviços da grade que não são turma (só da equipe).
  */
 export const atividadesAvulsasRetrieve = (
-    id: number,
+    id: string,
  ) => {
       return api<AtividadeAvulsa>(
       {url: `/atividades-avulsas/${id}/`, method: 'GET'
@@ -57,7 +57,7 @@ export const atividadesAvulsasRetrieve = (
  * Atividades, eventos e serviços da grade que não são turma (só da equipe).
  */
 export const atividadesAvulsasUpdate = (
-    id: number,
+    id: string,
     atividadeAvulsaRequest: AtividadeAvulsaRequest,
  ) => {
       return api<AtividadeAvulsa>(
@@ -71,7 +71,7 @@ export const atividadesAvulsasUpdate = (
  * Atividades, eventos e serviços da grade que não são turma (só da equipe).
  */
 export const atividadesAvulsasPartialUpdate = (
-    id: number,
+    id: string,
     patchedAtividadeAvulsaRequest?: PatchedAtividadeAvulsaRequest,
  ) => {
       return api<AtividadeAvulsa>(
@@ -85,7 +85,7 @@ export const atividadesAvulsasPartialUpdate = (
  * Atividades, eventos e serviços da grade que não são turma (só da equipe).
  */
 export const atividadesAvulsasDestroy = (
-    id: number,
+    id: string,
  ) => {
       return api<void>(
       {url: `/atividades-avulsas/${id}/`, method: 'DELETE'

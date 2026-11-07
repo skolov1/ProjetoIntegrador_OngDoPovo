@@ -218,6 +218,10 @@ SPECTACULAR_SETTINGS = {
         {"url": "http://localhost:8000/api/v1", "description": "Desenvolvimento local"},
     ],
     "COMPONENT_SPLIT_REQUEST": True,
+    "POSTPROCESSING_HOOKS": [
+        "drf_spectacular.hooks.postprocess_schema_enums",
+        "setup.schema.ids_como_texto",
+    ],
     "SORT_OPERATIONS": True,
     "DISABLE_ERRORS_AND_WARNINGS": False,
 }

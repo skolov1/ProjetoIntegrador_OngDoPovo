@@ -15,13 +15,14 @@
  * nenhum professor ativo (ver `grade.py`).
  */
 export interface TurmaList {
-  readonly id: number;
+  readonly id: string;
   /** @maxLength 100 */
   nome: string;
   readonly horario_formatado: string;
   ativo?: boolean;
   /** Desligado por padrão: turma interna não aparece no site. */
   visivel_na_grade?: boolean;
+  /** Alunos ativos da turma. */
   readonly total_alunos: number;
   readonly total_presencas: number;
   readonly sem_professor: boolean;

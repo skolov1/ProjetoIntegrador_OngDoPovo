@@ -52,7 +52,7 @@ export const presencasCreate = (
  * CRUD de presenças (recepcionista/admin).
  */
 export const presencasRetrieve = (
-    id: number,
+    id: string,
  ) => {
       return api<Presenca>(
       {url: `/presencas/${id}/`, method: 'GET'
@@ -63,7 +63,7 @@ export const presencasRetrieve = (
  * CRUD de presenças (recepcionista/admin).
  */
 export const presencasUpdate = (
-    id: number,
+    id: string,
     presencaRequest: PresencaRequest,
  ) => {
       return api<Presenca>(
@@ -77,7 +77,7 @@ export const presencasUpdate = (
  * CRUD de presenças (recepcionista/admin).
  */
 export const presencasPartialUpdate = (
-    id: number,
+    id: string,
     patchedPresencaRequest?: PatchedPresencaRequest,
  ) => {
       return api<Presenca>(
@@ -91,7 +91,7 @@ export const presencasPartialUpdate = (
  * CRUD de presenças (recepcionista/admin).
  */
 export const presencasDestroy = (
-    id: number,
+    id: string,
  ) => {
       return api<void>(
       {url: `/presencas/${id}/`, method: 'DELETE'

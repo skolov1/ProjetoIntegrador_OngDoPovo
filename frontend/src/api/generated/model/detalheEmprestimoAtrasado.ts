@@ -7,7 +7,7 @@
  */
 
 export interface DetalheEmprestimoAtrasado {
-  emprestimo_id: number;
+  emprestimo_id: string;
   item: string;
   quantidade: number;
   pessoa_nome: string;

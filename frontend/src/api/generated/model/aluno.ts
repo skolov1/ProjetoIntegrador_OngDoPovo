@@ -18,7 +18,7 @@ import type { TituloEleitorEnum } from './tituloEleitorEnum';
  * registro de `Consentimento`.
  */
 export interface Aluno {
-  readonly id: number;
+  readonly id: string;
   /** @maxLength 150 */
   nome: string;
   data_nascimento: string;
@@ -48,7 +48,7 @@ export interface Aluno {
   /** @nullable */
   readonly exame_situacao: string | null;
   readonly consentimento_registrado: boolean;
-  turmas?: number[];
+  turmas?: string[];
   readonly turmas_nomes: readonly string[];
   /**
      * @nullable

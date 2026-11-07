@@ -10,7 +10,7 @@ import type { Status79cEnum } from './status79cEnum';
 import type { TipoEnum } from './tipoEnum';
 
 export interface AtividadeAvulsa {
-  readonly id: number;
+  readonly id: string;
   /** @maxLength 120 */
   nome: string;
   tipo?: TipoEnum;

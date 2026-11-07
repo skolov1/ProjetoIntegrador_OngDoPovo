@@ -54,12 +54,12 @@ const SEM_FILTRO: Filtros = { usuario: "", acao: "", tipo: "", de: "", ate: "" }
 export function AuditoriaTela() {
   const [filtros, setFiltros] = useState<Filtros>(SEM_FILTRO);
   const [pagina, setPagina] = useState(1);
-  const [aberto, setAberto] = useState<number | null>(null);
+  const [aberto, setAberto] = useState<string | null>(null);
 
   const { data: pessoas } = useAuditoriaUsuarios();
   const { data, isLoading, error } = useAuditoria({
     page: pagina,
-    ...(filtros.usuario && { usuario: Number(filtros.usuario) }),
+    ...(filtros.usuario && { usuario: filtros.usuario }),
     ...(filtros.acao && { acao: filtros.acao as AuditoriaListAcao }),
     ...(filtros.tipo && { tipo: filtros.tipo }),
     ...(filtros.de && { de: filtros.de }),

@@ -20,6 +20,6 @@ export interface ProfessorRequest {
   email?: string;
   /** @maxLength 20 */
   telefone?: string;
-  turmas?: number[];
+  turmas?: string[];
   ativo?: boolean;
 }

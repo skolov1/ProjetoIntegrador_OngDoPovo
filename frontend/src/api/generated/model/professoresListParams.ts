@@ -24,5 +24,5 @@ page_size?: number;
  * A search term.
  */
 search?: string;
-turmas?: number[];
+turmas?: string[];
 };

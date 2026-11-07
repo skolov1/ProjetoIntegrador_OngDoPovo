@@ -7,9 +7,9 @@
  */
 
 export interface DetalheFaltante {
-  aluno_id: number;
+  aluno_id: string;
   aluno_nome: string;
-  turma_id: number;
+  turma_id: string;
   turma_nome: string;
   faltas_seguidas: number;
 }

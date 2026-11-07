@@ -10,7 +10,7 @@
  * Dados do usuario devolvidos junto do access token no login.
  */
 export interface LoginUser {
-  id: number;
+  id: string;
   username: string;
   name: string;
   role: string;

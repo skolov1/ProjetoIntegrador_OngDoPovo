@@ -32,5 +32,5 @@ search?: string;
  * * `JUSTIFICADO` - Justificado
  */
 situacao?: PresencasLoteCreateSituacao;
-turma?: number;
+turma?: string;
 };
