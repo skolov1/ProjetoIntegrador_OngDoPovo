@@ -13,7 +13,6 @@ import os
 import sys
 from datetime import timedelta
 from pathlib import Path
-from urllib.parse import parse_qs, unquote, urlparse
 
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
@@ -130,7 +129,10 @@ WHITENOISE_AUTOREFRESH = DEBUG
 REST_FRAMEWORK = {
     # JSON que sabe escrever ObjectId (ver setup/mongo.py); vale tambem para o cliente de testes.
     "DEFAULT_RENDERER_CLASSES": ("setup.mongo.JSONRenderer",),
-    "TEST_REQUEST_RENDERER_CLASSES": ("setup.mongo.JSONRenderer", "rest_framework.renderers.MultiPartRenderer"),
+    "TEST_REQUEST_RENDERER_CLASSES": (
+        "setup.mongo.JSONRenderer",
+        "rest_framework.renderers.MultiPartRenderer",
+    ),
     # Autenticacao por JWT em Authorization: Bearer <token>.
     # CSRF exempt: o access token vem no header, nao em cookie.
     "DEFAULT_AUTHENTICATION_CLASSES": (

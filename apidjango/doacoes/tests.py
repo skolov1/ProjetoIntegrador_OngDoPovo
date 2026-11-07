@@ -1016,5 +1016,5 @@ class TestItensEmprestaveis:
 
         assert response.status_code == 200
         disponiveis = {r["id"]: r["disponivel"] for r in response.data}
-        assert disponiveis == {livre.id: 2, parcial.id: 1, devolvido.id: 1}
-        assert {r["id"]: r["item_rotulo"] for r in response.data}[devolvido.id] == "Andador"
+        assert disponiveis == {str(livre.id): 2, str(parcial.id): 1, str(devolvido.id): 1}
+        assert {r["id"]: r["item_rotulo"] for r in response.data}[str(devolvido.id)] == "Andador"

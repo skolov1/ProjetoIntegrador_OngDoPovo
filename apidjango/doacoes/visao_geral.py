@@ -8,13 +8,13 @@ reaproveitam as que já existem: a situação da turma vem de `grade.py` (a mesm
 landing) e o "faltante" de `faltas.py` (3 faltas seguidas, justificadas ignoradas).
 """
 
+from collections import Counter
 from datetime import date
 from itertools import groupby
 
 from django.core.cache import cache
-from django.db.models import Count, F, Q, Sum
-from django.db.models.functions import Coalesce
 
+from .consultas import Contagens
 from .faltas import eh_faltante, faltas_seguidas
 from .grade import StatusGrade, status_da_turma
 from .models import (
@@ -22,7 +22,6 @@ from .models import (
     AtividadeAvulsa,
     Emprestimo,
     Presenca,
-    Professor,
     Turma,
 )
 
@@ -30,20 +29,15 @@ from .models import (
 LIMITE_DETALHE = 50
 
 
-def _classificar_turmas(hoje: date) -> tuple[list[Turma], list[Turma]]:
+def _classificar_turmas(hoje: date, contagens: Contagens) -> tuple[list[Turma], list[Turma]]:
     """(turmas em andamento ou agendadas, as que começaram e estão sem professor ativo)."""
-    turmas = (
-        Turma.objects.filter(ativo=True)
-        .annotate(professores_ativos=Count("professores", filter=Q(professores__ativo=True)))
-        .order_by("nome")
-    )
     ativas, sem_professor = [], []
-    for t in turmas:
+    for t in Turma.objects.filter(ativo=True).order_by("nome"):
         situacao = status_da_turma(
             ativo=t.ativo,
             data_inicio=t.data_inicio,
             data_fim=t.data_fim,
-            professores_ativos=t.professores_ativos,
+            professores_ativos=contagens.professores_por_turma.get(t.pk, 0),
             hoje=hoje,
         )
         if situacao is None:
@@ -54,33 +48,39 @@ def _classificar_turmas(hoje: date) -> tuple[list[Turma], list[Turma]]:
     return ativas, sem_professor
 
 
-def _faltantes(hoje: date) -> list[dict]:
+def _faltantes(hoje: date, contagens: Contagens) -> list[dict]:
     """Uma linha por aluno ativo e turma com 3+ faltas seguidas (mais faltas primeiro).
 
     Só conta turma em andamento em que o aluno ainda está matriculado.
     """
+    turmas = {
+        t.pk: t.nome
+        for t in Turma.objects.filter(ativo=True)
+        if t.data_fim is None or t.data_fim >= hoje
+    }
+    alunos = {a.pk: a.nome for a in Aluno.objects.filter(ativo=True)}
+    # Sem JOIN: o que cruza aluno x turma vem das tabelas de ligacao, ja em memoria.
+    matriculados = {
+        (a, t) for a, ts in contagens.turmas_por_aluno.items() for t in ts if t in turmas
+    }
+
     registros = (
-        Presenca.objects.filter(
-            Q(turma__data_fim__isnull=True) | Q(turma__data_fim__gte=hoje),
-            turma__ativo=True,
-            aluno__ativo=True,
-            aluno__turmas=F("turma"),  # só quem continua matriculado na turma
-            data__lte=hoje,
-        )
+        Presenca.objects.filter(turma_id__in=list(turmas), data__lte=hoje)
         .order_by("turma_id", "aluno_id", "-data")
-        .values_list("turma_id", "aluno_id", "situacao", "turma__nome", "aluno__nome")
+        .values_list("turma_id", "aluno_id", "situacao")
     )
     linhas = []
     for (turma_id, aluno_id), grupo in groupby(registros, key=lambda r: (r[0], r[1])):
-        grupo = list(grupo)
+        if aluno_id not in alunos or (aluno_id, turma_id) not in matriculados:
+            continue
         situacoes = [r[2] for r in grupo]
         if eh_faltante(situacoes):
             linhas.append(
                 {
-                    "aluno_id": aluno_id,
-                    "aluno_nome": grupo[0][4],
-                    "turma_id": turma_id,
-                    "turma_nome": grupo[0][3],
+                    "aluno_id": str(aluno_id),
+                    "aluno_nome": alunos[aluno_id],
+                    "turma_id": str(turma_id),
+                    "turma_nome": turmas[turma_id],
                     "faltas_seguidas": faltas_seguidas(situacoes),
                 }
             )
@@ -89,17 +89,25 @@ def _faltantes(hoje: date) -> list[dict]:
     )
 
 
+def _presencas_do_mes(hoje: date):
+    """(turma_id, situacao) de presentes e ausentes do mês (justificadas ficam de fora)."""
+    inicio = hoje.replace(day=1)
+    proximo = (inicio.replace(year=inicio.year + 1, month=1)
+               if inicio.month == 12 else inicio.replace(month=inicio.month + 1))
+    return Presenca.objects.filter(
+        data__gte=inicio,
+        data__lt=proximo,
+        situacao__in=[Presenca.Situacao.PRESENTE, Presenca.Situacao.AUSENTE],
+    ).values_list("turma_id", "situacao")
+
+
 def _frequencia_do_mes(hoje: date) -> int | None:
     """% de presentes entre presentes e ausentes do mês; justificadas não entram na conta."""
-    do_mes = Presenca.objects.filter(data__year=hoje.year, data__month=hoje.month)
-    contagem = do_mes.aggregate(
-        presentes=Count("id", filter=Q(situacao=Presenca.Situacao.PRESENTE)),
-        ausentes=Count("id", filter=Q(situacao=Presenca.Situacao.AUSENTE)),
-    )
-    total = contagem["presentes"] + contagem["ausentes"]
+    situacoes = Counter(situacao for _turma, situacao in _presencas_do_mes(hoje))
+    total = sum(situacoes.values())
     if total == 0:
         return None
-    return round(100 * contagem["presentes"] / total)
+    return round(100 * situacoes[Presenca.Situacao.PRESENTE] / total)
 
 
 def _frequencia_por_turma(hoje: date) -> list[dict]:
@@ -108,27 +116,22 @@ def _frequencia_por_turma(hoje: date) -> list[dict]:
     Mesma regra do número geral (justificadas fora da conta). Turma sem nenhuma
     presença ou ausência no mês não aparece, em vez de mostrar 0%.
     """
-    linhas = (
-        Presenca.objects.filter(
-            data__year=hoje.year,
-            data__month=hoje.month,
-            turma__ativo=True,
-            situacao__in=[Presenca.Situacao.PRESENTE, Presenca.Situacao.AUSENTE],
-        )
-        .values("turma_id", "turma__nome")
-        .annotate(
-            registros=Count("id"),
-            presentes=Count("id", filter=Q(situacao=Presenca.Situacao.PRESENTE)),
-        )
-    )
+    nomes = {t.pk: t.nome for t in Turma.objects.filter(ativo=True)}
+    registros, presentes = Counter(), Counter()
+    for turma_id, situacao in _presencas_do_mes(hoje):
+        if turma_id not in nomes:
+            continue
+        registros[turma_id] += 1
+        if situacao == Presenca.Situacao.PRESENTE:
+            presentes[turma_id] += 1
     por_turma = [
         {
-            "turma_id": linha["turma_id"],
-            "turma": linha["turma__nome"],
-            "percentual": round(100 * linha["presentes"] / linha["registros"]),
-            "registros": linha["registros"],
+            "turma_id": str(turma_id),
+            "turma": nomes[turma_id],
+            "percentual": round(100 * presentes[turma_id] / total),
+            "registros": total,
         }
-        for linha in linhas
+        for turma_id, total in registros.items()
     ]
     return sorted(por_turma, key=lambda t: (t["percentual"], t["turma"]))
 
@@ -139,35 +142,41 @@ def _emprestimos_atrasados(hoje: date):
     )
 
 
+def _alunos_sem_turma(contagens: Contagens) -> list[Aluno]:
+    return [
+        a
+        for a in Aluno.objects.filter(ativo=True).order_by("nome")
+        if a.pk not in contagens.alunos_com_turma
+    ]
+
+
 def montar_visao_geral(hoje: date) -> dict:
-    turmas_ativas, turmas_sem_professor = _classificar_turmas(hoje)
-    # Uma consulta só para os dois números de alunos e uma para os dois de empréstimos: o
-    # banco fica longe da API, e cada ida e volta custa ~200 ms.
-    alunos = Aluno.objects.filter(ativo=True).aggregate(
-        ativos=Count("id", distinct=True),
-        sem_turma=Count("id", filter=Q(turmas__isnull=True), distinct=True),
-    )
-    emprestados = Emprestimo.objects.filter(devolvido_em__isnull=True).aggregate(
-        itens=Coalesce(Sum("quantidade"), 0),
-        atrasados=Count("id", filter=Q(emprestado_em__lt=Emprestimo.limite_atraso(hoje))),
+    contagens = Contagens()
+    turmas_ativas, turmas_sem_professor = _classificar_turmas(hoje, contagens)
+    limite = Emprestimo.limite_atraso(hoje)
+    # `values_list` simples: o MongoDB nao agrega por relacao (ver consultas.py).
+    emprestados = list(
+        Emprestimo.objects.filter(devolvido_em__isnull=True).values_list(
+            "quantidade", "emprestado_em"
+        )
     )
 
     return {
         "totais": {
-            "alunos_ativos": alunos["ativos"],
+            "alunos_ativos": len(contagens.alunos_ativos_ids),
             "turmas_ativas": len(turmas_ativas),
-            "professores_ativos": Professor.objects.filter(ativo=True).count(),
+            "professores_ativos": len(contagens.professores_ativos_ids),
             "eventos_servicos_ativos": AtividadeAvulsa.objects.exclude(
                 status=AtividadeAvulsa.Status.ENCERRADO
             ).count(),
             "frequencia_mes": _frequencia_do_mes(hoje),
-            "itens_emprestados": emprestados["itens"],
+            "itens_emprestados": sum(q for q, _em in emprestados),
         },
         "alertas": {
-            "faltantes": len({linha["aluno_id"] for linha in _faltantes(hoje)}),
-            "emprestimos_atrasados": emprestados["atrasados"],
+            "faltantes": len({linha["aluno_id"] for linha in _faltantes(hoje, contagens)}),
+            "emprestimos_atrasados": sum(1 for _q, em in emprestados if em < limite),
             "turmas_sem_professor": len(turmas_sem_professor),
-            "alunos_sem_turma": alunos["sem_turma"],
+            "alunos_sem_turma": len(_alunos_sem_turma(contagens)),
         },
         "frequencia_por_turma": _frequencia_por_turma(hoje),
     }
@@ -175,12 +184,13 @@ def montar_visao_geral(hoje: date) -> dict:
 
 def montar_detalhes(hoje: date) -> dict:
     """As listas por trás de cada alerta (quem e onde), com no máximo `LIMITE_DETALHE` linhas."""
-    _ativas, sem_professor = _classificar_turmas(hoje)
+    contagens = Contagens()
+    _ativas, sem_professor = _classificar_turmas(hoje, contagens)
     atrasados = _emprestimos_atrasados(hoje).select_related("doacao").order_by("emprestado_em")
-    sem_turma = Aluno.objects.filter(ativo=True, turmas__isnull=True).order_by("nome")
+    sem_turma = _alunos_sem_turma(contagens)
 
     return {
-        "faltantes": _faltantes(hoje)[:LIMITE_DETALHE],
+        "faltantes": _faltantes(hoje, contagens)[:LIMITE_DETALHE],
         "emprestimos_atrasados": [
             {
                 "emprestimo_id": str(e.id),

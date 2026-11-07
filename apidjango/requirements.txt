@@ -4,7 +4,9 @@
 
 Django~=5.2.13
 djangorestframework~=3.15.0
-psycopg2-binary~=2.9.9
+# Banco: MongoDB (Atlas em producao). A serie 5.2.x acompanha o Django 5.2.
+django-mongodb-backend~=5.2.4
+pymongo[srv]~=4.19.0
 django-cors-headers~=4.3.0
 python-dotenv~=1.0.1
 

@@ -4,18 +4,21 @@ Views do painel: doações de itens, empréstimos, turmas, alunos, presenças e 
 Tudo aqui é só para a equipe (`IsAdminUser`); não há rota pública de doação.
 """
 
+from collections import Counter
 from datetime import date, time
 
 import django_filters
 from auditlog.context import set_actor
 from auditlog.models import LogEntry
+from bson import ObjectId
+from bson.errors import InvalidId
 from django.contrib.auth import get_user_model
-from django.db import transaction
-from django.db.models import Count, F, ProtectedError, Q, Sum
-from django.db.models.functions import Coalesce
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db.models import ProtectedError, Q, Sum
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
+from django_mongodb_backend import transaction
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
@@ -24,6 +27,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .auditoria import AuditoriaMixin, anonimizar_registros
+from .consultas import Contagens
 from .faltas import eh_faltante, faltas_seguidas
 from .grade import status_da_turma
 from .horarios import ORDEM_DIAS, faixa_horaria
@@ -113,21 +117,20 @@ class DoacaoItemViewSet(
     @action(detail=False, methods=["get"], url_path="emprestaveis", pagination_class=None)
     def emprestaveis(self, request):
         """Tudo que pode sair emprestado: sem alimentos e sem o que já está todo fora."""
-        itens = (
-            DoacaoItem.objects.exclude(item=DoacaoItem.Item.ALIMENTOS)
-            .annotate(
-                emprestada=Coalesce(
-                    Sum(
-                        "emprestimos__quantidade",
-                        filter=Q(emprestimos__devolvido_em__isnull=True),
-                    ),
-                    0,
-                )
-            )
-            .annotate(disponivel=F("quantidade") - F("emprestada"))
-            .filter(disponivel__gt=0)
-            .order_by("item", "-recebido_em")
-        )
+        # Sem JOIN/annotate (o MongoDB nao agrega por relacao): soma o que esta fora em Python.
+        fora = Counter()
+        for doacao_id, quantidade in Emprestimo.objects.filter(
+            devolvido_em__isnull=True
+        ).values_list("doacao_id", "quantidade"):
+            fora[doacao_id] += quantidade
+        itens = []
+        for doacao in DoacaoItem.objects.exclude(item=DoacaoItem.Item.ALIMENTOS).order_by(
+            "item", "-recebido_em"
+        ):
+            doacao.emprestada = fora[doacao.pk]
+            doacao.disponivel = doacao.quantidade - doacao.emprestada
+            if doacao.disponivel > 0:
+                itens.append(doacao)
         return Response(DoacaoItemEmprestavelSerializer(itens, many=True).data)
 
     def destroy(self, request, *args, **kwargs):
@@ -212,13 +215,7 @@ class TurmaViewSet(
 ):
     """CRUD de turmas (admin)."""
 
-    queryset = Turma.objects.annotate(
-        total_alunos=Count("alunos", filter=Q(alunos__ativo=True), distinct=True),
-        total_presencas=Count("presencas", distinct=True),
-        total_professores_ativos=Count(
-            "professores", filter=Q(professores__ativo=True), distinct=True
-        ),
-    )
+    queryset = Turma.objects.all()
     permission_classes = [IsAdminUser]
     filterset_class = TurmaFilter
     search_fields = ["nome", "descricao"]
@@ -367,7 +364,7 @@ class PresencaViewSet(
         summary="Lista de chamada de uma turma em uma data",
         tags=["presencas"],
         parameters=[
-            OpenApiParameter("turma", int, required=True),
+            OpenApiParameter("turma", str, required=True),
             OpenApiParameter("data", str, required=True, description="AAAA-MM-DD"),
         ],
         responses={200: ChamadaItemSerializer(many=True)},
@@ -390,7 +387,7 @@ class PresencaViewSet(
         try:
             turma = Turma.objects.get(pk=turma_id, ativo=True)
             data = date.fromisoformat(data_str)
-        except (Turma.DoesNotExist, ValueError):
+        except (Turma.DoesNotExist, ValueError, DjangoValidationError):
             return Response(
                 {"detail": "Turma ou data inválida."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -462,7 +459,7 @@ class ProfessorViewSet(
 
 
 class AuditoriaFilter(django_filters.FilterSet):
-    usuario = django_filters.NumberFilter(field_name="actor_id")
+    usuario = django_filters.CharFilter(method="filtrar_usuario")
     acao = django_filters.ChoiceFilter(
         choices=[(codigo, rotulo) for codigo, rotulo in ACOES_AUDITORIA.values()],
         method="filtrar_acao",
@@ -475,6 +472,13 @@ class AuditoriaFilter(django_filters.FilterSet):
     class Meta:
         model = LogEntry
         fields = []
+
+    def filtrar_usuario(self, queryset, name, valor):
+        try:
+            ObjectId(valor)
+        except (InvalidId, TypeError):
+            return queryset.none()
+        return queryset.filter(actor_id=valor)
 
     def filtrar_acao(self, queryset, name, valor):
         codigo = next(a for a, (c, _) in ACOES_AUDITORIA.items() if c == valor)
@@ -549,21 +553,15 @@ class GradeView(APIView):
     )
     def get(self, request):
         hoje = timezone.localdate()
-        turmas = (
-            Turma.objects.filter(ativo=True, visivel_na_grade=True)
-            .annotate(
-                professores_ativos=Count(
-                    "professores", filter=Q(professores__ativo=True), distinct=True
-                )
-            )
-        )
+        turmas = Turma.objects.filter(ativo=True, visivel_na_grade=True)
+        professores_por_turma = Contagens().professores_por_turma
         linhas = []
         for t in turmas:
             situacao = status_da_turma(
                 ativo=t.ativo,
                 data_inicio=t.data_inicio,
                 data_fim=t.data_fim,
-                professores_ativos=t.professores_ativos,
+                professores_ativos=professores_por_turma.get(t.pk, 0),
                 hoje=hoje,
             )
             if situacao is None:

@@ -7,13 +7,14 @@ from datetime import date
 
 from auditlog.models import LogEntry
 from django.core.exceptions import FieldDoesNotExist
-from django.db import transaction
 from django.db.models import Sum
 from django.utils import timezone
+from django_mongodb_backend import transaction
 from rest_framework import serializers
 
-from setup.mongo import IdField, MongoModelSerializer
+from setup.mongo import IdField, IdRelatedField, MongoModelSerializer
 
+from .consultas import Contagens
 from .documentos import cpf_valido, mascarar_cpf, so_digitos, telefone_valido
 from .grade import StatusGrade, status_da_turma
 from .horarios import ORDEM_DIAS
@@ -51,12 +52,21 @@ class HorarioTurmaSerializer(MongoModelSerializer):
         return attrs
 
 
+def contagens_de(serializer) -> Contagens:
+    """Contagens da requisicao (calculadas uma vez e reaproveitadas por todos os itens)."""
+    return serializer.context.setdefault("contagens", Contagens())
+
+
 class TurmaSerializer(MongoModelSerializer):
     """Turma com seus dias e horários (um ou mais) e a visibilidade na grade pública."""
 
     horarios = HorarioTurmaSerializer(many=True)
     horario_formatado = serializers.CharField(read_only=True)
-    total_alunos = serializers.IntegerField(read_only=True)
+    total_alunos = serializers.SerializerMethodField()
+
+    def get_total_alunos(self, obj: Turma) -> int:
+        """Alunos ativos da turma."""
+        return contagens_de(self).alunos_por_turma.get(obj.pk, 0)
 
     class Meta:
         model = Turma
@@ -145,7 +155,7 @@ class TurmaListSerializer(TurmaSerializer):
     nenhum professor ativo (ver `grade.py`).
     """
 
-    total_presencas = serializers.IntegerField(read_only=True)
+    total_presencas = serializers.SerializerMethodField()
     sem_professor = serializers.SerializerMethodField()
 
     class Meta(TurmaSerializer.Meta):
@@ -160,12 +170,15 @@ class TurmaListSerializer(TurmaSerializer):
             "sem_professor",
         ]
 
+    def get_total_presencas(self, obj: Turma) -> int:
+        return contagens_de(self).presencas_por_turma.get(obj.pk, 0)
+
     def get_sem_professor(self, obj: Turma) -> bool:
         situacao = status_da_turma(
             ativo=obj.ativo,
             data_inicio=obj.data_inicio,
             data_fim=obj.data_fim,
-            professores_ativos=obj.total_professores_ativos,
+            professores_ativos=contagens_de(self).professores_por_turma.get(obj.pk, 0),
             hoje=timezone.localdate(),
         )
         return situacao == StatusGrade.FALTA_PROFESSOR
@@ -779,7 +792,7 @@ class PresencaLoteItemSerializer(serializers.Serializer):
 class PresencaLoteSerializer(serializers.Serializer):
     """Marcação em lote: lista de presenças para uma turma/data."""
 
-    turma = serializers.PrimaryKeyRelatedField(queryset=Turma.objects.filter(ativo=True))
+    turma = IdRelatedField(queryset=Turma.objects.filter(ativo=True))
     data = serializers.DateField()
     presencas = PresencaLoteItemSerializer(many=True, allow_empty=False)
 
@@ -788,6 +801,7 @@ class PresencaLoteSerializer(serializers.Serializer):
         validos = set(
             Aluno.objects.filter(turmas=attrs["turma"], ativo=True).values_list("id", flat=True)
         )
+        validos = {str(pk) for pk in validos}
         ids = [p["aluno_id"] for p in attrs["presencas"]]
         if len(ids) != len(set(ids)):
             raise serializers.ValidationError({"presencas": "Aluno repetido na chamada."})
@@ -820,7 +834,7 @@ class ChamadaItemSerializer(serializers.Serializer):
 
 
 class ProfessorSerializer(MongoModelSerializer):
-    total_alunos = serializers.IntegerField(read_only=True)
+    total_alunos = serializers.SerializerMethodField()
     turmas_nomes = serializers.SerializerMethodField()
 
     class Meta:
@@ -838,6 +852,10 @@ class ProfessorSerializer(MongoModelSerializer):
             "criado_em",
         ]
         read_only_fields = ["criado_em", "total_alunos", "turmas_nomes"]
+
+    def get_total_alunos(self, obj: Professor) -> int:
+        """Alunos ativos (sem repetir) das turmas do professor."""
+        return contagens_de(self).alunos_por_professor.get(obj.pk, 0)
 
     def get_turmas_nomes(self, obj: Professor) -> list[str]:
         return list(obj.turmas.values_list("nome", flat=True))

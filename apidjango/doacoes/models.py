@@ -596,4 +596,6 @@ class Professor(models.Model):
     @property
     def total_alunos(self) -> int:
         """Total de alunos ativos nas turmas deste professor."""
-        return Aluno.objects.filter(turmas__in=self.turmas.all(), ativo=True).distinct().count()
+        from .consultas import Contagens
+
+        return Contagens().alunos_por_professor.get(self.pk, 0)

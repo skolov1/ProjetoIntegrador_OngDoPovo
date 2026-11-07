@@ -199,8 +199,8 @@ class TestFrequenciaPorTurma:
         marcar(aluno("Bia", ruim), ruim, ["PRESENTE", "AUSENTE"])
 
         assert self.por_turma(staff) == [
-            {"turma_id": ruim.id, "turma": "Muay Thai", "percentual": 50, "registros": 2},
-            {"turma_id": boa.id, "turma": "Futsal", "percentual": 75, "registros": 4},
+            {"turma_id": str(ruim.id), "turma": "Muay Thai", "percentual": 50, "registros": 2},
+            {"turma_id": str(boa.id), "turma": "Futsal", "percentual": 75, "registros": 4},
         ]
 
     def test_empate_desempata_pelo_nome(self, staff):
@@ -216,7 +216,7 @@ class TestFrequenciaPorTurma:
         marcar(aluno("Bia", so_justificadas), so_justificadas, ["JUSTIFICADO"])
 
         assert self.por_turma(staff) == [
-            {"turma_id": t.id, "turma": "Futsal", "percentual": 50, "registros": 2}
+            {"turma_id": str(t.id), "turma": "Futsal", "percentual": 50, "registros": 2}
         ]
 
     def test_turmas_com_o_mesmo_nome_ficam_separadas_pelo_id(self, staff):
@@ -227,8 +227,8 @@ class TestFrequenciaPorTurma:
         linhas = self.por_turma(staff)
 
         assert {(linha["turma_id"], linha["percentual"]) for linha in linhas} == {
-            (primeira.id, 100),
-            (segunda.id, 0),
+            (str(primeira.id), 100),
+            (str(segunda.id), 0),
         }
 
     def test_turma_inativa_e_chamada_de_outro_mes_nao_entram(self, staff):
@@ -360,9 +360,9 @@ class TestDetalhes:
 
         assert self.detalhes(staff)["faltantes"] == [
             {
-                "aluno_id": a.id,
+                "aluno_id": str(a.id),
                 "aluno_nome": "Ana Souza Lima",
-                "turma_id": t.id,
+                "turma_id": str(t.id),
                 "turma_nome": "Futsal sub 14",
                 "faltas_seguidas": 4,
             }
@@ -403,7 +403,7 @@ class TestDetalhes:
 
         assert self.detalhes(staff)["emprestimos_atrasados"] == [
             {
-                "emprestimo_id": atrasado.id,
+                "emprestimo_id": str(atrasado.id),
                 "item": doacao.item_exibido,
                 "quantidade": 2,
                 "pessoa_nome": "João da Silva",
@@ -418,7 +418,7 @@ class TestDetalhes:
         turma("Futura", data_inicio=hoje() + timedelta(days=10))
 
         assert self.detalhes(staff)["turmas_sem_professor"] == [
-            {"turma_id": sem.id, "turma_nome": "Sem professor"}
+            {"turma_id": str(sem.id), "turma_nome": "Sem professor"}
         ]
 
     def test_alunos_sem_turma_em_ordem_alfabetica(self, staff):
@@ -429,8 +429,8 @@ class TestDetalhes:
         aluno("Matriculada", t)
 
         assert self.detalhes(staff)["alunos_sem_turma"] == [
-            {"aluno_id": ana.id, "aluno_nome": "Ana"},
-            {"aluno_id": bia.id, "aluno_nome": "Bia"},
+            {"aluno_id": str(ana.id), "aluno_nome": "Ana"},
+            {"aluno_id": str(bia.id), "aluno_nome": "Bia"},
         ]
 
     def test_cada_lista_tem_um_teto_e_o_alerta_continua_com_o_total(self, staff):

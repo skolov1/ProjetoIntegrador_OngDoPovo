@@ -114,7 +114,7 @@ class TestTurmaSemProfessor:
 
     def sem_professor(self, staff, turma) -> bool:
         linhas = staff.get(self.URL, {"page_size": 100}).data["results"]
-        return next(linha for linha in linhas if linha["id"] == turma.id)["sem_professor"]
+        return next(linha for linha in linhas if linha["id"] == str(turma.id))["sem_professor"]
 
     def test_turma_em_andamento_sem_professor_e_sinalizada(self, staff):
         turma = nova_turma("Futsal", data_inicio=self.hoje() - timedelta(days=5))
@@ -148,7 +148,7 @@ class TestTurmaSemProfessor:
             nova_turma(f"Turma {i}", data_inicio=self.hoje() - timedelta(days=5))
 
         # Número de consultas fixo, não cresce com a quantidade de turmas (sem N+1).
-        with django_assert_max_num_queries(8):
+        with django_assert_max_num_queries(12):
             staff.get(self.URL, {"page_size": 100})
 
 

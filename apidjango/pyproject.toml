@@ -3,7 +3,7 @@
 # https://docs.astral.sh/ruff/
 target-version = "py312"
 line-length = 100
-extend-exclude = ["venv", "*/migrations/*"]
+extend-exclude = ["venv", "*/migrations/*", "*/mongo_migrations/*"]
 
 [tool.ruff.lint]
 select = [
