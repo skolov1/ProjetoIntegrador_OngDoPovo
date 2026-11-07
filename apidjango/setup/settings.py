@@ -13,6 +13,7 @@ import os
 import sys
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import quote_plus, unquote
 
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
@@ -232,7 +233,29 @@ SPECTACULAR_SETTINGS = {
 # MongoDB. Em desenvolvimento, o docker-compose.yml sobe um replica set de 1 no em
 # localhost:27017 (o Django precisa de replica set para transacoes). Em producao, defina
 # MONGO_URI com a string de conexao do Atlas (mongodb+srv://usuario:senha@cluster/ongdb).
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/ongdb")
+def _uri_com_senha_codificada(uri):
+    """Codifica usuario e senha da URI (RFC 3986), como o pymongo exige.
+
+    Quem cola a senha do Atlas com `@`, `/`, `:` ou `%` nao precisa codifica-la a mao.
+    Aceita tambem a senha ja codificada (decodifica e codifica de novo, sem mudar nada).
+    """
+    inicio = uri.find("://")
+    arroba = uri.rfind("@")
+    if inicio == -1 or arroba == -1:
+        return uri
+    credenciais = uri[inicio + 3 : arroba]
+    usuario, separador, senha = credenciais.partition(":")
+    if not separador:
+        return uri
+    return (
+        f"{uri[: inicio + 3]}{quote_plus(unquote(usuario))}:"
+        f"{quote_plus(unquote(senha))}{uri[arroba:]}"
+    )
+
+
+MONGO_URI = _uri_com_senha_codificada(
+    os.getenv("MONGO_URI", "mongodb://localhost:27017/ongdb")
+)
 
 DATABASES = {
     "default": {
