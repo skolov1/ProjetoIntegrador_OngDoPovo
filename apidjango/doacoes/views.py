@@ -212,7 +212,7 @@ class TurmaViewSet(
 ):
     """CRUD de turmas (admin)."""
 
-    queryset = Turma.objects.prefetch_related("horarios").annotate(
+    queryset = Turma.objects.annotate(
         total_alunos=Count("alunos", filter=Q(alunos__ativo=True), distinct=True),
         total_presencas=Count("presencas", distinct=True),
         total_professores_ativos=Count(
@@ -267,7 +267,7 @@ class AlunoViewSet(
 ):
     """CRUD de alunos (admin)."""
 
-    queryset = Aluno.objects.prefetch_related("turmas").all()
+    queryset = Aluno.objects.all()
     permission_classes = [IsAdminUser]
     filterset_fields = ["ativo", "turmas", "sexo"]
     search_fields = ["nome"]
@@ -414,7 +414,7 @@ class PresencaViewSet(
             registro = do_dia.get(aluno.id)
             itens.append(
                 {
-                    "aluno_id": aluno.id,
+                    "aluno_id": str(aluno.id),
                     "aluno_nome": aluno.nome,
                     "idade": aluno.idade,
                     "situacao": registro.situacao if registro else None,
@@ -442,7 +442,7 @@ class ProfessorViewSet(
 ):
     """CRUD de professores (admin)."""
 
-    queryset = Professor.objects.prefetch_related("turmas").all()
+    queryset = Professor.objects.all()
     permission_classes = [IsAdminUser]
     filterset_fields = ["ativo", "turmas"]
     # Só por nome: CPF e e-mail não vão em parâmetro de URL (ver docs/LGPD.md).
@@ -510,7 +510,7 @@ class AuditoriaViewSet(
         """Equipe atual e quem já aparece no histórico (mesmo que a conta tenha saído)."""
         no_historico = LogEntry.objects.exclude(actor=None).values("actor_id")
         pessoas = [
-            {"id": u.id, "nome": u.get_full_name() or u.get_username()}
+            {"id": str(u.id), "nome": u.get_full_name() or u.get_username()}
             for u in get_user_model().objects.filter(
                 Q(is_staff=True) | Q(pk__in=no_historico)
             )
@@ -551,7 +551,6 @@ class GradeView(APIView):
         hoje = timezone.localdate()
         turmas = (
             Turma.objects.filter(ativo=True, visivel_na_grade=True)
-            .prefetch_related("horarios")
             .annotate(
                 professores_ativos=Count(
                     "professores", filter=Q(professores__ativo=True), distinct=True

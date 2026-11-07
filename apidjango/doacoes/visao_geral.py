@@ -183,7 +183,7 @@ def montar_detalhes(hoje: date) -> dict:
         "faltantes": _faltantes(hoje)[:LIMITE_DETALHE],
         "emprestimos_atrasados": [
             {
-                "emprestimo_id": e.id,
+                "emprestimo_id": str(e.id),
                 "item": e.doacao.item_exibido,
                 "quantidade": e.quantidade,
                 "pessoa_nome": e.pessoa_nome,
@@ -193,10 +193,10 @@ def montar_detalhes(hoje: date) -> dict:
             for e in atrasados[:LIMITE_DETALHE]
         ],
         "turmas_sem_professor": [
-            {"turma_id": t.id, "turma_nome": t.nome} for t in sem_professor[:LIMITE_DETALHE]
+            {"turma_id": str(t.id), "turma_nome": t.nome} for t in sem_professor[:LIMITE_DETALHE]
         ],
         "alunos_sem_turma": [
-            {"aluno_id": a.id, "aluno_nome": a.nome} for a in sem_turma[:LIMITE_DETALHE]
+            {"aluno_id": str(a.id), "aluno_nome": a.nome} for a in sem_turma[:LIMITE_DETALHE]
         ],
     }
 

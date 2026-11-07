@@ -14,5 +14,24 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  # MongoDB para desenvolvimento: replica set de 1 no (o Django precisa dele para transacoes).
+  # O Atlas (producao) ja vem como replica set. URI local: mongodb://localhost:27017/ongdb
+  mongo:
+    image: mongo:7
+    container_name: ong_mongo
+    restart: always
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: >
+        mongosh --quiet --eval "try { rs.status().ok } catch (e) { rs.initiate({_id:'rs0',members:[{_id:0,host:'localhost:27017'}]}).ok }"
+      interval: 5s
+      timeout: 10s
+      retries: 10
+
 volumes:
   postgres_data:
+  mongo_data:

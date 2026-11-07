@@ -26,6 +26,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from .mongo import IdField
 from .serializers import CustomTokenObtainPairSerializer, tipo_de_conta
 
 # --------------------------------------------------------------------------- #
@@ -59,7 +60,7 @@ def clear_refresh_cookie(response):
 # --------------------------------------------------------------------------- #
 
 class MeSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
+    id = IdField()
     username = serializers.CharField()
     name = serializers.CharField()
     email = serializers.EmailField(allow_blank=True)
@@ -83,7 +84,7 @@ class AccessTokenSerializer(serializers.Serializer):
 class LoginUserSerializer(serializers.Serializer):
     """Dados do usuario devolvidos junto do access token no login."""
 
-    id = serializers.IntegerField()
+    id = IdField()
     username = serializers.CharField()
     name = serializers.CharField()
     role = serializers.CharField()
@@ -228,7 +229,7 @@ class MeView(APIView):
         user = request.user
         return Response(
             {
-                'id': user.id,
+                'id': str(user.id),
                 'username': user.username,
                 'name': user.get_full_name() or user.username,
                 'email': user.email,

@@ -159,7 +159,7 @@ class AlunoAdmin(admin.ModelAdmin):
     )
 
     def get_queryset(self, request):
-        return super().get_queryset(request).prefetch_related("turmas")
+        return super().get_queryset(request)
 
     @admin.display(description="Turmas")
     def turmas_lista(self, obj: Aluno) -> str:

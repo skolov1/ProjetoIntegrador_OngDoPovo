@@ -68,9 +68,10 @@ if _HOST_RENDER:
 # --- Apps ------------------------------------------------------------------
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
+    # Versoes dos apps do Django que usam ObjectId como chave (MongoDB).
+    "setup.mongo_apps.MongoAdminConfig",
+    "setup.mongo_apps.MongoAuthConfig",
+    "setup.mongo_apps.MongoContentTypesConfig",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
@@ -80,7 +81,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "drf_spectacular",
     "django_filters",
-    "auditlog",
+    "setup.mongo_apps.AuditlogMongoConfig",  # django-auditlog com chave ObjectId
     # Domino
     "setup",
     "doacoes",
@@ -127,6 +128,9 @@ WHITENOISE_AUTOREFRESH = DEBUG
 # --- Django REST Framework -------------------------------------------------
 
 REST_FRAMEWORK = {
+    # JSON que sabe escrever ObjectId (ver setup/mongo.py); vale tambem para o cliente de testes.
+    "DEFAULT_RENDERER_CLASSES": ("setup.mongo.JSONRenderer",),
+    "TEST_REQUEST_RENDERER_CLASSES": ("setup.mongo.JSONRenderer", "rest_framework.renderers.MultiPartRenderer"),
     # Autenticacao por JWT em Authorization: Bearer <token>.
     # CSRF exempt: o access token vem no header, nao em cookie.
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -219,39 +223,29 @@ SPECTACULAR_SETTINGS = {
 
 # --- Database --------------------------------------------------------------
 
-# Os padrões abaixo são os do banco que o docker-compose.yml cria (só para
-# desenvolvimento local). Em produção, defina DB_* no ambiente/.env.
-def _banco_da_url(url):
-    """Le `postgres://usuario:senha@host:porta/banco?sslmode=require` (padrao dos provedores)."""
-    partes = urlparse(url)
-    config = {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": partes.path.lstrip("/"),
-        "USER": unquote(partes.username or ""),
-        "PASSWORD": unquote(partes.password or ""),
-        "HOST": partes.hostname or "",
-        "PORT": str(partes.port or 5432),
-    }
-    sslmode = parse_qs(partes.query).get("sslmode", [""])[0]
-    if sslmode:
-        config["OPTIONS"] = {"sslmode": sslmode}
-    return config
+# MongoDB. Em desenvolvimento, o docker-compose.yml sobe um replica set de 1 no em
+# localhost:27017 (o Django precisa de replica set para transacoes). Em producao, defina
+# MONGO_URI com a string de conexao do Atlas (mongodb+srv://usuario:senha@cluster/ongdb).
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/ongdb")
 
-
-# Em producao, o mais simples e definir DATABASE_URL (Render, Neon, Supabase...).
-if os.getenv("DATABASE_URL"):
-    DATABASES = {"default": _banco_da_url(os.environ["DATABASE_URL"])}
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.getenv("DB_NAME", "ongdb"),
-            "USER": os.getenv("DB_USER", "postgres"),
-            "PASSWORD": os.getenv("DB_PASSWORD", "123"),
-            "HOST": os.getenv("DB_HOST", "localhost"),
-            "PORT": os.getenv("DB_PORT", "5432"),
-        }
+DATABASES = {
+    "default": {
+        "ENGINE": "django_mongodb_backend",
+        "HOST": MONGO_URI,
+        "NAME": os.getenv("MONGO_DB", "ongdb"),
     }
+}
+
+# Cada app que nasceu com chaves inteiras precisa de migracoes proprias para ObjectId.
+MIGRATION_MODULES = {
+    "admin": "setup.mongo_migrations.admin",
+    "auth": "setup.mongo_migrations.auth",
+    "contenttypes": "setup.mongo_migrations.contenttypes",
+    "auditlog": "setup.mongo_migrations.auditlog",
+}
+
+# Roteia os models de apps do Django que nao usam ObjectId (sessions) para o mesmo banco.
+DATABASE_ROUTERS = ["django_mongodb_backend.routers.MongoRouter"]
 
 
 # --- Password validation ---------------------------------------------------
@@ -300,8 +294,8 @@ if PRODUCAO:
         },
     }
 
-# Evita W042 e usa BigAutoField (64 bits) nas chaves primarias.
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+# MongoDB: chave primaria = ObjectId (string de 24 caracteres na API).
+DEFAULT_AUTO_FIELD = "django_mongodb_backend.fields.ObjectIdAutoField"
 
 
 # --- Email -----------------------------------------------------------------

@@ -12,6 +12,8 @@ from django.db.models import Sum
 from django.utils import timezone
 from rest_framework import serializers
 
+from setup.mongo import IdField, MongoModelSerializer
+
 from .documentos import cpf_valido, mascarar_cpf, so_digitos, telefone_valido
 from .grade import StatusGrade, status_da_turma
 from .horarios import ORDEM_DIAS
@@ -33,7 +35,7 @@ from .models import (
 # =============================================================================
 
 
-class HorarioTurmaSerializer(serializers.ModelSerializer):
+class HorarioTurmaSerializer(MongoModelSerializer):
     """Um dia da semana e a faixa de horário em que a turma acontece."""
 
     class Meta:
@@ -49,7 +51,7 @@ class HorarioTurmaSerializer(serializers.ModelSerializer):
         return attrs
 
 
-class TurmaSerializer(serializers.ModelSerializer):
+class TurmaSerializer(MongoModelSerializer):
     """Turma com seus dias e horários (um ou mais) e a visibilidade na grade pública."""
 
     horarios = HorarioTurmaSerializer(many=True)
@@ -170,7 +172,7 @@ class TurmaListSerializer(TurmaSerializer):
 
     def to_representation(self, instance):
         # A lista não traz os horários um a um, só o texto pronto.
-        return serializers.ModelSerializer.to_representation(self, instance)
+        return MongoModelSerializer.to_representation(self, instance)
 
 
 # =============================================================================
@@ -178,7 +180,7 @@ class TurmaListSerializer(TurmaSerializer):
 # =============================================================================
 
 
-class AtividadeAvulsaSerializer(serializers.ModelSerializer):
+class AtividadeAvulsaSerializer(MongoModelSerializer):
     horario_exibido = serializers.CharField(read_only=True)
     quando = serializers.CharField(read_only=True)
 
@@ -227,7 +229,7 @@ class AtividadeAvulsaSerializer(serializers.ModelSerializer):
 # =============================================================================
 
 
-class DoacaoItemSerializer(serializers.ModelSerializer):
+class DoacaoItemSerializer(MongoModelSerializer):
     item_rotulo = serializers.CharField(source="item_exibido", read_only=True)
     doador_exibido = serializers.CharField(read_only=True)
 
@@ -294,7 +296,7 @@ class DoacaoItemResumoSerializer(serializers.Serializer):
 class DoacaoItemEmprestavelSerializer(serializers.Serializer):
     """Doação que ainda tem unidades para emprestar (usada no seletor do painel)."""
 
-    id = serializers.IntegerField()
+    id = IdField()
     item_rotulo = serializers.CharField(source="item_exibido")
     quantidade = serializers.IntegerField()
     disponivel = serializers.IntegerField()
@@ -307,7 +309,7 @@ class DoacaoItemEmprestavelSerializer(serializers.Serializer):
 # =============================================================================
 
 
-class EmprestimoSerializer(serializers.ModelSerializer):
+class EmprestimoSerializer(MongoModelSerializer):
     item_rotulo = serializers.CharField(source="doacao.item_exibido", read_only=True)
     status = serializers.CharField(read_only=True)
     status_rotulo = serializers.CharField(read_only=True)
@@ -409,13 +411,13 @@ def _primeira_maiuscula(texto: str) -> str:
 class AuditoriaUsuarioSerializer(serializers.Serializer):
     """Pessoa da equipe, para o filtro "quem fez" da tela de auditoria."""
 
-    id = serializers.IntegerField()
+    id = IdField()
     nome = serializers.CharField()
 
 
-class AuditoriaSerializer(serializers.ModelSerializer):
+class AuditoriaSerializer(MongoModelSerializer):
     quando = serializers.DateTimeField(source="timestamp", read_only=True)
-    usuario_id = serializers.IntegerField(source="actor_id", read_only=True, allow_null=True)
+    usuario_id = IdField(source="actor_id", read_only=True, allow_null=True)
     usuario_nome = serializers.SerializerMethodField()
     acao = serializers.SerializerMethodField()
     acao_rotulo = serializers.SerializerMethodField()
@@ -543,7 +545,7 @@ class GradeItemSerializer(serializers.Serializer):
 # =============================================================================
 
 
-class AlunoSerializer(serializers.ModelSerializer):
+class AlunoSerializer(MongoModelSerializer):
     """Serializer completo do aluno (admin).
 
     Regras de LGPD: menor de 18 anos não tem CPF próprio (o CPF fica no
@@ -698,7 +700,7 @@ class AlunoSerializer(serializers.ModelSerializer):
         return aluno
 
 
-class AlunoListSerializer(serializers.ModelSerializer):
+class AlunoListSerializer(MongoModelSerializer):
     """Listagem leve para tabelas.
 
     Não traz o CPF completo (só mascarado, e só para maior de idade) nem dados do
@@ -737,7 +739,7 @@ class AlunoListSerializer(serializers.ModelSerializer):
 # =============================================================================
 
 
-class PresencaSerializer(serializers.ModelSerializer):
+class PresencaSerializer(MongoModelSerializer):
     """Serializer completo da presença."""
 
     aluno_nome = serializers.CharField(source="aluno.nome", read_only=True)
@@ -760,7 +762,7 @@ class PresencaSerializer(serializers.ModelSerializer):
         read_only_fields = ["registrado_em", "aluno_nome", "turma_nome"]
 
 
-class PresencaCreateSerializer(serializers.ModelSerializer):
+class PresencaCreateSerializer(MongoModelSerializer):
     """Para marcar presença (recepcionista)."""
 
     class Meta:
@@ -769,7 +771,7 @@ class PresencaCreateSerializer(serializers.ModelSerializer):
 
 
 class PresencaLoteItemSerializer(serializers.Serializer):
-    aluno_id = serializers.IntegerField()
+    aluno_id = IdField()
     situacao = serializers.ChoiceField(choices=Presenca.Situacao.choices)
     observacao = serializers.CharField(max_length=255, required=False, allow_blank=True)
 
@@ -800,7 +802,7 @@ class PresencaLoteSerializer(serializers.Serializer):
 class ChamadaItemSerializer(serializers.Serializer):
     """Um aluno na lista de chamada de uma turma em uma data."""
 
-    aluno_id = serializers.IntegerField()
+    aluno_id = IdField()
     aluno_nome = serializers.CharField()
     idade = serializers.IntegerField()
     # None = ainda não registrada nessa data (não conta como falta).
@@ -817,7 +819,7 @@ class ChamadaItemSerializer(serializers.Serializer):
 # =============================================================================
 
 
-class ProfessorSerializer(serializers.ModelSerializer):
+class ProfessorSerializer(MongoModelSerializer):
     total_alunos = serializers.IntegerField(read_only=True)
     turmas_nomes = serializers.SerializerMethodField()
 
@@ -880,7 +882,7 @@ class VisaoGeralAlertasSerializer(serializers.Serializer):
 
 
 class VisaoGeralFrequenciaTurmaSerializer(serializers.Serializer):
-    turma_id = serializers.IntegerField()
+    turma_id = IdField()
     turma = serializers.CharField(help_text="Nome da turma.")
     percentual = serializers.IntegerField(help_text="% de presentes no mês.")
     registros = serializers.IntegerField(help_text="Presentes mais ausentes que entraram na conta.")
@@ -897,15 +899,15 @@ class VisaoGeralSerializer(serializers.Serializer):
 
 
 class DetalheFaltanteSerializer(serializers.Serializer):
-    aluno_id = serializers.IntegerField()
+    aluno_id = IdField()
     aluno_nome = serializers.CharField()
-    turma_id = serializers.IntegerField()
+    turma_id = IdField()
     turma_nome = serializers.CharField()
     faltas_seguidas = serializers.IntegerField()
 
 
 class DetalheEmprestimoAtrasadoSerializer(serializers.Serializer):
-    emprestimo_id = serializers.IntegerField()
+    emprestimo_id = IdField()
     item = serializers.CharField()
     quantidade = serializers.IntegerField()
     pessoa_nome = serializers.CharField()
@@ -914,12 +916,12 @@ class DetalheEmprestimoAtrasadoSerializer(serializers.Serializer):
 
 
 class DetalheTurmaSemProfessorSerializer(serializers.Serializer):
-    turma_id = serializers.IntegerField()
+    turma_id = IdField()
     turma_nome = serializers.CharField()
 
 
 class DetalheAlunoSemTurmaSerializer(serializers.Serializer):
-    aluno_id = serializers.IntegerField()
+    aluno_id = IdField()
     aluno_nome = serializers.CharField()
 
 
