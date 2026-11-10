@@ -36,7 +36,7 @@ export function Footer({ onPrivacyPage = false }: FooterProps) {
         rays={26}
         fill={0.04}
         spin={false}
-        className="pointer-events-none absolute -left-40 -bottom-40 text-white opacity-25 select-none"
+        className="pointer-events-none absolute -left-80 -bottom-60 text-white opacity-25 select-none"
       />
 
       <div className="relative mx-auto max-w-7xl px-6 py-16 lg:px-8">

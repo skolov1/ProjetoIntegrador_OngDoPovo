@@ -49,14 +49,14 @@ export function HeroSection() {
     >
       {/* Padrão de raios — o elemento gráfico do manual, em marca d'água */}
       <Sunburst
-        tone="green"
+        tone="white"
         size={720}
         rays={32}
         fill={0.06}
         className="pointer-events-none absolute top-28 -right-2 hidden text-verde opacity-70 select-none sm:block"
       />
       <Sunburst
-        tone="green"
+        tone="white"
         size={420}
         rays={24}
         fill={0.05}
@@ -99,7 +99,7 @@ export function HeroSection() {
 
           {/* Categorias */}
           <Reveal delay={250}>
-            <ul className="mt-7 flex flex-wrap gap-2">
+            <ul className="mt-7 hidden md:flex md:flex-wrap gap-2">
               {ONG.areas.map((area) => (
                 <li
                   key={area}

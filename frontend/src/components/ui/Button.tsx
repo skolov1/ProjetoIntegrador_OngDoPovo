@@ -16,7 +16,7 @@ const VARIANTES: Record<Variante, string> = {
   secundaria:
     "bg-amarelo text-verde-escuro shadow-lg shadow-amarelo/25 hover:bg-[#ffd54a] hover:-translate-y-0.5",
   "contorno-claro":
-    "border-2 border-verde text-verde hover:bg-verde hover:text-white hover:-translate-y-0.5",
+    "border-2 bg-zinc-50/95 border-verde text-verde hover:bg-verde hover:text-white hover:-translate-y-0.5",
   perigo:
     "bg-vermelho text-white shadow-lg shadow-vermelho/25 hover:bg-[#c62828] hover:-translate-y-0.5",
 };
