@@ -2,6 +2,7 @@
  * Nosso Espaço — endereço, horários e a grade da agenda da semana.
  * A referência mostra a tabela de horários ao lado do bloco de endereço.
  */
+import { useMemo, useState, type KeyboardEvent } from "react";
 import { Clock3, MapPin } from "lucide-react";
 
 import {
@@ -14,13 +15,32 @@ import { Reveal } from "@/components/ui/Reveal";
 import { ONG } from "@/features/home/data";
 import { EventosServicos } from "@/features/home/EventosServicos";
 import { useGrade } from "@/features/home/useGrade";
-import { estiloDoStatus } from "@/lib/grade";
+import { agruparPorDia, diaInicial, estiloDoStatus } from "@/lib/grade";
 import { rotuloPublicoDoStatus } from "@/lib/horarios";
 import { MENSALIDADE_POR_ATIVIDADE } from "@/lib/inscricao";
 
 export function SpaceSection() {
   const { data: grade, isLoading, isError } = useGrade();
   const precisaProfessor = grade?.some((i) => i.status === "FALTA_PROFESSOR");
+
+  // Uma aba por dia com aula; abre em hoje (ou no próximo dia com aula).
+  const [diaEscolhido, setDiaEscolhido] = useState<string | null>(null);
+  const grupos = useMemo(() => agruparPorDia(grade ?? []), [grade]);
+  const grupoAtivo =
+    grupos.find((g) => g.dia === diaEscolhido) ??
+    grupos.find((g) => g.dia === diaInicial(grupos, new Date()));
+  // Altura do dia mais cheio, para o cartão não pular ao trocar de aba.
+  const maiorDia = Math.max(0, ...grupos.map((g) => g.itens.length));
+
+  function trocarComSetas(e: KeyboardEvent<HTMLDivElement>) {
+    if (!grupoAtivo || (e.key !== "ArrowRight" && e.key !== "ArrowLeft")) return;
+    e.preventDefault();
+    const atual = grupos.findIndex((g) => g.dia === grupoAtivo.dia);
+    const passo = e.key === "ArrowRight" ? 1 : -1;
+    const proximo = grupos[(atual + passo + grupos.length) % grupos.length];
+    setDiaEscolhido(proximo.dia);
+    document.getElementById(`grade-aba-${proximo.dia}`)?.focus();
+  }
 
   return (
     <Section id="espaco" tom="claro">
@@ -88,47 +108,88 @@ export function SpaceSection() {
               </span>
             </div>
 
-            <ul className="divide-y divide-slate-100" aria-live="polite">
-              {isLoading && (
-                <li className="px-5 py-6 text-sm text-grafite/60 sm:px-6">
-                  Carregando a grade... na primeira visita do dia pode levar alguns segundos.
-                </li>
-              )}
-              {isError && (
-                <li className="px-5 py-6 text-sm text-grafite/70 sm:px-6">
-                  Não foi possível carregar a grade agora. Tente de novo em
-                  instantes ou fale com a gente pelo WhatsApp.
-                </li>
-              )}
-              {grade?.length === 0 && (
-                <li className="px-5 py-6 text-sm text-grafite/70 sm:px-6">
-                  Nenhuma atividade na grade no momento.
-                </li>
-              )}
-              {grade?.map((item) => (
-                <li
-                  key={item.chave}
-                  className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 px-5 py-4 transition-colors hover:bg-mist-50 sm:px-6 lg:grid-cols-[6rem_1fr_auto]"
+            {isLoading && (
+              <p className="px-5 py-6 text-sm text-grafite/60 sm:px-6">
+                Carregando a grade... na primeira visita do dia pode levar alguns segundos.
+              </p>
+            )}
+            {isError && (
+              <p className="px-5 py-6 text-sm text-grafite/70 sm:px-6">
+                Não foi possível carregar a grade agora. Tente de novo em
+                instantes ou fale com a gente pelo WhatsApp.
+              </p>
+            )}
+            {grade?.length === 0 && (
+              <p className="px-5 py-6 text-sm text-grafite/70 sm:px-6">
+                Nenhuma atividade na grade no momento.
+              </p>
+            )}
+
+            {grupoAtivo && (
+              <>
+                <div
+                  role="tablist"
+                  aria-label="Dia da semana"
+                  className="flex gap-1.5 overflow-x-auto border-b border-slate-100 px-4 py-3 sm:px-5"
+                  onKeyDown={trocarComSetas}
                 >
-                  <span className="text-xs font-bold uppercase tracking-wider text-verde max-lg:col-start-1 max-lg:row-start-1">
-                    {item.dia_rotulo}
-                  </span>
-                  <div className="max-lg:col-span-2">
-                    <p className="font-bold text-verde-escuro">{item.nome}</p>
-                    <p className="mt-0.5 text-sm text-grafite/60">
-                      {item.horario}
-                    </p>
-                  </div>
-                  <span
-                    className={`w-fit whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold max-lg:col-start-2 max-lg:row-start-1 max-lg:justify-self-end ${estiloDoStatus(
-                      item.status,
-                    )}`}
-                  >
-                    {rotuloPublicoDoStatus(item.status)}
-                  </span>
-                </li>
-              ))}
-            </ul>
+                  {grupos.map((g) => {
+                    const ativo = g.dia === grupoAtivo.dia;
+                    return (
+                      <button
+                        key={g.dia}
+                        type="button"
+                        role="tab"
+                        id={`grade-aba-${g.dia}`}
+                        aria-selected={ativo}
+                        aria-controls="grade-painel"
+                        tabIndex={ativo ? 0 : -1}
+                        onClick={() => setDiaEscolhido(g.dia)}
+                        className={`flex-1 whitespace-nowrap rounded-full px-3 py-2 text-sm font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-verde ${
+                          ativo
+                            ? "bg-verde text-white"
+                            : "bg-mist-50 text-grafite/70 hover:bg-mist-100"
+                        }`}
+                      >
+                        <span className="sm:hidden">{g.curto}</span>
+                        <span className="max-sm:hidden">{g.rotulo}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <ul
+                  role="tabpanel"
+                  id="grade-painel"
+                  aria-labelledby={`grade-aba-${grupoAtivo.dia}`}
+                  className="divide-y divide-slate-100"
+                  style={{ minHeight: `${maiorDia * 3.75}rem` }}
+                >
+                  {grupoAtivo.itens.map((item) => (
+                    <li
+                      key={item.chave}
+                      className="flex min-h-15 items-center gap-4 px-5 py-3 transition-colors hover:bg-mist-50 sm:px-6"
+                    >
+                      <span className="w-26 shrink-0 text-sm font-bold tabular-nums text-verde">
+                        {item.horario}
+                      </span>
+                      <p className="min-w-0 flex-1 font-bold text-verde-escuro">
+                        {item.nome}
+                      </p>
+                      {item.status !== "ATIVO" && (
+                        <span
+                          className={`w-fit whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ${estiloDoStatus(
+                            item.status,
+                          )}`}
+                        >
+                          {rotuloPublicoDoStatus(item.status)}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
             {precisaProfessor && (
               <p className="border-t border-slate-100 bg-amarelo/10 px-5 py-3 text-sm text-grafite/80 sm:px-6">
                 Tem aula procurando professor. Quer ensinar?{" "}
